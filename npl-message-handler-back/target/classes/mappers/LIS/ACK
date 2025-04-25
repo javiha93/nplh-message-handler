@@ -1,0 +1,13 @@
+MessageType ACK^O21^ACK CA
+MSH(3) sendingApplication
+MSH(4) sendingFacility
+MSH(5) receivingApplication
+MSH(6) receivingFacility
+MSH(7) messageDateTime
+MSH(9) messageType
+MSH(10) messageControlId
+MSH(11) processingId
+MSH(12) versionId
+MSA(1) actionCode
+MSA(2) header.originalMessageControlId
+ERR(3-2) error

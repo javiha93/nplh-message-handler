@@ -1,0 +1,15 @@
+MessageType OUL^R21 RE
+MSH(3) sendingApplication
+MSH(4) sendingFacility
+MSH(5) receivingApplication
+MSH(6) receivingFacility
+MSH(7) messageDateTime
+MSH(9) messageType
+MSH(10) messageControlId
+MSH(11) processingId
+MSH(12) versionId
+ORC(1) actionCode
+ORC(3-1) specimens.specimenList.blocks.blockList.slides.slideList.id
+OBR(3-1) specimens.specimenList.blocks.blockList.slides.slideList.id
+OBR(4-1) specimens.specimenList.blocks.blockList.slides.slideList.entityName
+OBR(4-2) [sendScannedSlideImageLabelId]

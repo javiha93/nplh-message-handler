@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Información básica del proyecto padre -->
+    <groupId>org.example</groupId>
+    <artifactId>message-handler-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging> <!-- Importante para proyecto multi-módulo -->
+
+    <name>Message Handler Parent</name>
+    <description>Parent POM for Message Handler (Backend + Frontend)</description>
+
+    <!-- Módulos que componen el proyecto -->
+    <modules>
+        <module>npl-message-handler-back</module> <!-- Módulo Spring Boot -->
+        <module>npl-message-handler-ui</module>    <!-- Módulo React (aunque no sea Maven) -->
+    </modules>
+
+    <!-- Propiedades comunes -->
+    <properties>
+        <java.version>17</java.version> <!-- Versión que mencionaste usar -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+    </properties>
+
+    <!-- Build configuration para el proyecto padre -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- Dependency Management (opcional para dependencias compartidas) -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Aquí puedes definir versiones comunes para ambos módulos -->
+        </dependencies>
+    </dependencyManagement>
+</project>
