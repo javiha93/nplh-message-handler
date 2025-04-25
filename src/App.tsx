@@ -1,6 +1,6 @@
 
 import React from 'react';
-import MessageGenerator from './components/MessageGenerator';
+import MessageGenerator from '@ui/components/MessageGenerator';
 
 function App() {
   return (
