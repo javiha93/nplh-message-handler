@@ -27,16 +27,17 @@
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   },
+  "main": "postcss.config.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/javiha93/h-5839.git"
+    "url": "git+https://github.com/javiha93/nplh-message-handler.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/javiha93/h-5839/issues"
+    "url": "https://github.com/javiha93/nplh-message-handler/issues"
   },
-  "homepage": "https://github.com/javiha93/h-5839#readme",
+  "homepage": "https://github.com/javiha93/nplh-message-handler#readme",
   "description": ""
 }
