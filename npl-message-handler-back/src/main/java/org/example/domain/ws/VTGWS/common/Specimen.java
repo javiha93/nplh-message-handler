@@ -2,7 +2,7 @@ package org.example.domain.ws.VTGWS.common;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.domain.ws.VTGWS.WSSegment;
+import org.example.domain.ws.WSSegment;
 
 import java.util.stream.Stream;
 

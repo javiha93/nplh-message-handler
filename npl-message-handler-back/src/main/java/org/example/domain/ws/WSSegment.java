@@ -1,7 +1,5 @@
 
-package org.example.domain.ws.VTGWS;
-
-import org.example.domain.hl7.HL7Segment;
+package org.example.domain.ws;
 
 import java.util.function.Supplier;
 

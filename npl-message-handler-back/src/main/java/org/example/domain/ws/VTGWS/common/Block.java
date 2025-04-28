@@ -3,7 +3,7 @@ package org.example.domain.ws.VTGWS.common;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.entity.Specimen;
-import org.example.domain.ws.VTGWS.WSSegment;
+import org.example.domain.ws.WSSegment;
 
 import java.util.stream.Stream;
 
@@ -50,27 +50,4 @@ public class Block extends WSSegment {
         return specimen;
     }
 
-    @Override
-    public String toString() {
-        String result = "<Block>\n";
-
-        if (barcode != null) {
-            result += "            <Barcode>" + barcode + "</Barcode>\n";
-        }
-
-        if (sequence != null) {
-            result += "            <Sequence>" + sequence + "</Sequence>\n";
-        }
-
-        if (tissueSubTypeDescription != null) {
-            result += "            <TissueSubTypeDescription>" + tissueSubTypeDescription + "</TissueSubTypeDescription>\n";
-        }
-
-        if (tissueSubTypeName != null) {
-            result += "            <TissueSubTypeName>" + tissueSubTypeName + "</TissueSubTypeName>\n";
-        }
-
-        result += "        </Block>";
-        return result;
-    }
 }

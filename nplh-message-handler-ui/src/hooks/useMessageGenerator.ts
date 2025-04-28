@@ -35,7 +35,8 @@ export const useMessageGenerator = () => {
   const hosts = [
     { id: 'LIS', name: 'LIS' },
     { id: 'VTG', name: 'VTG' },
-    { id: 'VANTAGE_WS', name: 'VANTAGE WS' }
+    { id: 'VANTAGE_WS', name: 'VANTAGE WS' },
+    { id: 'UPATH_CLOUD', name: 'UPATH CLOUD' }
   ];
 
   const statusOptions = [
@@ -86,7 +87,14 @@ export const useMessageGenerator = () => {
       { id: 'ProcessAssignedPathologistUpdate', name: 'ProcessAssignedPathologistUpdate' },
       { id: 'ProcessPhysicianUpdate', name: 'ProcessPhysicianUpdate' },
       { id: 'ProcessPatientUpdate', name: 'ProcessPatientUpdate' }
-    ]
+    ],
+    UPATH_CLOUD: [
+          { id: 'sendScannedSlideImageLabelId', name: 'sendScannedSlideImageLabelId' },
+          { id: 'sendReleasedSpecimen', name: 'sendReleasedSpecimen' },
+          { id: 'SPECIMEN_UPDATE', name: 'SPECIMEN_UPDATE' },
+          { id: 'BLOCK_UPDATE', name: 'BLOCK_UPDATE' },
+          { id: 'SLIDE_UPDATE', name: 'SLIDE_UPDATE' }
+        ]
   };
 
   useEffect(() => {
@@ -308,12 +316,15 @@ export const useMessageGenerator = () => {
       return;
     }
 
-    if (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN' && !selectedSpecimen) {
+    if ((selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN' && !selectedSpecimen) ||
+    (selectedHost === "UPATH_CLOUD" && selectedType === 'sendReleasedSpecimen' && !selectedSpecimen)
+    ){
       setGeneratedMessage('Por favor, selecciona un specimen para eliminar.');
       return;
     }
 
     if ((selectedHost === 'LIS' && selectedType === 'DELETE_SLIDE' && !selectedSlide) ||
+        (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendScannedSlideImageLabelId' && !selectedSlide) ||
         (selectedHost === 'VANTAGE_WS' && selectedType === 'ProcessVANTAGEEvent' && !selectedEntity)) {
       setGeneratedMessage('Por favor, selecciona una entidad para procesar.');
       return;
@@ -384,9 +395,9 @@ export const useMessageGenerator = () => {
     }
   };
 
-  const showSpecimenSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN') || (selectedHost === 'VTG' && selectedType === 'SPECIMEN_UPDATE');
+  const showSpecimenSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN') || (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendReleasedSpecimen') || (selectedHost === 'VTG' && selectedType === 'SPECIMEN_UPDATE');
   const showBlockSelector = (selectedHost === 'VTG' && selectedType === 'BLOCK_UPDATE');
-  const showSlideSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SLIDE') || (selectedHost === 'VTG' && selectedType === 'SLIDE_UPDATE');
+  const showSlideSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SLIDE') || (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendScannedSlideImageLabelId') || (selectedHost === 'VTG' && selectedType === 'SLIDE_UPDATE');
   const showEntitySelector = (selectedHost === 'VANTAGE_WS' && selectedType === 'ProcessVANTAGEEvent');
   const showStatusSelector = (selectedHost === 'LIS' && selectedType === 'CASE_UPDATE') || 
                             (selectedHost === 'VANTAGE_WS' && selectedType === 'ProcessVANTAGEEvent') || 

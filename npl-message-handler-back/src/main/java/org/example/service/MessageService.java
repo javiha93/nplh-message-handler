@@ -17,6 +17,7 @@ import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Specimen;
+import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendScannedSlide.SendScannedSlide;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessAssignedPathologistUpdate.ProcessAssignedPathologistUpdate;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrder.ProcessCancelOrder;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrderRequest.ProcessCancelOrderRequest;
@@ -110,6 +111,9 @@ public class MessageService {
             case "DELETE_SLIDE":
                 DELETESLIDE deleteSlide = DELETESLIDE.FromMessage(message, slide);
                 return deleteSlide.toString();
+            case "sendScannedSlideImageLabelId":
+                SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
+                return sendScannedSlide.toString();
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }

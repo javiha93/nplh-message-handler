@@ -6,7 +6,7 @@ import org.example.domain.message.Message;
 import org.example.domain.message.MessageHeader;
 import org.example.domain.message.entity.Order;
 import org.example.domain.message.entity.Slide;
-import org.example.domain.ws.VTGWS.WSSegment;
+import org.example.domain.ws.WSSegment;
 
 import java.util.ArrayList;
 import java.util.List;

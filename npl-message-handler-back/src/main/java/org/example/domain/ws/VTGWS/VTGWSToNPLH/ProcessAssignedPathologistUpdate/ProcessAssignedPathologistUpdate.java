@@ -3,9 +3,7 @@ package org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessAssignedPathologistUpdate
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.Message;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrderRequest.ProcessCancelOrderRequest;
-import org.example.domain.ws.VTGWS.WSSegment;
-import org.example.domain.ws.VTGWS.common.LabOrder;
+import org.example.domain.ws.WSSegment;
 import org.example.domain.ws.VTGWS.common.Pathologist;
 
 @Data

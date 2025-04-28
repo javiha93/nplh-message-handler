@@ -3,7 +3,7 @@ package org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessVTGEvent;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.Message;
-import org.example.domain.ws.VTGWS.WSSegment;
+import org.example.domain.ws.WSSegment;
 
 @Data
 @NoArgsConstructor
