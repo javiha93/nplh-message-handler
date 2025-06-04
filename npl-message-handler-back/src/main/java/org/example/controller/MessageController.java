@@ -34,14 +34,19 @@ public class MessageController {
     }
 
     @PostMapping("/send")
-    public void sendMessage(@RequestBody SendMessageRequest request) {
+    public ResponseEntity<String> sendMessage(@RequestBody SendMessageRequest request) {
+        String response;
         Client client = clients.getClient(request.hostName);
 
         if (client instanceof HL7Client) {
-            client.send(request.message);
+            response = client.send(request.message);
         } else if (client instanceof WSClient) {
-            client.send(request.messageType, request.message);
+            response = client.send(request.messageType, request.message);
+        } else {
+            throw new RuntimeException();
         }
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/convert")

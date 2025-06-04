@@ -36,13 +36,35 @@ public class HL7Client extends Client {
     }
 
     @Override
-    public void send(String message) {
+    public String send(String message) {
         String llpMessage = textToLlp(message);
         for (char c : llpMessage.toCharArray()) {
             out.write(c);
         }
         logger.info("\nSent message: \n{}\nto Host {}", message, clientName);
         out.flush();
+
+        return receive();
+    }
+
+    private String receive() {
+        try {
+            StringBuilder response = new StringBuilder();
+            int c;
+            while ((c = in.read()) != -1) {
+                response.append((char) c);
+                if (c == HL7LLPCharacters.FS.getCharacter()) {
+                    break;
+                }
+            }
+            logger.info("\nReceived response: \n{}\nfrom Host {}",
+                    llpToText(response.toString()),
+                    clientName);
+            return  llpToText(response.toString());
+        } catch (IOException e) {
+            logger.error("Error reading response from host {}", clientName, e);
+            return null;
+        }
     }
 
     private String textToLlp(String textMessage) {
@@ -51,6 +73,23 @@ public class HL7Client extends Client {
                 + HL7LLPCharacters.CR.getCharacter()
                 + HL7LLPCharacters.FS.getCharacter()
                 + HL7LLPCharacters.CR.getCharacter();
+    }
+
+    private String llpToText(String llpMessage) {
+        if (llpMessage == null || llpMessage.isEmpty()) {
+            return llpMessage;
+        }
+
+        String trimmedMessage = llpMessage.startsWith(HL7LLPCharacters.VT.getCharacterAsString())
+                ? llpMessage.substring(1)
+                : llpMessage;
+
+        int fsIndex = trimmedMessage.indexOf(HL7LLPCharacters.FS.getCharacter());
+        if (fsIndex >= 0) {
+            trimmedMessage = trimmedMessage.substring(0, fsIndex);
+        }
+
+        return trimmedMessage.replaceAll(HL7LLPCharacters.CR.getCharacterAsString(), "\n").trim();
     }
 
     @Getter
