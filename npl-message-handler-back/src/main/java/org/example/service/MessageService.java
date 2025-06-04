@@ -1,6 +1,7 @@
 
 package org.example.service;
 
+import org.example.*;
 import org.example.domain.hl7.LIS.LISToNPLH.ADTA08.ADTA08;
 import org.example.domain.hl7.LIS.LISToNPLH.ADTA28.ADTA28;
 import org.example.domain.hl7.LIS.LISToNPLH.CASEUPDATE.CASEUPDATE;
@@ -17,7 +18,9 @@ import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Specimen;
+import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendReleasedSpecimen.SendReleasedSpecimen;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendScannedSlide.SendScannedSlide;
+import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendSlideWSAData.SendSlideWSAData;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessAssignedPathologistUpdate.ProcessAssignedPathologistUpdate;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrder.ProcessCancelOrder;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrderRequest.ProcessCancelOrderRequest;
@@ -33,6 +36,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MessageService {
 
+    Clients clients = new Clients();
+
     public Message generateMessage(String sampleId) {
         return Message.Default(sampleId);
     }
@@ -45,6 +50,8 @@ public class MessageService {
         switch (messageType) {
             case "OML21":
                 OML21 oml21 = OML21.FromMessage(message);
+                clients.getClient(Host.LIS).send(oml21.toString());
+
                 return oml21.toString();
             case "DELETE_SLIDE":
                 DELETESLIDE deleteslide = DELETESLIDE.FromMessage(message, new Slide());
@@ -101,6 +108,9 @@ public class MessageService {
             case "DELETE_SPECIMEN":
                 DELETESPECIMEN deletespecimen = DELETESPECIMEN.FromMessage(message, specimen);
                 return deletespecimen.toString();
+            case "sendReleasedSpecimen":
+                SendReleasedSpecimen sendReleasedSpecimen = SendReleasedSpecimen.FromSpecimen(message, specimen);
+                return sendReleasedSpecimen.toString();
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
@@ -113,6 +123,9 @@ public class MessageService {
                 return deleteSlide.toString();
             case "sendScannedSlideImageLabelId":
                 SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
+
+                WSClient wsClient = new WSClient(WSHost.UPATH_CLOUD);
+                wsClient.sendSoapMessage(messageType, sendScannedSlide.toString());
                 return sendScannedSlide.toString();
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
@@ -124,9 +137,12 @@ public class MessageService {
             case "SLIDE_UPDATE":
                 SlideUpdate slideUpdate = SlideUpdate.FromMessage(message, slide, status);
                 return slideUpdate.toString();
-            case "ProcessVANTAGEEvent" :
+            case "ProcessVANTAGEEvent":
                 ProcessVTGEvent processVTGEvent = ProcessVTGEvent.FromMessage(message, status, slide);
                 return processVTGEvent.toString();
+            case "sendSlideWSAData":
+                SendSlideWSAData sendSlideWSAData = SendSlideWSAData.FromMessage(message, slide, status);
+                return sendSlideWSAData.toString();
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
@@ -137,7 +153,7 @@ public class MessageService {
             case "BLOCK_UPDATE":
                 BlockUpdate blockUpdate = BlockUpdate.FromMessage(message, block, status);
                 return blockUpdate.toString();
-            case "ProcessVANTAGEEvent" :
+            case "ProcessVANTAGEEvent":
                 ProcessVTGEvent processVTGEvent = ProcessVTGEvent.FromMessage(message, status, block);
                 return processVTGEvent.toString();
             default:
@@ -150,7 +166,7 @@ public class MessageService {
             case "SPECIMEN_UPDATE":
                 SpecimenUpdate slideUpdate = SpecimenUpdate.FromMessage(message, specimen, status);
                 return slideUpdate.toString();
-            case "ProcessVANTAGEEvent" :
+            case "ProcessVANTAGEEvent":
                 ProcessVTGEvent processVTGEvent = ProcessVTGEvent.FromMessage(message, status, specimen);
                 return processVTGEvent.toString();
             default:

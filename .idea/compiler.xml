@@ -7,7 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="npl-message-handler-back" />
-        <module name="nplh-message-handler" />
+        <module name="nplh-message-handler-client" />
         <module name="hl7-message-generator" />
       </profile>
     </annotationProcessing>

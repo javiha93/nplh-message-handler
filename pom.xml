@@ -16,7 +16,8 @@
     <!-- Módulos que componen el proyecto -->
     <modules>
         <module>npl-message-handler-back</module> <!-- Módulo Spring Boot -->
-        <module>npl-message-handler-ui</module>    <!-- Módulo React (aunque no sea Maven) -->
+        <module>npl-message-handler-ui</module>
+        <module>nplh-message-handler-client</module>    <!-- Módulo React (aunque no sea Maven) -->
     </modules>
 
     <!-- Propiedades comunes -->
