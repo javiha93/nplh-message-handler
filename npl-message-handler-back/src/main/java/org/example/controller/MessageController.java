@@ -1,12 +1,12 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.Clients;
-import org.example.Host;
+import org.example.*;
+import org.example.domain.host.Host;
+import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;
-import org.example.domain.message.entity.Slide;
-import org.example.domain.message.entity.Specimen;
 import org.example.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,26 +34,13 @@ public class MessageController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<String> sendMessage(@RequestBody SendMessageRequest request) {
-        try {
-            String message = request.message;
-            String hostName = request.hostName;
-            String messageType = request.messageType;
-            
-            // Convert string host to Host enum
-            Host host = Host.valueOf(hostName);
-            
-            // Here you would implement the actual sending logic
-            // For now, just log the received data
-            System.out.println("Sending message to host: " + host.name());
-            System.out.println("Message type: " + messageType);
-            System.out.println("Message content: " + message);
-            
-            return ResponseEntity.ok("Message sent successfully");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Invalid host: " + request.hostName);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error sending message: " + e.getMessage());
+    public void sendMessage(@RequestBody SendMessageRequest request) {
+        Client client = clients.getClient(request.hostName);
+
+        if (client instanceof HL7Client) {
+            client.send(request.message);
+        } else if (client instanceof WSClient) {
+            client.send(request.messageType, request.message);
         }
     }
 
@@ -127,7 +114,8 @@ public class MessageController {
     @Getter
     public static class SendMessageRequest {
         private String message;
-        private String hostName;
+        @JsonDeserialize(using = HostDeserializer.class)
+        private Host hostName;
         private String messageType;
     }
 }

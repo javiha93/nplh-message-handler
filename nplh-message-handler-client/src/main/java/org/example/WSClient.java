@@ -1,5 +1,7 @@
 package org.example;
 
+import org.example.domain.host.WSHost;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -9,9 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WSClient {
-
-    String clientName;
+public class WSClient extends Client {
     private final String baseUrl;
     private final Map<String, String> headers;
 
@@ -21,7 +21,8 @@ public class WSClient {
         this.headers = host.getHeader() != null ? host.getHeader() : new HashMap<>();
     }
 
-    public String sendSoapMessage(String soapAction, String messageBody) {
+    @Override
+    public String send(String soapAction, String messageBody) {
         String requestBody = buildSoapEnvelope(messageBody);
 
         try {

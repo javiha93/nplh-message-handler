@@ -1,6 +1,7 @@
 package org.example;
 
 import lombok.Getter;
+import org.example.domain.host.HL7Host;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,17 +12,15 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class HL7Client {
+public class HL7Client extends Client {
 
     static final Logger logger = LoggerFactory.getLogger(HL7Client.class);
-
-    String clientName;
     Socket socket;
     PrintWriter out;
     BufferedReader in;
 
 
-    public HL7Client(Host host) {
+    public HL7Client(HL7Host host) {
         this.clientName = host.name();
         try {
             socket = new Socket(host.getIp(), host.getPort());
@@ -36,6 +35,7 @@ public class HL7Client {
         }
     }
 
+    @Override
     public void send(String message) {
         String llpMessage = textToLlp(message);
         for (char c : llpMessage.toCharArray()) {
@@ -45,7 +45,7 @@ public class HL7Client {
         out.flush();
     }
 
-    public String textToLlp(String textMessage) {
+    private String textToLlp(String textMessage) {
         return HL7LLPCharacters.VT.getCharacter()
                 + textMessage.trim().replaceAll("\\n", HL7LLPCharacters.CR.getCharacterAsString())
                 + HL7LLPCharacters.CR.getCharacter()

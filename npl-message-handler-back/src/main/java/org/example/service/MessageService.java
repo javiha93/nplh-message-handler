@@ -36,8 +36,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class MessageService {
 
-    Clients clients = new Clients();
-
     public Message generateMessage(String sampleId) {
         return Message.Default(sampleId);
     }
@@ -50,8 +48,6 @@ public class MessageService {
         switch (messageType) {
             case "OML21":
                 OML21 oml21 = OML21.FromMessage(message);
-                clients.getClient(Host.LIS).send(oml21.toString());
-
                 return oml21.toString();
             case "DELETE_SLIDE":
                 DELETESLIDE deleteslide = DELETESLIDE.FromMessage(message, new Slide());
@@ -124,8 +120,8 @@ public class MessageService {
             case "sendScannedSlideImageLabelId":
                 SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
 
-                WSClient wsClient = new WSClient(WSHost.UPATH_CLOUD);
-                wsClient.sendSoapMessage(messageType, sendScannedSlide.toString());
+                //WSClient wsClient = new WSClient(WSHost.UPATH_CLOUD);
+                //wsClient.sendSoapMessage(messageType, sendScannedSlide.toString());
                 return sendScannedSlide.toString();
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);

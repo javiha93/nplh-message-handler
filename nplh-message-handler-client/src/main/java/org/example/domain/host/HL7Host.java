@@ -1,4 +1,4 @@
-package org.example;
+package org.example.domain.host;
 
 
 import lombok.AllArgsConstructor;
@@ -6,8 +6,9 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum Host {
-    LIS("127.0.0.1", 55550);
+public enum HL7Host implements Host {
+    LIS("127.0.0.1", 55550),
+    VTG("127.0.0.1", 2222);
 
     private final String ip;
     private final int port;
