@@ -1,6 +1,7 @@
 
-import React from 'react';
-import { Send } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, Edit } from 'lucide-react';
+import MessageEditor from './MessageEditor';
 
 interface GeneratedMessageProps {
   generatedMessage: string;
@@ -8,6 +9,7 @@ interface GeneratedMessageProps {
   copyToClipboard: () => void;
   onSendMessage: () => void;
   isSendingMessage: boolean;
+  onMessageUpdate: (updatedMessage: string) => void;
 }
 
 const GeneratedMessage: React.FC<GeneratedMessageProps> = ({
@@ -15,10 +17,26 @@ const GeneratedMessage: React.FC<GeneratedMessageProps> = ({
   messageCopied,
   copyToClipboard,
   onSendMessage,
-  isSendingMessage
+  isSendingMessage,
+  onMessageUpdate
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+
   if (!generatedMessage) return null;
-  
+
+  const handleEditSave = (editedMessage: string) => {
+    onMessageUpdate(editedMessage);
+    setIsEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
+  };
+
+  const toggleEdit = () => {
+    setIsEditing(!isEditing);
+  };
+
   return (
     <div className="mt-8">
       <div className="flex justify-between items-center mb-3">
@@ -29,6 +47,13 @@ const GeneratedMessage: React.FC<GeneratedMessageProps> = ({
             className="text-indigo-600 hover:text-indigo-800 flex items-center px-3 py-1 rounded border border-indigo-300 hover:border-indigo-500 transition-colors"
           >
             {messageCopied ? 'Copied!' : 'Copy'}
+          </button>
+          <button
+            onClick={toggleEdit}
+            className="text-blue-600 hover:text-blue-800 flex items-center gap-2 px-3 py-1 rounded border border-blue-300 hover:border-blue-500 transition-colors"
+          >
+            <Edit size={16} />
+            {isEditing ? 'Vista previa' : 'Editar'}
           </button>
           <button
             onClick={onSendMessage}
@@ -44,11 +69,20 @@ const GeneratedMessage: React.FC<GeneratedMessageProps> = ({
           </button>
         </div>
       </div>
-      <div className="relative">
-        <pre className="bg-gray-50 p-6 rounded-lg overflow-auto max-h-[400px] text-sm whitespace-pre-wrap shadow-inner border border-gray-200">
-          {generatedMessage}
-        </pre>
-      </div>
+      
+      {isEditing ? (
+        <MessageEditor
+          message={generatedMessage}
+          onSave={handleEditSave}
+          onCancel={handleEditCancel}
+        />
+      ) : (
+        <div className="relative">
+          <pre className="bg-gray-50 p-6 rounded-lg overflow-auto max-h-[400px] text-sm whitespace-pre-wrap shadow-inner border border-gray-200">
+            {generatedMessage}
+          </pre>
+        </div>
+      )}
     </div>
   );
 };

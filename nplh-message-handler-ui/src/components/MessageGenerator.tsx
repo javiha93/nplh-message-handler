@@ -77,7 +77,8 @@ const MessageGenerator: React.FC = () => {
     toggleEntitySelectorModal,
     generateMessage,
     sendMessage,
-    copyToClipboard
+    copyToClipboard,
+    updateGeneratedMessage
   } = useMessageGenerator();
 
   return (
@@ -140,6 +141,7 @@ const MessageGenerator: React.FC = () => {
         copyToClipboard={copyToClipboard}
         onSendMessage={sendMessage}
         isSendingMessage={isSendingMessage}
+        onMessageUpdate={updateGeneratedMessage}
       />
 
       <PatientEditModal

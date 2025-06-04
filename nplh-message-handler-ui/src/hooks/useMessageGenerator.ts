@@ -430,6 +430,10 @@ export const useMessageGenerator = () => {
     }
   };
 
+  const updateGeneratedMessage = (updatedMessage: string) => {
+    setGeneratedMessage(updatedMessage);
+  };
+
   const showSpecimenSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN') ||
                                (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendReleasedSpecimen') ||
                                (selectedHost === 'VTG' && selectedType === 'SPECIMEN_UPDATE');
@@ -517,6 +521,7 @@ export const useMessageGenerator = () => {
     toggleEntitySelectorModal,
     generateMessage,
     sendMessage,
-    copyToClipboard
+    copyToClipboard,
+    updateGeneratedMessage
   };
 };
