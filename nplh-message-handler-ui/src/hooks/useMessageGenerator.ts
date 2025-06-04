@@ -31,6 +31,7 @@ export const useMessageGenerator = () => {
   const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
   const [isEntitySelectorModalOpen, setIsEntitySelectorModalOpen] = useState<boolean>(false);
   const [selectedEntity, setSelectedEntity] = useState<{ type: string; id: string } | null>(null);
+  const [sendResponse, setSendResponse] = useState<string>('');
 
   const hosts = [
     { id: 'LIS', name: 'LIS' },
@@ -332,6 +333,8 @@ export const useMessageGenerator = () => {
 
     setIsGeneratingMessage(true);
     setError(null);
+    setSendResponse(''); // Clear previous send response when generating new message
+    
     try {
       if (!message) {
         throw new Error('No hay datos iniciales disponibles.');
@@ -408,6 +411,8 @@ export const useMessageGenerator = () => {
         throw new Error(`Error: ${response.status}`);
       }
 
+      const responseText = await response.text();
+      setSendResponse(responseText);
       console.log('Mensaje enviado exitosamente');
     } catch (err) {
       console.error('Error sending message:', err);
@@ -498,6 +503,7 @@ export const useMessageGenerator = () => {
     showEntitySelector,
     showStatusSelector,
     generateButtonDisabled,
+    sendResponse,
     handleSampleIdChange,
     handleHostChange,
     handleTypeChange,

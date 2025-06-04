@@ -4,6 +4,7 @@ import SampleIdInput from './messageGenerator/SampleIdInput';
 import MessageOptions from './messageGenerator/MessageOptions';
 import GenerateButton from './messageGenerator/GenerateButton';
 import GeneratedMessage from './messageGenerator/GeneratedMessage';
+import SendResponse from './messageGenerator/SendResponse';
 import PatientEditModal from './editModals/PatientEditModal';
 import PhysicianEditModal from './editModals/PhysicianEditModal';
 import PathologistEditModal from './editModals/PathologistEditModal';
@@ -54,6 +55,7 @@ const MessageGenerator: React.FC = () => {
     showEntitySelector,
     showStatusSelector,
     generateButtonDisabled,
+    sendResponse,
     handleSampleIdChange,
     handleHostChange,
     handleTypeChange,
@@ -143,6 +145,8 @@ const MessageGenerator: React.FC = () => {
         isSendingMessage={isSendingMessage}
         onMessageUpdate={updateGeneratedMessage}
       />
+
+      <SendResponse sendResponse={sendResponse} />
 
       <PatientEditModal
         isOpen={isPatientModalOpen}
