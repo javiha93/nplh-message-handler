@@ -1,6 +1,10 @@
 
 package org.example.controller;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.example.Clients;
+import org.example.Host;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Specimen;
@@ -15,10 +19,12 @@ import org.springframework.web.bind.annotation.*;
 public class MessageController {
 
     private final MessageService messageService;
+    private final Clients clients;
 
     @Autowired
     public MessageController(MessageService messageService) {
         this.messageService = messageService;
+        this.clients = new Clients();
     }
 
     @PostMapping("/generate")
@@ -26,6 +32,11 @@ public class MessageController {
         String sampleId = (request != null && request.getSampleId() != null) ? request.getSampleId() : "";
         Message message = messageService.generateMessage(sampleId);
         return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/send")
+    public void generateMessage(@RequestBody SendMessageRequest request) {
+        String message = request.message;
     }
 
     @PostMapping("/convert")
@@ -88,15 +99,18 @@ public class MessageController {
         return ResponseEntity.ok(convertedMessage);
     }
 
+    @Setter
+    @Getter
     public static class SampleIdRequest {
         private String sampleId;
 
-        public String getSampleId() {
-            return sampleId;
-        }
+    }
 
-        public void setSampleId(String sampleId) {
-            this.sampleId = sampleId;
-        }
+    @Setter
+    @Getter
+    public static class SendMessageRequest {
+        private String message;
+        private Host hostName;
+        private String messageType;
     }
 }
