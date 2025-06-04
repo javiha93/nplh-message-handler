@@ -50,6 +50,16 @@ public class Slide extends EntityInfo implements Cloneable {
         this.supplementalInfos = new SupplementalInfoList();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        Slide slide = (Slide) o;
+        return getId() != null ? getId().equals(slide.getId()) : slide.getId() == null;
+    }
+
     public static Slide Default(String id, String sequence, String actionCode) {
         Slide slide = new Slide();
 
