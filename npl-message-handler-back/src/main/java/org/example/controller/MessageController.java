@@ -1,4 +1,3 @@
-
 package org.example.controller;
 
 import lombok.Getter;
@@ -35,8 +34,27 @@ public class MessageController {
     }
 
     @PostMapping("/send")
-    public void generateMessage(@RequestBody SendMessageRequest request) {
-        String message = request.message;
+    public ResponseEntity<String> sendMessage(@RequestBody SendMessageRequest request) {
+        try {
+            String message = request.message;
+            String hostName = request.hostName;
+            String messageType = request.messageType;
+            
+            // Convert string host to Host enum
+            Host host = Host.valueOf(hostName);
+            
+            // Here you would implement the actual sending logic
+            // For now, just log the received data
+            System.out.println("Sending message to host: " + host.name());
+            System.out.println("Message type: " + messageType);
+            System.out.println("Message content: " + message);
+            
+            return ResponseEntity.ok("Message sent successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid host: " + request.hostName);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error sending message: " + e.getMessage());
+        }
     }
 
     @PostMapping("/convert")
@@ -103,14 +121,13 @@ public class MessageController {
     @Getter
     public static class SampleIdRequest {
         private String sampleId;
-
     }
 
     @Setter
     @Getter
     public static class SendMessageRequest {
         private String message;
-        private Host hostName;
+        private String hostName;
         private String messageType;
     }
 }

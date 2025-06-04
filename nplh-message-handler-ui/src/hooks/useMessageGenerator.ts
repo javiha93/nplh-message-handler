@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { MessageType, Patient, Physician, Pathologist, Technician } from '../types/MessageType';
 import { Message, Specimen, Block, Slide } from '../types/Message';
@@ -17,6 +16,7 @@ export const useMessageGenerator = () => {
   const [isHierarchyModalOpen, setIsHierarchyModalOpen] = useState<boolean>(false);
   const [isFetchingData, setIsFetchingData] = useState<boolean>(false);
   const [isGeneratingMessage, setIsGeneratingMessage] = useState<boolean>(false);
+  const [isSendingMessage, setIsSendingMessage] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [patientInfo, setPatientInfo] = useState<Patient | null>(null);
   const [physicianInfo, setPhysicianInfo] = useState<Physician | null>(null);
@@ -382,6 +382,41 @@ export const useMessageGenerator = () => {
     }
   };
 
+  const sendMessage = async () => {
+    if (!generatedMessage || !selectedHost || !selectedType) {
+      setError('No hay mensaje para enviar o faltan datos.');
+      return;
+    }
+
+    setIsSendingMessage(true);
+    setError(null);
+
+    try {
+      const response = await fetch('http://localhost:8085/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: generatedMessage,
+          hostName: selectedHost,
+          messageType: selectedType
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      console.log('Mensaje enviado exitosamente');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Error al enviar mensaje. Por favor intente nuevamente.');
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
   const copyToClipboard = () => {
     if (generatedMessage) {
       navigator.clipboard.writeText(generatedMessage)
@@ -434,6 +469,7 @@ export const useMessageGenerator = () => {
     isHierarchyModalOpen,
     isFetchingData,
     isGeneratingMessage,
+    isSendingMessage,
     error,
     patientInfo,
     physicianInfo,
@@ -480,6 +516,7 @@ export const useMessageGenerator = () => {
     toggleSlideSelectorModal,
     toggleEntitySelectorModal,
     generateMessage,
+    sendMessage,
     copyToClipboard
   };
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useMessageGenerator } from '../hooks/useMessageGenerator';
 import SampleIdInput from './messageGenerator/SampleIdInput';
@@ -30,6 +29,7 @@ const MessageGenerator: React.FC = () => {
     isHierarchyModalOpen,
     isFetchingData,
     isGeneratingMessage,
+    isSendingMessage,
     error,
     patientInfo,
     physicianInfo,
@@ -76,6 +76,7 @@ const MessageGenerator: React.FC = () => {
     toggleSlideSelectorModal,
     toggleEntitySelectorModal,
     generateMessage,
+    sendMessage,
     copyToClipboard
   } = useMessageGenerator();
 
@@ -137,6 +138,8 @@ const MessageGenerator: React.FC = () => {
         generatedMessage={generatedMessage}
         messageCopied={messageCopied}
         copyToClipboard={copyToClipboard}
+        onSendMessage={sendMessage}
+        isSendingMessage={isSendingMessage}
       />
 
       <PatientEditModal
