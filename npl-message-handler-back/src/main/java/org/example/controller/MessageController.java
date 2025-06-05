@@ -12,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/messages")
 @CrossOrigin(origins = "*")
@@ -34,14 +37,14 @@ public class MessageController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<String> sendMessage(@RequestBody SendMessageRequest request) {
-        String response;
+    public ResponseEntity<List<String>> sendMessage(@RequestBody SendMessageRequest request) {
+        List<String> response;
         Client client = clients.getClient(request.hostName);
 
         if (client instanceof HL7Client) {
             response = client.send(request.message);
         } else if (client instanceof WSClient) {
-            response = client.send(request.messageType, request.message);
+            response = Collections.singletonList(client.send(request.messageType, request.message));
         } else {
             throw new RuntimeException();
         }

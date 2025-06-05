@@ -8,7 +8,7 @@ interface SavedMessage {
   host: string;
   messageType: string;
   timestamp: Date;
-  response?: string;
+  responses?: string[];
 }
 
 interface MessageViewModalProps {
@@ -65,15 +65,33 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
                   {message.content}
                 </pre>
               </div>
-            </div>
-
-            {message.response && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Respuesta del Servidor:</h3>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <pre className="text-xs font-mono whitespace-pre-wrap text-green-800">
-                    {message.response}
-                  </pre>
+            </div>            {message.responses && message.responses.length > 0 && (
+              <div>                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''} del Servidor:
+                </h3>                <div className="space-y-3">
+                  {message.responses?.map((response, index) => {
+                    const isError = response.includes('ERR|');
+                    return (
+                      <div key={index} className={`p-4 rounded-lg border ${
+                        isError 
+                          ? 'bg-red-50 border-red-200' 
+                          : 'bg-green-50 border-green-200'
+                      }`}>
+                        {(message.responses?.length || 0) > 1 && (
+                          <div className={`text-xs font-semibold mb-2 ${
+                            isError ? 'text-red-600' : 'text-green-600'
+                          }`}>
+                            Respuesta #{index + 1}:
+                          </div>
+                        )}
+                        <pre className={`text-xs font-mono whitespace-pre-wrap ${
+                          isError ? 'text-red-800' : 'text-green-800'
+                        }`}>
+                          {response}
+                        </pre>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

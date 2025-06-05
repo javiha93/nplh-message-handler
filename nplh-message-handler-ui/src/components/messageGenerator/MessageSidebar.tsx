@@ -8,7 +8,7 @@ interface SavedMessage {
   host: string;
   messageType: string;
   timestamp: Date;
-  response?: string;
+  responses?: string[];
 }
 
 interface MessageSidebarProps {
@@ -76,8 +76,7 @@ useEffect(() => {
   }, []);
 
   if (!isOpen) return null;
-
-  const startResizing = (e: React.MouseEvent) => {
+  const startResizing = (_e: React.MouseEvent) => {
       isResizingRef.current = true;
       setIsResizing(true);
       document.body.style.cursor = 'col-resize';
@@ -131,21 +130,29 @@ useEffect(() => {
               <p className="text-gray-500">No messages saved</p>
             </div>
           ) : (
-            <div className="p-4 space-y-4">
-              {savedMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`cursor-pointer rounded-lg border ${
-                    message.response ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                  }`}
-                  onClick={() => onMessageClick(message)}
-                >
+            <div className="p-4 space-y-4">              {savedMessages.map((message) => {
+                const hasResponses = message.responses && message.responses.length > 0;
+                const hasErrors = hasResponses && message.responses?.some(response => response.includes('ERR|'));
+                
+                return (
+                  <div
+                    key={message.id}
+                    className={`cursor-pointer rounded-lg border ${
+                      hasErrors ? 'bg-red-50 border-red-200' : 
+                      hasResponses ? 'bg-green-50 border-green-200' : 
+                      'bg-gray-50 border-gray-200'
+                    }`}
+                    onClick={() => onMessageClick(message)}
+                  >
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm flex items-center">
-                        <span className="font-medium text-blue-600">{message.host}</span>
-                        <span className="text-gray-500 mx-1">•</span>
-                        <span className={`${message.response ? 'text-green-700' : 'text-gray-700'}`}>
+                        <span className="font-medium text-blue-600">{message.host}</span>                        <span className="text-gray-500 mx-1">•</span>
+                        <span className={`${
+                          hasErrors ? 'text-red-700' : 
+                          hasResponses ? 'text-green-700' : 
+                          'text-gray-700'
+                        }`}>
                           {message.messageType}
                         </span>
                       </div>
@@ -193,22 +200,40 @@ useEffect(() => {
                         {message.content.substring(0, 200)}
                         {message.content.length > 200 && '...'}
                       </div>
-                    )}
-
-                    {message.response && expandedMessages.has(message.id) && (
+                    )}                    {message.responses && message.responses.length > 0 && expandedMessages.has(message.id) && (
                       <div
                         className="mt-2 pt-2 border-t border-gray-200"
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="text-xs font-medium text-gray-700 mb-1">Respuesta:</div>
-                        <div className="bg-green-50 p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border border-green-200 cursor-text">
-                          {message.response}
+                      >                        <div className="text-xs font-medium text-gray-700 mb-1">
+                          Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''}:
+                        </div>                        <div className="space-y-2">
+                          {message.responses?.map((response, index) => {
+                            const isError = response.includes('ERR|');
+                            return (
+                              <div key={index} className={`p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border cursor-text ${
+                                isError 
+                                  ? 'bg-red-50 border-red-200' 
+                                  : 'bg-green-50 border-green-200'
+                              }`}>
+                                {(message.responses?.length || 0) > 1 && (
+                                  <div className={`text-xs font-semibold mb-1 ${
+                                    isError ? 'text-red-600' : 'text-green-600'
+                                  }`}>
+                                    #{index + 1}:
+                                  </div>
+                                )}                                <span className={isError ? 'text-red-800' : 'text-green-800'}>
+                                  {response}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, MessagesSquare } from 'lucide-react';
+import { MessagesSquare } from 'lucide-react';
 import { useMessageGenerator } from '../hooks/useMessageGenerator';
 import SampleIdInput from './messageGenerator/SampleIdInput';
 import MessageOptions from './messageGenerator/MessageOptions';
@@ -17,6 +17,7 @@ import SpecimenSelectorModal from './messageGenerator/SpecimenSelectorModal';
 import BlockSelectorModal from './messageGenerator/BlockSelectorModal';
 import SlideSelectorModal from './messageGenerator/SlideSelectorModal';
 import EntitySelectorModal from './messageGenerator/EntitySelectorModal';
+import Snackbar from './Snackbar';
 
 interface SavedMessage {
   id: string;
@@ -24,7 +25,7 @@ interface SavedMessage {
   host: string;
   messageType: string;
   timestamp: Date;
-  response?: string;
+  responses?: string[];
 }
 
 const MessageGenerator: React.FC = () => {
@@ -71,10 +72,12 @@ const MessageGenerator: React.FC = () => {
     showStatusSelector,
     generateButtonDisabled,
     sendResponse,
-    // Sidebar props
     isSidebarOpen,
     savedMessages,
     isSendingAll,
+    isMessageSaved,
+    snackbar,
+    closeSnackbar,
     toggleSidebar,
     saveMessageToSidebar,
     removeSavedMessage,
@@ -122,10 +125,13 @@ const MessageGenerator: React.FC = () => {
       <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'mr-96' : ''}`}>
         <div className="max-w-4xl mx-auto my-8 p-8 bg-white rounded-xl shadow-lg">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Message Generator</h1>
-            <button
+            <h1 className="text-3xl font-bold text-gray-800">Message Generator</h1>            <button
               onClick={toggleSidebar}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              className={`p-2 rounded-lg transition-colors ${
+                isMessageSaved 
+                  ? 'bg-green-600 text-white hover:bg-green-700' 
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              }`}
               title="Abrir panel de mensajes"
             >
               <MessagesSquare size={24} />
@@ -267,12 +273,17 @@ const MessageGenerator: React.FC = () => {
         onSendAllMessages={sendAllSavedMessages}
         isSendingAll={isSendingAll}
         onMessageClick={handleMessageClick}
-      />
-
-      <MessageViewModal
+      />      <MessageViewModal
         isOpen={isMessageViewModalOpen}
         onClose={closeMessageViewModal}
         message={selectedMessage}
+      />
+
+      <Snackbar
+        message={snackbar.message}
+        type={snackbar.type}
+        isVisible={snackbar.isVisible}
+        onClose={closeSnackbar}
       />
     </div>
   );

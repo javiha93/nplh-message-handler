@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { MessageType, Patient, Physician, Pathologist, Technician } from '../types/MessageType';
-import { Message, Specimen, Block, Slide } from '../types/Message';
+import { MessageType, Patient, Physician, Pathologist, Technician, Message } from '../types/MessageType';
+import { Specimen, Block, Slide } from '../types/Message';
 
 interface SavedMessage {
   id: string;
@@ -8,7 +8,7 @@ interface SavedMessage {
   host: string;
   messageType: string;
   timestamp: Date;
-  response?: string;
+  responses?: string[];
 }
 
 export const useMessageGenerator = () => {
@@ -38,14 +38,22 @@ export const useMessageGenerator = () => {
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [isSlideSelectorModalOpen, setIsSlideSelectorModalOpen] = useState<boolean>(false);
   const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
-  const [isEntitySelectorModalOpen, setIsEntitySelectorModalOpen] = useState<boolean>(false);
-  const [selectedEntity, setSelectedEntity] = useState<{ type: string; id: string } | null>(null);
-  const [sendResponse, setSendResponse] = useState<string>('');
-
-  // New state for sidebar panel
+  const [isEntitySelectorModalOpen, setIsEntitySelectorModalOpen] = useState<boolean>(false);  const [selectedEntity, setSelectedEntity] = useState<{ type: string; id: string } | null>(null);
+  const [sendResponse, setSendResponse] = useState<string[]>([]);  // New state for sidebar panel
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);
   const [isSendingAll, setIsSendingAll] = useState<boolean>(false);
+  const [isMessageSaved, setIsMessageSaved] = useState<boolean>(false);
+
+  const [snackbar, setSnackbar] = useState<{
+    isVisible: boolean;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    isVisible: false,
+    message: '',
+    type: 'info'
+  });
 
   const hosts = [
     { id: 'LIS', name: 'LIS' },
@@ -229,16 +237,17 @@ export const useMessageGenerator = () => {
       }));
     }
   };
-
   const handlePathologistInfoSave = (updatedInfo: Pathologist) => {
     setPathologistInfo(updatedInfo);
 
     if (message && message.patient && message.patient.orders && message.patient.orders.orderList) {
       const updatedMessage = { ...message };
-      updatedMessage.patient.orders.orderList = updatedMessage.patient.orders.orderList.map(order => ({
-        ...order,
-        pathologist: updatedInfo,
-      }));
+      if (updatedMessage.patient && updatedMessage.patient.orders) {
+        updatedMessage.patient.orders.orderList = updatedMessage.patient.orders.orderList.map(order => ({
+          ...order,
+          pathologist: updatedInfo,
+        }));
+      }
       setMessage(updatedMessage);
     }
   };
@@ -248,10 +257,12 @@ export const useMessageGenerator = () => {
 
     if (message && message.patient && message.patient.orders && message.patient.orders.orderList) {
       const updatedMessage = { ...message };
-      updatedMessage.patient.orders.orderList = updatedMessage.patient.orders.orderList.map(order => ({
-        ...order,
-        technician: updatedInfo,
-      }));
+      if (updatedMessage.patient && updatedMessage.patient.orders) {
+        updatedMessage.patient.orders.orderList = updatedMessage.patient.orders.orderList.map(order => ({
+          ...order,
+          technician: updatedInfo,
+        }));
+      }
       setMessage(updatedMessage);
     }
   };
@@ -343,11 +354,9 @@ export const useMessageGenerator = () => {
         (selectedHost === 'VANTAGE_WS' && selectedType === 'ProcessVANTAGEEvent' && !selectedEntity)) {
       setGeneratedMessage('Por favor, selecciona una entidad para procesar.');
       return;
-    }
-
-    setIsGeneratingMessage(true);
+    }    setIsGeneratingMessage(true);
     setError(null);
-    setSendResponse(''); // Clear previous send response when generating new message
+    setSendResponse([]); // Clear previous send response when generating new message
     
     try {
       if (!message) {
@@ -419,14 +428,23 @@ export const useMessageGenerator = () => {
           hostName: selectedHost,
           messageType: selectedType
         }),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
 
-      const responseText = await response.text();
-      setSendResponse(responseText);
+      const contentType = response.headers.get('content-type');
+      let responseData: string[];
+      
+      if (contentType && contentType.includes('application/json')) {
+        // Handle JSON response (array of strings)
+        responseData = await response.json();
+      } else {
+        // Handle plain text response (single HL7 message)
+        const textResponse = await response.text();
+        responseData = [textResponse];
+      }
+      
+      setSendResponse(responseData);
       console.log('Mensaje enviado exitosamente');
     } catch (err) {
       console.error('Error sending message:', err);
@@ -448,16 +466,17 @@ export const useMessageGenerator = () => {
         });
     }
   };
-
   const updateGeneratedMessage = (updatedMessage: string) => {
     setGeneratedMessage(updatedMessage);
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+  const closeSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, isVisible: false }));
   };
 
-  const saveMessageToSidebar = () => {
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };  const saveMessageToSidebar = () => {
     if (!generatedMessage || !selectedHost || !selectedType) {
       setError('No hay mensaje para guardar o faltan datos.');
       return;
@@ -472,6 +491,18 @@ export const useMessageGenerator = () => {
     };
 
     setSavedMessages(prev => [...prev, newSavedMessage]);
+
+    setIsMessageSaved(true);
+
+    setSnackbar({
+      isVisible: true,
+      message: 'Mensaje guardado exitosamente',
+      type: 'success'
+    });
+
+    setTimeout(() => {
+      setIsMessageSaved(false);
+    }, 1500);
   };
 
   const removeSavedMessage = (id: string) => {
@@ -490,19 +521,28 @@ export const useMessageGenerator = () => {
           hostName: savedMessage.host,
           messageType: savedMessage.messageType
         }),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
 
-      const responseText = await response.text();
-      console.log('Mensaje guardado enviado exitosamente:', responseText);
+      const contentType = response.headers.get('content-type');
+      let responseData: string[];
+      
+      if (contentType && contentType.includes('application/json')) {
+        // Handle JSON response (array of strings)
+        responseData = await response.json();
+      } else {
+        // Handle plain text response (single HL7 message)
+        const textResponse = await response.text();
+        responseData = [textResponse];
+      }
+      
+      console.log('Mensaje guardado enviado exitosamente:', responseData);
       
       // Actualizar el mensaje guardado con la respuesta
       setSavedMessages(prev => prev.map(msg => 
         msg.id === savedMessage.id 
-          ? { ...msg, response: responseText }
+          ? { ...msg, responses: responseData }
           : msg
       ));
     } catch (err) {
@@ -596,12 +636,13 @@ export const useMessageGenerator = () => {
     showSlideSelector,
     showEntitySelector,
     showStatusSelector,
-    generateButtonDisabled,
-    sendResponse,
-    // New sidebar state and functions
+    generateButtonDisabled,    sendResponse,    // New sidebar state and functions
     isSidebarOpen,
     savedMessages,
     isSendingAll,
+    isMessageSaved,
+    snackbar,
+    closeSnackbar,
     toggleSidebar,
     saveMessageToSidebar,
     removeSavedMessage,

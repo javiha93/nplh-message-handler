@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Technician } from '../types/MessageType';
+import { Technician } from '../../types/MessageType';
 
 interface TechnicianEditModalProps {
   isOpen: boolean;

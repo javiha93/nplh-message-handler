@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Message } from '../types/Message';
+import { Message } from '../types/MessageType';
 import { ListTree, ChevronDown, ChevronRight, Plus, Edit, Trash2 } from 'lucide-react';
 import SpecimenEditModal from './hierarchy/SpecimenEditModal';
 import BlockEditModal from './hierarchy/BlockEditModal';

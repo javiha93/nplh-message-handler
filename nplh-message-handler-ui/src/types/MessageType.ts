@@ -1,5 +1,7 @@
 
 
+import { Procedure, BlocksList } from './Message';
+
 export interface PatientInfo {
   code: string;
   firstName: string;
@@ -109,9 +111,9 @@ export interface MessageHeader {
 }
 
 export interface Message {
-  header: MessageHeader;
-  patient: Patient;
-  physician: Physician;
+  header?: MessageHeader;
+  patient?: Patient;
+  physician?: Physician;
   pathologist?: Pathologist;
   // Add other properties as needed
 }

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Pathologist } from '../types/MessageType';
+import { Pathologist } from '../../types/MessageType';
 
 interface PathologistEditModalProps {
   isOpen: boolean;

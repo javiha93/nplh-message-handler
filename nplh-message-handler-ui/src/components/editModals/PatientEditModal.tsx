@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Patient } from '../types/MessageType';
+import { Patient } from '../../types/MessageType';
 
 interface PatientEditModalProps {
   isOpen: boolean;

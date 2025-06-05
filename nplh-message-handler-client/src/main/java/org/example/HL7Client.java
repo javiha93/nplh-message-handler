@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HL7Client extends Client {
 
@@ -36,7 +39,7 @@ public class HL7Client extends Client {
     }
 
     @Override
-    public String send(String message) {
+    public List<String> send(String message) {
         String llpMessage = textToLlp(message);
         for (char c : llpMessage.toCharArray()) {
             out.write(c);
@@ -47,7 +50,33 @@ public class HL7Client extends Client {
         return receive();
     }
 
-    private String receive() {
+    private List<String> receive() {
+        List<String> responses = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+
+        var timeoutMs = 5000;
+        var maxResponses = 2;
+        try {
+            socket.setSoTimeout(timeoutMs);
+
+            while (responses.size() < maxResponses &&
+                    (System.currentTimeMillis() - startTime) < timeoutMs) {
+
+                String response = receiveSingle();
+                if (response != null && !response.trim().isEmpty()) {
+                   responses.add(response);
+                   timeoutMs = (int) ((System.currentTimeMillis() - startTime) + 500);
+                   logger.info("Received response {} of max {}", responses.size(), maxResponses);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error setting socket timeout", e);
+        }
+
+        return responses;
+    }
+
+    private String receiveSingle() {
         try {
             StringBuilder response = new StringBuilder();
             int c;
@@ -57,10 +86,12 @@ public class HL7Client extends Client {
                     break;
                 }
             }
-            logger.info("\nReceived response: \n{}\nfrom Host {}",
-                    llpToText(response.toString()),
-                    clientName);
-            return  llpToText(response.toString());
+            String responseText = llpToText(response.toString());
+            logger.info("\nReceived response: \n{}\nfrom Host {}", responseText, clientName);
+            return responseText;
+        } catch (SocketTimeoutException e) {
+            logger.info("Not found any response");
+            return null;
         } catch (IOException e) {
             logger.error("Error reading response from host {}", clientName, e);
             return null;

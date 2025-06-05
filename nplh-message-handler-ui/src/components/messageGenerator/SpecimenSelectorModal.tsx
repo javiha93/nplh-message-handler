@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Specimen } from '../types/Message';
+import { Specimen } from '../../types/Message';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface SpecimenSelectorModalProps {
