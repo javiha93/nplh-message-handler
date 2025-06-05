@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Menu } from 'lucide-react';
 import { useMessageGenerator } from '../hooks/useMessageGenerator';
@@ -16,7 +17,6 @@ import SpecimenSelectorModal from './messageGenerator/SpecimenSelectorModal';
 import BlockSelectorModal from './messageGenerator/BlockSelectorModal';
 import SlideSelectorModal from './messageGenerator/SlideSelectorModal';
 import EntitySelectorModal from './messageGenerator/EntitySelectorModal';
-import MessageViewModal from './messageGenerator/MessageViewModal';
 
 const MessageGenerator: React.FC = () => {
   const {
@@ -92,12 +92,7 @@ const MessageGenerator: React.FC = () => {
     generateMessage,
     sendMessage,
     copyToClipboard,
-    updateGeneratedMessage,
-    // New values
-    viewingMessage,
-    isMessageViewModalOpen,
-    viewSavedMessage,
-    closeMessageViewModal
+    updateGeneratedMessage
   } = useMessageGenerator();
 
   return (
@@ -249,13 +244,6 @@ const MessageGenerator: React.FC = () => {
         onSendMessage={sendSavedMessage}
         onSendAllMessages={sendAllSavedMessages}
         isSendingAll={isSendingAll}
-        onViewMessage={viewSavedMessage}
-      />
-
-      <MessageViewModal
-        isOpen={isMessageViewModalOpen}
-        onClose={closeMessageViewModal}
-        message={viewingMessage}
       />
     </div>
   );

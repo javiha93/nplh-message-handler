@@ -45,8 +45,6 @@ export const useMessageGenerator = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);
   const [isSendingAll, setIsSendingAll] = useState<boolean>(false);
-  const [viewingMessage, setViewingMessage] = useState<SavedMessage | null>(null);
-  const [isMessageViewModalOpen, setIsMessageViewModalOpen] = useState<boolean>(false);
 
   const hosts = [
     { id: 'LIS', name: 'LIS' },
@@ -498,14 +496,6 @@ export const useMessageGenerator = () => {
       }
 
       const responseText = await response.text();
-      
-      // Update the saved message with the response
-      setSavedMessages(prev => prev.map(msg => 
-        msg.id === savedMessage.id 
-          ? { ...msg, response: responseText }
-          : msg
-      ));
-      
       console.log('Mensaje guardado enviado exitosamente:', responseText);
     } catch (err) {
       console.error('Error sending saved message:', err);
@@ -527,23 +517,13 @@ export const useMessageGenerator = () => {
         await sendSavedMessage(savedMessage);
       }
       console.log('Todos los mensajes enviados exitosamente');
-      // Don't clear messages after sending all
+      setSavedMessages([]); // Clear all messages after sending
     } catch (err) {
       console.error('Error sending all messages:', err);
       setError('Error al enviar todos los mensajes.');
     } finally {
       setIsSendingAll(false);
     }
-  };
-
-  const viewSavedMessage = (message: SavedMessage) => {
-    setViewingMessage(message);
-    setIsMessageViewModalOpen(true);
-  };
-
-  const closeMessageViewModal = () => {
-    setIsMessageViewModalOpen(false);
-    setViewingMessage(null);
   };
 
   const showSpecimenSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN') ||
@@ -615,10 +595,6 @@ export const useMessageGenerator = () => {
     isSidebarOpen,
     savedMessages,
     isSendingAll,
-    viewingMessage,
-    isMessageViewModalOpen,
-    viewSavedMessage,
-    closeMessageViewModal,
     toggleSidebar,
     saveMessageToSidebar,
     removeSavedMessage,
