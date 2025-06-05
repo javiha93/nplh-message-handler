@@ -77,10 +77,10 @@ const MessageGenerator: React.FC = () => {
     isSendingAll,
     isMessageSaved,
     snackbar,
-    closeSnackbar,
-    toggleSidebar,
-    saveMessageToSidebar,
-    removeSavedMessage,
+    closeSnackbar,    toggleSidebar,
+    saveMessageToSidebar,    removeSavedMessage,
+    clearAllResponses,
+    reorderSavedMessages,
     sendSavedMessage,
     sendAllSavedMessages,
     handleSampleIdChange,
@@ -262,18 +262,18 @@ const MessageGenerator: React.FC = () => {
             onSelectEntity={handleEntitySelect}
           />
         </div>
-      </div>
-
-      <MessageSidebar
+      </div>      <MessageSidebar
         isOpen={isSidebarOpen}
         onClose={toggleSidebar}
         savedMessages={savedMessages}
         onRemoveMessage={removeSavedMessage}
         onSendMessage={sendSavedMessage}
         onSendAllMessages={sendAllSavedMessages}
+        onClearAllResponses={clearAllResponses}
+        onReorderMessages={reorderSavedMessages}
         isSendingAll={isSendingAll}
         onMessageClick={handleMessageClick}
-      />      <MessageViewModal
+      /><MessageViewModal
         isOpen={isMessageViewModalOpen}
         onClose={closeMessageViewModal}
         message={selectedMessage}
