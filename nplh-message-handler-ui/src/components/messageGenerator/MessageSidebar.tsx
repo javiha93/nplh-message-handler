@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Send, Trash, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface SavedMessage {
@@ -33,24 +33,57 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onMessageClick
 }) => {
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+  const [width, setWidth] = useState<number>(384);
+  const [isResizing, setIsResizing] = useState(false);
+  const isResizingRef = useRef(false);
 
+
+  const maxCombinedLength = useMemo(() => {
+      if (savedMessages.length === 0) return 384;
+
+      const longest = savedMessages.reduce((max, msg) => {
+        const len = (msg.host + msg.messageType).length + 5;
+        return len > max ? len : max;
+      }, 0);
+      return Math.min(Math.max(longest * 8 + 100, 300), 600);
+    }, [savedMessages]);
+
+    useEffect(() => {
+      setWidth(maxCombinedLength);
+    }, [maxCombinedLength]);
+
+
+    const resize = (e: MouseEvent) => {
+      if (isResizingRef.current) {
+        const newWidth = window.innerWidth - e.clientX;
+        setWidth(Math.min(Math.max(newWidth, 300), 600));
+      }
+    };
+
+    const stopResizing = () => {
+      isResizingRef.current = false;
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('mouseup', stopResizing);
+    };
 useEffect(() => {
-  const newExpanded = new Set(expandedMessages);
-  let hasChanges = false;
-
-  savedMessages.forEach(message => {
-    if (message.response && !newExpanded.has(message.id)) {
-      newExpanded.add(message.id);
-      hasChanges = true;
-    }
-  });
-
-  if (hasChanges) {
-    setExpandedMessages(newExpanded);
-  }
-}, [savedMessages]);
+    return () => {
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('mouseup', stopResizing);
+      document.body.style.cursor = '';
+    };
+  }, []);
 
   if (!isOpen) return null;
+
+  const startResizing = (e: React.MouseEvent) => {
+      isResizingRef.current = true;
+      setIsResizing(true);
+      document.body.style.cursor = 'col-resize';
+      document.addEventListener('mousemove', resize);
+      document.addEventListener('mouseup', stopResizing);
+    };
 
   const formatTimestamp = (timestamp: Date) => {
     return new Date(timestamp).toLocaleString('es-ES', {
@@ -73,10 +106,16 @@ useEffect(() => {
   };
 
   return (
-      <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-lg border-l border-gray-200 z-50 transform transition-transform duration-300 flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-lg border-l border-gray-200 z-50 transform transition-transform duration-300 flex flex-col"
+      style={{ width: `${width}px`, transition: isResizing ? 'none' : 'width 0.2s ease' }}
+      >
+        <div
+                className="absolute left-0 top-0 bottom-0 w-2 -ml-1 cursor-col-resize hover:bg-blue-200 active:bg-blue-300 z-10"
+                onMouseDown={startResizing}
+              />
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Mensajes Guardados</h2>
+          <h2 className="text-lg font-semibold text-gray-800">Saved Messages</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded"
@@ -89,38 +128,53 @@ useEffect(() => {
         <div className="flex-1 overflow-y-auto">
           {savedMessages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">No hay mensajes guardados</p>
+              <p className="text-gray-500">No messages saved</p>
             </div>
           ) : (
             <div className="p-4 space-y-4">
               {savedMessages.map((message) => (
-                <div key={message.id} className="bg-gray-50 rounded-lg border">
+                <div
+                  key={message.id}
+                  className={`cursor-pointer rounded-lg border ${
+                    message.response ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                  }`}
+                  onClick={() => onMessageClick(message)}
+                >
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm flex items-center">
                         <span className="font-medium text-blue-600">{message.host}</span>
                         <span className="text-gray-500 mx-1">•</span>
-                        <span className="text-gray-700">{message.messageType}</span>
+                        <span className={`${message.response ? 'text-green-700' : 'text-gray-700'}`}>
+                          {message.messageType}
+                        </span>
                       </div>
-                      <div className="flex gap-1">
-                        {message.response && (
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => toggleMessageExpansion(message.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMessageExpansion(message.id);
+                            }}
                             className="p-1 text-gray-600 hover:bg-gray-200 rounded"
                             title="Ver/ocultar respuesta"
                           >
                             {expandedMessages.has(message.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                           </button>
-                        )}
                         <button
-                          onClick={() => onSendMessage(message)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSendMessage(message);
+                          }}
                           className="p-1 text-green-600 hover:bg-green-100 rounded"
                           title="Enviar mensaje"
                         >
                           <Send size={16} />
                         </button>
                         <button
-                          onClick={() => onRemoveMessage(message.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveMessage(message.id);
+                          }}
                           className="p-1 text-red-600 hover:bg-red-100 rounded"
                           title="Eliminar mensaje"
                         >
@@ -131,18 +185,23 @@ useEffect(() => {
                     <div className="text-xs text-gray-500 mb-2">
                       {formatTimestamp(message.timestamp)}
                     </div>
-                    <div
-                      className="bg-white p-2 rounded text-xs font-mono max-h-32 overflow-y-auto cursor-pointer hover:bg-gray-50"
-                      onClick={() => onMessageClick(message)}
-                    >
-                      {message.content.substring(0, 200)}
-                      {message.content.length > 200 && '...'}
-                    </div>
+                    {expandedMessages.has(message.id) && (
+                      <div
+                        className="bg-white p-2 rounded text-xs font-mono max-h-32 overflow-y-auto hover:bg-gray-50 cursor-text"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {message.content.substring(0, 200)}
+                        {message.content.length > 200 && '...'}
+                      </div>
+                    )}
 
                     {message.response && expandedMessages.has(message.id) && (
-                      <div className="mt-2 pt-2 border-t border-gray-200">
+                      <div
+                        className="mt-2 pt-2 border-t border-gray-200"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="text-xs font-medium text-gray-700 mb-1">Respuesta:</div>
-                        <div className="bg-green-50 p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border border-green-200">
+                        <div className="bg-green-50 p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border border-green-200 cursor-text">
                           {message.response}
                         </div>
                       </div>

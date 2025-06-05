@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, MessagesSquare } from 'lucide-react';
 import { useMessageGenerator } from '../hooks/useMessageGenerator';
 import SampleIdInput from './messageGenerator/SampleIdInput';
 import MessageOptions from './messageGenerator/MessageOptions';
@@ -122,13 +122,13 @@ const MessageGenerator: React.FC = () => {
       <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'mr-96' : ''}`}>
         <div className="max-w-4xl mx-auto my-8 p-8 bg-white rounded-xl shadow-lg">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Generador de Mensajes HL7</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Message Generator</h1>
             <button
               onClick={toggleSidebar}
               className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
               title="Abrir panel de mensajes"
             >
-              <Menu size={24} />
+              <MessagesSquare size={24} />
             </button>
           </div>
           
