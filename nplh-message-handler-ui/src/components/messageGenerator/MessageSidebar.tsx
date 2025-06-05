@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { X, Send, Trash, Eye } from 'lucide-react';
 
 interface SavedMessage {
@@ -52,7 +52,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     e.preventDefault();
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing) return;
     
     const newWidth = window.innerWidth - e.clientX;
@@ -60,11 +60,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     const maxWidth = window.innerWidth * 0.8;
     
     setSidebarWidth(Math.min(Math.max(newWidth, minWidth), maxWidth));
-  };
+  }, [isResizing]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsResizing(false);
-  };
+  }, []);
 
   React.useEffect(() => {
     if (isResizing) {
@@ -75,7 +75,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isResizing]);
+  }, [isResizing, handleMouseMove, handleMouseUp]);
 
   return (
     <>
