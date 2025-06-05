@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { MessageType, Patient, Physician, Pathologist, Technician } from '../types/MessageType';
 import { Message, Specimen, Block, Slide } from '../types/Message';
 
+interface SavedMessage {
+  id: string;
+  content: string;
+  host: string;
+  messageType: string;
+  timestamp: Date;
+}
+
 export const useMessageGenerator = () => {
   const [message, setMessage] = useState<Message | null>(null);
   const [sampleId, setSampleId] = useState<string>('');
@@ -32,6 +40,11 @@ export const useMessageGenerator = () => {
   const [isEntitySelectorModalOpen, setIsEntitySelectorModalOpen] = useState<boolean>(false);
   const [selectedEntity, setSelectedEntity] = useState<{ type: string; id: string } | null>(null);
   const [sendResponse, setSendResponse] = useState<string>('');
+
+  // New state for sidebar panel
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);
+  const [isSendingAll, setIsSendingAll] = useState<boolean>(false);
 
   const hosts = [
     { id: 'LIS', name: 'LIS' },
@@ -439,6 +452,80 @@ export const useMessageGenerator = () => {
     setGeneratedMessage(updatedMessage);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const saveMessageToSidebar = () => {
+    if (!generatedMessage || !selectedHost || !selectedType) {
+      setError('No hay mensaje para guardar o faltan datos.');
+      return;
+    }
+
+    const newSavedMessage: SavedMessage = {
+      id: Date.now().toString(),
+      content: generatedMessage,
+      host: selectedHost,
+      messageType: selectedType,
+      timestamp: new Date()
+    };
+
+    setSavedMessages(prev => [...prev, newSavedMessage]);
+  };
+
+  const removeSavedMessage = (id: string) => {
+    setSavedMessages(prev => prev.filter(msg => msg.id !== id));
+  };
+
+  const sendSavedMessage = async (savedMessage: SavedMessage) => {
+    try {
+      const response = await fetch('http://localhost:8085/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: savedMessage.content,
+          hostName: savedMessage.host,
+          messageType: savedMessage.messageType
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      console.log('Mensaje guardado enviado exitosamente:', responseText);
+    } catch (err) {
+      console.error('Error sending saved message:', err);
+      setError('Error al enviar mensaje guardado.');
+    }
+  };
+
+  const sendAllSavedMessages = async () => {
+    if (savedMessages.length === 0) {
+      setError('No hay mensajes guardados para enviar.');
+      return;
+    }
+
+    setIsSendingAll(true);
+    setError(null);
+
+    try {
+      for (const savedMessage of savedMessages) {
+        await sendSavedMessage(savedMessage);
+      }
+      console.log('Todos los mensajes enviados exitosamente');
+      setSavedMessages([]); // Clear all messages after sending
+    } catch (err) {
+      console.error('Error sending all messages:', err);
+      setError('Error al enviar todos los mensajes.');
+    } finally {
+      setIsSendingAll(false);
+    }
+  };
+
   const showSpecimenSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN') ||
                                (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendReleasedSpecimen') ||
                                (selectedHost === 'VTG' && selectedType === 'SPECIMEN_UPDATE');
@@ -504,6 +591,15 @@ export const useMessageGenerator = () => {
     showStatusSelector,
     generateButtonDisabled,
     sendResponse,
+    // New sidebar state and functions
+    isSidebarOpen,
+    savedMessages,
+    isSendingAll,
+    toggleSidebar,
+    saveMessageToSidebar,
+    removeSavedMessage,
+    sendSavedMessage,
+    sendAllSavedMessages,
     handleSampleIdChange,
     handleHostChange,
     handleTypeChange,

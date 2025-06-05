@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Send, Edit } from 'lucide-react';
+import { Send, Edit, Save } from 'lucide-react';
 import MessageEditor from './MessageEditor';
 
 interface GeneratedMessageProps {
@@ -10,6 +10,7 @@ interface GeneratedMessageProps {
   onSendMessage: () => void;
   isSendingMessage: boolean;
   onMessageUpdate: (updatedMessage: string) => void;
+  onSaveMessage: () => void;
 }
 
 const GeneratedMessage: React.FC<GeneratedMessageProps> = ({
@@ -18,7 +19,8 @@ const GeneratedMessage: React.FC<GeneratedMessageProps> = ({
   copyToClipboard,
   onSendMessage,
   isSendingMessage,
-  onMessageUpdate
+  onMessageUpdate,
+  onSaveMessage
 }) => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -54,6 +56,13 @@ const GeneratedMessage: React.FC<GeneratedMessageProps> = ({
           >
             <Edit size={16} />
             {isEditing ? 'Vista previa' : 'Editar'}
+          </button>
+          <button
+            onClick={onSaveMessage}
+            className="text-purple-600 hover:text-purple-800 flex items-center gap-2 px-3 py-1 rounded border border-purple-300 hover:border-purple-500 transition-colors"
+          >
+            <Save size={16} />
+            Guardar
           </button>
           <button
             onClick={onSendMessage}
