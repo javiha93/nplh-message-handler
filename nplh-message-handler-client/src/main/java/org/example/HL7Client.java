@@ -32,8 +32,7 @@ public class HL7Client extends Client {
 
         } catch (UnknownHostException e) {
             logger.error("Unknown host {} , {}:{}", host.name(), host.getIp(), host.getPort(), e);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.error("Error connecting to {}:{}", host.getIp(), host.getPort(), e);
         }
     }
@@ -52,25 +51,25 @@ public class HL7Client extends Client {
 
     private List<String> receive() {
         List<String> responses = new ArrayList<>();
-        long startTime = System.currentTimeMillis();
-
-        var timeoutMs = 5000;
-        var maxResponses = 2;
+        final int initialTimeout = 4000;
+        final int extendedTimeout = 2000;
         try {
-            socket.setSoTimeout(timeoutMs);
+            socket.setSoTimeout(initialTimeout);
 
-            while (responses.size() < maxResponses &&
-                    (System.currentTimeMillis() - startTime) < timeoutMs) {
+            String firstResponse = receiveSingle();
+            if (firstResponse != null && !firstResponse.trim().isEmpty()) {
+                responses.add(firstResponse);
+                logger.info("Received first response");
 
-                String response = receiveSingle();
-                if (response != null && !response.trim().isEmpty()) {
-                   responses.add(response);
-                   timeoutMs = (int) ((System.currentTimeMillis() - startTime) + 500);
-                   logger.info("Received response {} of max {}", responses.size(), maxResponses);
+                socket.setSoTimeout(extendedTimeout);
+                String extraResponse = receiveSingle();
+                if (extraResponse != null && !extraResponse.trim().isEmpty()) {
+                    responses.add(extraResponse);
+                    logger.info("Received second response");
                 }
             }
         } catch (IOException e) {
-            logger.error("Error setting socket timeout", e);
+            logger.error("Socket error", e);
         }
 
         return responses;

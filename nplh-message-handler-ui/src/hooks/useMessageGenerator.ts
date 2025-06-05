@@ -504,9 +504,21 @@ export const useMessageGenerator = () => {
       setIsMessageSaved(false);
     }, 1500);
   };
-
   const removeSavedMessage = (id: string) => {
     setSavedMessages(prev => prev.filter(msg => msg.id !== id));
+  };
+
+  const clearAllResponses = () => {
+    setSavedMessages(prev => prev.map(msg => ({
+      ...msg,
+      responses: undefined
+    })));
+
+    setSnackbar({
+      isVisible: true,
+      message: 'Respuestas de mensajes limpiadas exitosamente',
+      type: 'info'
+    });
   };
 
   const sendSavedMessage = async (savedMessage: SavedMessage) => {
@@ -642,10 +654,10 @@ export const useMessageGenerator = () => {
     isSendingAll,
     isMessageSaved,
     snackbar,
-    closeSnackbar,
-    toggleSidebar,
+    closeSnackbar,    toggleSidebar,
     saveMessageToSidebar,
     removeSavedMessage,
+    clearAllResponses,
     sendSavedMessage,
     sendAllSavedMessages,
     handleSampleIdChange,

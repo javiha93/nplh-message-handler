@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Send, Trash, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
 
 interface SavedMessage {
   id: string;
@@ -18,6 +18,7 @@ interface MessageSidebarProps {
   onRemoveMessage: (id: string) => void;
   onSendMessage: (message: SavedMessage) => void;
   onSendAllMessages: () => void;
+  onClearAllResponses: () => void;
   isSendingAll: boolean;
   onMessageClick: (message: SavedMessage) => void;
 }
@@ -29,6 +30,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onRemoveMessage,
   onSendMessage,
   onSendAllMessages,
+  onClearAllResponses,
   isSendingAll,
   onMessageClick
 }) => {
@@ -111,16 +113,26 @@ useEffect(() => {
         <div
                 className="absolute left-0 top-0 bottom-0 w-2 -ml-1 cursor-col-resize hover:bg-blue-200 active:bg-blue-300 z-10"
                 onMouseDown={startResizing}
-              />
-        {/* Header */}
+              />        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800">Saved Messages</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {savedMessages.length > 0 && (
+              <button
+                onClick={onClearAllResponses}
+                className="p-1 text-orange-600 hover:bg-orange-100 rounded"
+                title="Limpiar respuestas"
+              >
+                <RotateCcw size={18} />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Contenedor de mensajes con scroll */}
