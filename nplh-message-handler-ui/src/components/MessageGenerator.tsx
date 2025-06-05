@@ -78,9 +78,9 @@ const MessageGenerator: React.FC = () => {
     isMessageSaved,
     snackbar,
     closeSnackbar,    toggleSidebar,
-    saveMessageToSidebar,
-    removeSavedMessage,
+    saveMessageToSidebar,    removeSavedMessage,
     clearAllResponses,
+    reorderSavedMessages,
     sendSavedMessage,
     sendAllSavedMessages,
     handleSampleIdChange,
@@ -270,6 +270,7 @@ const MessageGenerator: React.FC = () => {
         onSendMessage={sendSavedMessage}
         onSendAllMessages={sendAllSavedMessages}
         onClearAllResponses={clearAllResponses}
+        onReorderMessages={reorderSavedMessages}
         isSendingAll={isSendingAll}
         onMessageClick={handleMessageClick}
       /><MessageViewModal

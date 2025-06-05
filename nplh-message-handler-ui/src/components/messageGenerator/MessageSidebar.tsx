@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
+import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 interface SavedMessage {
   id: string;
@@ -19,6 +20,7 @@ interface MessageSidebarProps {
   onSendMessage: (message: SavedMessage) => void;
   onSendAllMessages: () => void;
   onClearAllResponses: () => void;
+  onReorderMessages: (startIndex: number, endIndex: number) => void;
   isSendingAll: boolean;
   onMessageClick: (message: SavedMessage) => void;
 }
@@ -31,6 +33,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onSendMessage,
   onSendAllMessages,
   onClearAllResponses,
+  onReorderMessages,
   isSendingAll,
   onMessageClick
 }) => {
@@ -76,8 +79,19 @@ useEffect(() => {
       document.body.style.cursor = '';
     };
   }, []);
-
   if (!isOpen) return null;
+  
+  const handleOnDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    
+    if (startIndex !== endIndex) {
+      onReorderMessages(startIndex, endIndex);
+    }
+  };
+  
   const startResizing = (_e: React.MouseEvent) => {
       isResizingRef.current = true;
       setIsResizing(true);
@@ -133,124 +147,158 @@ useEffect(() => {
               <X size={20} />
             </button>
           </div>
-        </div>
-
-        {/* Contenedor de mensajes con scroll */}
+        </div>        {/* Contenedor de mensajes con scroll */}
         <div className="flex-1 overflow-y-auto">
           {savedMessages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">No messages saved</p>
             </div>
           ) : (
-            <div className="p-4 space-y-4">              {savedMessages.map((message) => {
-                const hasResponses = message.responses && message.responses.length > 0;
-                const hasErrors = hasResponses && message.responses?.some(response => response.includes('ERR|'));
-                
-                return (
-                  <div
-                    key={message.id}
-                    className={`cursor-pointer rounded-lg border ${
-                      hasErrors ? 'bg-red-50 border-red-200' : 
-                      hasResponses ? 'bg-green-50 border-green-200' : 
-                      'bg-gray-50 border-gray-200'
-                    }`}
-                    onClick={() => onMessageClick(message)}
+            <DragDropContext onDragEnd={handleOnDragEnd}>
+              <Droppable droppableId="messages">
+                {(provided) => (
+                  <div 
+                    className="p-4 space-y-4"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
                   >
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm flex items-center">
-                        <span className="font-medium text-blue-600">{message.host}</span>                        <span className="text-gray-500 mx-1">•</span>
-                        <span className={`${
-                          hasErrors ? 'text-red-700' : 
-                          hasResponses ? 'text-green-700' : 
-                          'text-gray-700'
-                        }`}>
-                          {message.messageType}
-                        </span>
-                      </div>
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleMessageExpansion(message.id);
-                            }}
-                            className="p-1 text-gray-600 hover:bg-gray-200 rounded"
-                            title="Ver/ocultar respuesta"
-                          >
-                            {expandedMessages.has(message.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSendMessage(message);
-                          }}
-                          className="p-1 text-green-600 hover:bg-green-100 rounded"
-                          title="Enviar mensaje"
-                        >
-                          <Send size={16} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveMessage(message.id);
-                          }}
-                          className="p-1 text-red-600 hover:bg-red-100 rounded"
-                          title="Eliminar mensaje"
-                        >
-                          <Trash size={16} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500 mb-2">
-                      {formatTimestamp(message.timestamp)}
-                    </div>
-                    {expandedMessages.has(message.id) && (
-                      <div
-                        className="bg-white p-2 rounded text-xs font-mono max-h-32 overflow-y-auto hover:bg-gray-50 cursor-text"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {message.content.substring(0, 200)}
-                        {message.content.length > 200 && '...'}
-                      </div>
-                    )}                    {message.responses && message.responses.length > 0 && expandedMessages.has(message.id) && (
-                      <div
-                        className="mt-2 pt-2 border-t border-gray-200"
-                        onClick={(e) => e.stopPropagation()}
-                      >                        <div className="text-xs font-medium text-gray-700 mb-1">
-                          Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''}:
-                        </div>                        <div className="space-y-2">
-                          {message.responses?.map((response, index) => {
-                            const isError = response.includes('ERR|');
-                            return (
-                              <div key={index} className={`p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border cursor-text ${
-                                isError 
-                                  ? 'bg-red-50 border-red-200' 
-                                  : 'bg-green-50 border-green-200'
-                              }`}>
-                                {(message.responses?.length || 0) > 1 && (
-                                  <div className={`text-xs font-semibold mb-1 ${
-                                    isError ? 'text-red-600' : 'text-green-600'
-                                  }`}>
-                                    #{index + 1}:
+                    {savedMessages.map((message, index) => {
+                      const hasResponses = message.responses && message.responses.length > 0;
+                      const hasErrors = hasResponses && message.responses?.some(response => response.includes('ERR|'));
+                        return (
+                        <Draggable key={message.id} draggableId={message.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className={`rounded-lg border transition-shadow ${
+                                snapshot.isDragging ? 'shadow-lg' : ''
+                              } ${
+                                hasErrors ? 'bg-red-50 border-red-200' : 
+                                hasResponses ? 'bg-green-50 border-green-200' : 
+                                'bg-gray-50 border-gray-200'
+                              }`}
+                            >
+                              {/* Drag Handle Area */}
+                              <div className="flex items-center border-b border-gray-200">
+                                <div
+                                  {...provided.dragHandleProps}
+                                  className="flex items-center justify-center p-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+                                >
+                                  <GripVertical size={16} />
+                                </div>
+                                <div className="flex-1 p-2">
+                                  <div className="text-sm flex items-center">
+                                    <span className="font-medium text-blue-600">{message.host}</span>
+                                    <span className="text-gray-500 mx-1">•</span>
+                                    <span className={`${
+                                      hasErrors ? 'text-red-700' : 
+                                      hasResponses ? 'text-green-700' : 
+                                      'text-gray-700'
+                                    }`}>
+                                      {message.messageType}
+                                    </span>
                                   </div>
-                                )}                                <span className={isError ? 'text-red-800' : 'text-green-800'}>
-                                  {response}
-                                </span>
+                                </div>
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                              
+                              {/* Content Area */}
+                              <div className="cursor-pointer" onClick={() => onMessageClick(message)}>
+                                <div className="p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="text-xs text-gray-500">
+                                      {formatTimestamp(message.timestamp)}
+                                    </div>
+                                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleMessageExpansion(message.id);
+                                        }}
+                                        className="p-1 text-gray-600 hover:bg-gray-200 rounded"
+                                        title="Ver/ocultar respuesta"
+                                      >
+                                        {expandedMessages.has(message.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onSendMessage(message);
+                                        }}
+                                        className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                        title="Enviar mensaje"
+                                      >
+                                        <Send size={16} />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onRemoveMessage(message.id);
+                                        }}
+                                        className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                        title="Eliminar mensaje"
+                                      >
+                                        <Trash size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  
+                                  {expandedMessages.has(message.id) && (
+                                    <div
+                                      className="bg-white p-2 rounded text-xs font-mono max-h-32 overflow-y-auto hover:bg-gray-50 cursor-text mb-2"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {message.content.substring(0, 200)}
+                                      {message.content.length > 200 && '...'}
+                                    </div>
+                                  )}
 
-        {/* Footer con botón de enviar todos */}
+                                  {message.responses && message.responses.length > 0 && expandedMessages.has(message.id) && (
+                                    <div
+                                      className="mt-2 pt-2 border-t border-gray-200"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="text-xs font-medium text-gray-700 mb-1">
+                                        Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''}:
+                                      </div>
+                                      <div className="space-y-2">
+                                        {message.responses?.map((response, index) => {
+                                          const isError = response.includes('ERR|');
+                                          return (
+                                            <div key={index} className={`p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border cursor-text ${
+                                              isError 
+                                                ? 'bg-red-50 border-red-200' 
+                                                : 'bg-green-50 border-green-200'
+                                            }`}>
+                                              {(message.responses?.length || 0) > 1 && (
+                                                <div className={`text-xs font-semibold mb-1 ${
+                                                  isError ? 'text-red-600' : 'text-green-600'
+                                                }`}>
+                                                  #{index + 1}:
+                                                </div>
+                                              )}
+                                              <span className={isError ? 'text-red-800' : 'text-green-800'}>
+                                                {response}
+                                              </span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      );                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          )}
+        </div>        {/* Footer con botón de enviar todos */}
         {savedMessages.length > 0 && (
           <div className="p-4 border-t border-gray-200">
             <button
@@ -268,6 +316,6 @@ useEffect(() => {
         )}
       </div>
     );
-  };
+};
 
 export default MessageSidebar;

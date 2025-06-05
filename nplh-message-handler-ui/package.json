@@ -10,9 +10,11 @@
     "build:dev": "vite build --mode development"
   },
   "dependencies": {
+    "@types/react-beautiful-dnd": "^13.1.8",
     "lovable-tagger": "^1.1.7",
     "lucide-react": "^0.483.0",
     "react": "^18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {

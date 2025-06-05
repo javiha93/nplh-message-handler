@@ -507,7 +507,6 @@ export const useMessageGenerator = () => {
   const removeSavedMessage = (id: string) => {
     setSavedMessages(prev => prev.filter(msg => msg.id !== id));
   };
-
   const clearAllResponses = () => {
     setSavedMessages(prev => prev.map(msg => ({
       ...msg,
@@ -518,6 +517,15 @@ export const useMessageGenerator = () => {
       isVisible: true,
       message: 'Respuestas de mensajes limpiadas exitosamente',
       type: 'info'
+    });
+  };
+
+  const reorderSavedMessages = (startIndex: number, endIndex: number) => {
+    setSavedMessages(prev => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return result;
     });
   };
 
@@ -654,10 +662,10 @@ export const useMessageGenerator = () => {
     isSendingAll,
     isMessageSaved,
     snackbar,
-    closeSnackbar,    toggleSidebar,
-    saveMessageToSidebar,
+    closeSnackbar,    toggleSidebar,    saveMessageToSidebar,
     removeSavedMessage,
     clearAllResponses,
+    reorderSavedMessages,
     sendSavedMessage,
     sendAllSavedMessages,
     handleSampleIdChange,
