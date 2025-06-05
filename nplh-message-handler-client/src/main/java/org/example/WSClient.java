@@ -1,6 +1,8 @@
 package org.example;
 
 import org.example.domain.host.WSHost;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -10,8 +12,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class WSClient extends Client {
+
+    static final Logger logger = LoggerFactory.getLogger(HL7Client.class);
     private final String baseUrl;
     private final Map<String, String> headers;
 
@@ -41,6 +47,7 @@ public class WSClient extends Client {
 
             OutputStream reqStream = con.getOutputStream();
             reqStream.write(requestBody.getBytes());
+            logger.info("\nSent message: \n{}\nto Host {}", messageBody, clientName);
 
             StringBuilder r = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
@@ -50,11 +57,15 @@ public class WSClient extends Client {
             }
             br.close();
 
-            return r.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+            logger.info("\nReceived response: \n{}\nfrom Host {}",
+                    extractSoapResponse(r.toString()),
+                    clientName);
 
+            return extractSoapResponse(r.toString());
+        } catch (Exception e) {
+            logger.error("Error sending message: {} to {}, Error:", messageBody, clientName, e);
+            return e.getMessage();
+        }
     }
 
     private String buildSoapEnvelope(String messageBody) {
@@ -65,5 +76,16 @@ public class WSClient extends Client {
                 messageBody + "\n" +
                 "   </soapenv:Body>\n" +
                 "</soapenv:Envelope>";
+    }
+
+    private String extractSoapResponse(String response) {
+        Pattern pattern = Pattern.compile("<SOAP-ENV:Body>(.*?)</SOAP-ENV:Body>", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(response);
+
+        if (matcher.find()) {
+            response = matcher.group(1);
+        }
+        return response.replaceAll("types:", "")
+                .replaceAll(" xsi:type\\s*=\\s*\"[^\"]*\"", "");
     }
 }
