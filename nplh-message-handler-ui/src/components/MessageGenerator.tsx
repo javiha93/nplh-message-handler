@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Menu } from 'lucide-react';
 import { useMessageGenerator } from '../hooks/useMessageGenerator';
 import SampleIdInput from './messageGenerator/SampleIdInput';
@@ -8,6 +7,7 @@ import GenerateButton from './messageGenerator/GenerateButton';
 import GeneratedMessage from './messageGenerator/GeneratedMessage';
 import SendResponse from './messageGenerator/SendResponse';
 import MessageSidebar from './messageGenerator/MessageSidebar';
+import MessageViewModal from './messageGenerator/MessageViewModal';
 import PatientEditModal from './editModals/PatientEditModal';
 import PhysicianEditModal from './editModals/PhysicianEditModal';
 import PathologistEditModal from './editModals/PathologistEditModal';
@@ -18,7 +18,19 @@ import BlockSelectorModal from './messageGenerator/BlockSelectorModal';
 import SlideSelectorModal from './messageGenerator/SlideSelectorModal';
 import EntitySelectorModal from './messageGenerator/EntitySelectorModal';
 
+interface SavedMessage {
+  id: string;
+  content: string;
+  host: string;
+  messageType: string;
+  timestamp: Date;
+  response?: string;
+}
+
 const MessageGenerator: React.FC = () => {
+  const [isMessageViewModalOpen, setIsMessageViewModalOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<SavedMessage | null>(null);
+
   const {
     message,
     sampleId,
@@ -59,7 +71,7 @@ const MessageGenerator: React.FC = () => {
     showStatusSelector,
     generateButtonDisabled,
     sendResponse,
-    // New sidebar props
+    // Sidebar props
     isSidebarOpen,
     savedMessages,
     isSendingAll,
@@ -94,6 +106,16 @@ const MessageGenerator: React.FC = () => {
     copyToClipboard,
     updateGeneratedMessage
   } = useMessageGenerator();
+
+  const handleMessageClick = (message: SavedMessage) => {
+    setSelectedMessage(message);
+    setIsMessageViewModalOpen(true);
+  };
+
+  const closeMessageViewModal = () => {
+    setIsMessageViewModalOpen(false);
+    setSelectedMessage(null);
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -244,6 +266,13 @@ const MessageGenerator: React.FC = () => {
         onSendMessage={sendSavedMessage}
         onSendAllMessages={sendAllSavedMessages}
         isSendingAll={isSendingAll}
+        onMessageClick={handleMessageClick}
+      />
+
+      <MessageViewModal
+        isOpen={isMessageViewModalOpen}
+        onClose={closeMessageViewModal}
+        message={selectedMessage}
       />
     </div>
   );

@@ -8,6 +8,7 @@ interface SavedMessage {
   host: string;
   messageType: string;
   timestamp: Date;
+  response?: string;
 }
 
 export const useMessageGenerator = () => {
@@ -497,6 +498,13 @@ export const useMessageGenerator = () => {
 
       const responseText = await response.text();
       console.log('Mensaje guardado enviado exitosamente:', responseText);
+      
+      // Actualizar el mensaje guardado con la respuesta
+      setSavedMessages(prev => prev.map(msg => 
+        msg.id === savedMessage.id 
+          ? { ...msg, response: responseText }
+          : msg
+      ));
     } catch (err) {
       console.error('Error sending saved message:', err);
       setError('Error al enviar mensaje guardado.');
@@ -517,7 +525,6 @@ export const useMessageGenerator = () => {
         await sendSavedMessage(savedMessage);
       }
       console.log('Todos los mensajes enviados exitosamente');
-      setSavedMessages([]); // Clear all messages after sending
     } catch (err) {
       console.error('Error sending all messages:', err);
       setError('Error al enviar todos los mensajes.');
