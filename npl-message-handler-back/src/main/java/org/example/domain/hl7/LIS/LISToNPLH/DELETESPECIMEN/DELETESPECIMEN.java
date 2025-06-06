@@ -42,4 +42,8 @@ public class DELETESPECIMEN extends HL7Segment {
 
         return cleanMessage(deleteSpecimen);
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

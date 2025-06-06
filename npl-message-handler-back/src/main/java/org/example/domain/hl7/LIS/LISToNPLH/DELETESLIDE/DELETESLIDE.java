@@ -42,4 +42,8 @@ public class DELETESLIDE extends HL7Segment {
 
         return cleanMessage(deleteSlide);
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

@@ -1,6 +1,11 @@
 
 package org.example.service;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.example.*;
 import org.example.domain.hl7.LIS.LISToNPLH.ADTA08.ADTA08;
 import org.example.domain.hl7.LIS.LISToNPLH.ADTA28.ADTA28;
@@ -14,6 +19,8 @@ import org.example.domain.hl7.VTG.VTGToNPLH.BLOCKUPDATE.BlockUpdate;
 import org.example.domain.hl7.VTG.VTGToNPLH.OEWF.OEWF;
 import org.example.domain.hl7.VTG.VTGToNPLH.SLIDEUPDATE.SlideUpdate;
 import org.example.domain.hl7.VTG.VTGToNPLH.SPECIMENUPDATE.SpecimenUpdate;
+import org.example.domain.host.Host;
+import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Slide;
@@ -44,139 +51,144 @@ public class MessageService {
         return Message.Default("");
     }
 
-    public String convertMessage(Message message, String messageType) {
+    public MessageResponse convertMessage(Message message, String messageType) {
         switch (messageType) {
             case "OML21":
                 OML21 oml21 = OML21.FromMessage(message);
-                return oml21.toString();
+                return new MessageResponse(oml21.toString(), oml21.getControlId());
             case "DELETE_SLIDE":
                 DELETESLIDE deleteslide = DELETESLIDE.FromMessage(message, new Slide());
-                return deleteslide.toString();
+                return new MessageResponse(deleteslide.toString(), deleteslide.getControlId());
             case "ADTA28":
                 ADTA28 adta28 = ADTA28.FromMessage(message);
-                return adta28.toString();
+                return new MessageResponse(adta28.toString(), adta28.getControlId());
             case "ADTA08":
                 ADTA08 adta08 = ADTA08.FromMessage(message);
-                return adta08.toString();
+                return new MessageResponse(adta08.toString(), adta08.getControlId());
             case "DELETE_CASE":
                 DELETECASE deletecase = DELETECASE.FromMessage(message);
-                return deletecase.toString();
+                return new MessageResponse(deletecase.toString(), deletecase.getControlId());
             case "OEWF":
                 OEWF oewf = OEWF.FromMessage(message);
-                return oewf.toString();
+                return new MessageResponse(oewf.toString(), oewf.getControlId());
             case "ADDITION":
                 Addition addition = Addition.FromMessage(message);
-                return addition.toString();
+                return new MessageResponse(addition.toString(), addition.getControlId());
             case "ProcessPatientUpdate":
                 ProcessPatientUpdate processPatientUpdate = ProcessPatientUpdate.FromMessage(message);
-                return processPatientUpdate.toString();
+                return new MessageResponse(processPatientUpdate.toString(), processPatientUpdate.getTransactionId());
             case "ProcessNewOrderRequest":
                 ProcessNewOrderRequest processNewOrderRequest = ProcessNewOrderRequest.FromMessage(message);
-                return processNewOrderRequest.toString();
+                return new MessageResponse(processNewOrderRequest.toString(), processNewOrderRequest.getTransactionId());
             case "ProcessChangeOrderRequest":
                 ProcessChangeOrderRequest processChangeOrderRequest = ProcessChangeOrderRequest.FromMessage(message);
-                return processChangeOrderRequest.toString();
+                return new MessageResponse(processChangeOrderRequest.toString(), processChangeOrderRequest.getTransactionId());
             case "ProcessCancelOrderRequest":
                 ProcessCancelOrderRequest processCancelOrderRequest = ProcessCancelOrderRequest.FromMessage(message);
-                return processCancelOrderRequest.toString();
+                return new MessageResponse(processCancelOrderRequest.toString(), processCancelOrderRequest.getTransactionId());
             case "ProcessNewOrder":
                 ProcessNewOrder processNewOrder = ProcessNewOrder.FromMessage(message);
-                return processNewOrder.toString();
+                return new MessageResponse(processNewOrder.toString(), processNewOrder.getTransactionId());
             case "ProcessChangeOrder":
                 ProcessChangeOrder processChangeOrder = ProcessChangeOrder.FromMessage(message);
-                return processChangeOrder.toString();
+                return new MessageResponse(processChangeOrder.toString(), processChangeOrder.getTransactionId());
             case "ProcessCancelOrder":
                 ProcessCancelOrder processCancelOrder = ProcessCancelOrder.FromMessage(message);
-                return processCancelOrder.toString();
+                return new MessageResponse(processCancelOrder.toString(), processCancelOrder.getTransactionId());
             case "ProcessAssignedPathologistUpdate":
                 ProcessAssignedPathologistUpdate processAssignedPathologistUpdate = ProcessAssignedPathologistUpdate.FromMessage(message);
-                return processAssignedPathologistUpdate.toString();
+                return new MessageResponse(processAssignedPathologistUpdate.toString(), processAssignedPathologistUpdate.getTransactionId());
             case "ProcessPhysicianUpdate":
                 ProcessPhysicianUpdate processPhysicianUpdate = ProcessPhysicianUpdate.FromMessage(message);
-                return processPhysicianUpdate.toString();
+                return new MessageResponse(processPhysicianUpdate.toString(), processPhysicianUpdate.getTransactionId());
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
     }
 
-    public String convertMessage(Message message, String messageType, Specimen specimen) {
+    public MessageResponse convertMessage(Message message, String messageType, Specimen specimen) {
         switch (messageType) {
             case "DELETE_SPECIMEN":
                 DELETESPECIMEN deletespecimen = DELETESPECIMEN.FromMessage(message, specimen);
-                return deletespecimen.toString();
+                return new MessageResponse(deletespecimen.toString(), deletespecimen.getControlId());
             case "sendReleasedSpecimen":
                 SendReleasedSpecimen sendReleasedSpecimen = SendReleasedSpecimen.FromSpecimen(message, specimen);
-                return sendReleasedSpecimen.toString();
+                return new MessageResponse(sendReleasedSpecimen.toString(), "");
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
     }
 
-    public String convertMessage(Message message, String messageType, Slide slide) {
+    public MessageResponse convertMessage(Message message, String messageType, Slide slide) {
         switch (messageType) {
             case "DELETE_SLIDE":
                 DELETESLIDE deleteSlide = DELETESLIDE.FromMessage(message, slide);
-                return deleteSlide.toString();
+                return new MessageResponse(deleteSlide.toString(), deleteSlide.getControlId());
             case "sendScannedSlideImageLabelId":
                 SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
-
-                //WSClient wsClient = new WSClient(WSHost.UPATH_CLOUD);
-                //wsClient.sendSoapMessage(messageType, sendScannedSlide.toString());
-                return sendScannedSlide.toString();
+                return new MessageResponse(sendScannedSlide.toString(), "");
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
     }
 
-    public String convertMessage(Message message, String messageType, Slide slide, String status) {
+    public MessageResponse convertMessage(Message message, String messageType, Slide slide, String status) {
         switch (messageType) {
             case "SLIDE_UPDATE":
                 SlideUpdate slideUpdate = SlideUpdate.FromMessage(message, slide, status);
-                return slideUpdate.toString();
+                return new MessageResponse(slideUpdate.toString(), slideUpdate.getControlId());
             case "ProcessVANTAGEEvent":
                 ProcessVTGEvent processVTGEvent = ProcessVTGEvent.FromMessage(message, status, slide);
-                return processVTGEvent.toString();
+                return new MessageResponse(processVTGEvent.toString(), processVTGEvent.getTransactionId());
             case "sendSlideWSAData":
                 SendSlideWSAData sendSlideWSAData = SendSlideWSAData.FromMessage(message, slide, status);
-                return sendSlideWSAData.toString();
+                return new MessageResponse(sendSlideWSAData.toString(), "");
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
     }
 
-    public String convertMessage(Message message, String messageType, Block block, String status) {
+    public MessageResponse convertMessage(Message message, String messageType, Block block, String status) {
         switch (messageType) {
             case "BLOCK_UPDATE":
                 BlockUpdate blockUpdate = BlockUpdate.FromMessage(message, block, status);
-                return blockUpdate.toString();
+                return new MessageResponse(blockUpdate.toString(), blockUpdate.getControlId());
             case "ProcessVANTAGEEvent":
                 ProcessVTGEvent processVTGEvent = ProcessVTGEvent.FromMessage(message, status, block);
-                return processVTGEvent.toString();
+                return new MessageResponse(processVTGEvent.toString(), processVTGEvent.getTransactionId());
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
     }
 
-    public String convertMessage(Message message, String messageType, Specimen specimen, String status) {
+    public MessageResponse convertMessage(Message message, String messageType, Specimen specimen, String status) {
         switch (messageType) {
             case "SPECIMEN_UPDATE":
-                SpecimenUpdate slideUpdate = SpecimenUpdate.FromMessage(message, specimen, status);
-                return slideUpdate.toString();
+                SpecimenUpdate specimenUpdate = SpecimenUpdate.FromMessage(message, specimen, status);
+                return new MessageResponse(specimenUpdate.toString(), specimenUpdate.getControlId());
             case "ProcessVANTAGEEvent":
                 ProcessVTGEvent processVTGEvent = ProcessVTGEvent.FromMessage(message, status, specimen);
-                return processVTGEvent.toString();
+                return new MessageResponse(processVTGEvent.toString(), processVTGEvent.getTransactionId());
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
     }
 
-    public String convertMessage(Message message, String messageType, String status) {
+    public MessageResponse convertMessage(Message message, String messageType, String status) {
         switch (messageType) {
             case "CASE_UPDATE":
                 CASEUPDATE caseupdate = CASEUPDATE.FromMessage(message, status);
-                return caseupdate.toString();
+                return new MessageResponse(caseupdate.toString(), caseupdate.getControlId());
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
+    }
+
+    @Setter
+    @Getter
+    @AllArgsConstructor
+    public static class MessageResponse {
+        private String message;
+        private String controlId;
     }
 }

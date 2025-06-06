@@ -28,7 +28,7 @@ public class WSClient extends Client {
     }
 
     @Override
-    public String send(String soapAction, String messageBody) {
+    public String send(String soapAction, String messageBody, String controlId) {
         String requestBody = buildSoapEnvelope(messageBody);
 
         try {

@@ -24,6 +24,7 @@ interface SavedMessage {
   content: string;
   host: string;
   messageType: string;
+  messageControlId?: string;
   timestamp: Date;
   responses?: string[];
 }

@@ -52,4 +52,8 @@ public class Addition extends HL7Segment {
         }
         return cleanMessage(addition + oSegmentsString);
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

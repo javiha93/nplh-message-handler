@@ -64,4 +64,8 @@ public class OML21 extends HL7Segment {
         return cleanMessage(oml21 + oSegmentsString);
     }
 
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
+
 }

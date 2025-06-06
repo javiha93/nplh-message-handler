@@ -42,4 +42,8 @@ public class CASEUPDATE extends HL7Segment {
 
         return cleanMessage(caseUpdate);
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

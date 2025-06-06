@@ -34,4 +34,8 @@ public class BlockUpdate extends HL7Segment {
 
         return cleanMessage(blockUpdate );
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

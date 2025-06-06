@@ -42,9 +42,9 @@ public class MessageController {
         Client client = clients.getClient(request.hostName);
 
         if (client instanceof HL7Client) {
-            response = client.send(request.message);
+            response = client.send(request.message, request.controlId);
         } else if (client instanceof WSClient) {
-            response = Collections.singletonList(client.send(request.messageType, request.message));
+            response = Collections.singletonList(client.send(request.messageType, request.message, request.controlId));
         } else {
             throw new RuntimeException();
         }
@@ -53,8 +53,8 @@ public class MessageController {
     }
 
     @PostMapping("/convert")
-    public ResponseEntity<String> convertMessage(@RequestBody UnifiedConvertRequest request) {
-        String convertedMessage;
+    public ResponseEntity<MessageService.MessageResponse> convertMessage(@RequestBody UnifiedConvertRequest request) {
+        MessageService.MessageResponse convertedMessage;
         
         if (request.getSlide() != null && request.getStatus() != null) {
             // Case for slide with status
@@ -125,5 +125,6 @@ public class MessageController {
         @JsonDeserialize(using = HostDeserializer.class)
         private Host hostName;
         private String messageType;
+        private String controlId;
     }
 }

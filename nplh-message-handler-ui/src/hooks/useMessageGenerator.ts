@@ -7,6 +7,7 @@ interface SavedMessage {
   content: string;
   host: string;
   messageType: string;
+  messageControlId?: string;
   timestamp: Date;
   responses?: string[];
 }
@@ -36,14 +37,14 @@ export const useMessageGenerator = () => {
   const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null);
   const [isBlockSelectorModalOpen, setIsBlockSelectorModalOpen] = useState<boolean>(false);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
-  const [isSlideSelectorModalOpen, setIsSlideSelectorModalOpen] = useState<boolean>(false);
-  const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
+  const [isSlideSelectorModalOpen, setIsSlideSelectorModalOpen] = useState<boolean>(false);  const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
   const [isEntitySelectorModalOpen, setIsEntitySelectorModalOpen] = useState<boolean>(false);  const [selectedEntity, setSelectedEntity] = useState<{ type: string; id: string } | null>(null);
   const [sendResponse, setSendResponse] = useState<string[]>([]);  // New state for sidebar panel
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);
   const [isSendingAll, setIsSendingAll] = useState<boolean>(false);
   const [isMessageSaved, setIsMessageSaved] = useState<boolean>(false);
+  const [currentMessageControlId, setCurrentMessageControlId] = useState<string | undefined>(undefined);
 
   const [snackbar, setSnackbar] = useState<{
     isVisible: boolean;
@@ -391,14 +392,14 @@ export const useMessageGenerator = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
+      });      if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
 
-      const formattedMessage = await response.text();
-      setGeneratedMessage(formattedMessage);
+      const messageResponse = await response.json();
+      setGeneratedMessage(messageResponse.message);
+      setCurrentMessageControlId(messageResponse.controlId);
+      
     } catch (err) {
       console.error('Error generating message:', err);
       setError('Error al generar mensaje. Por favor intente nuevamente.');
@@ -406,9 +407,7 @@ export const useMessageGenerator = () => {
     } finally {
       setIsGeneratingMessage(false);
     }
-  };
-
-  const sendMessage = async () => {
+  };  const sendMessage = async () => {
     if (!generatedMessage || !selectedHost || !selectedType) {
       setError('No hay mensaje para enviar o faltan datos.');
       return;
@@ -426,9 +425,10 @@ export const useMessageGenerator = () => {
         body: JSON.stringify({
           message: generatedMessage,
           hostName: selectedHost,
-          messageType: selectedType
+          messageType: selectedType,
+          controlId: currentMessageControlId
         }),
-      });      if (!response.ok) {
+      });if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
 
@@ -469,7 +469,6 @@ export const useMessageGenerator = () => {
   const updateGeneratedMessage = (updatedMessage: string) => {
     setGeneratedMessage(updatedMessage);
   };
-
   const closeSnackbar = () => {
     setSnackbar(prev => ({ ...prev, isVisible: false }));
   };
@@ -487,6 +486,7 @@ export const useMessageGenerator = () => {
       content: generatedMessage,
       host: selectedHost,
       messageType: selectedType,
+      messageControlId: currentMessageControlId,
       timestamp: new Date()
     };
 
@@ -528,7 +528,6 @@ export const useMessageGenerator = () => {
       return result;
     });
   };
-
   const sendSavedMessage = async (savedMessage: SavedMessage) => {
     try {
       const response = await fetch('http://localhost:8085/api/messages/send', {
@@ -539,9 +538,10 @@ export const useMessageGenerator = () => {
         body: JSON.stringify({
           message: savedMessage.content,
           hostName: savedMessage.host,
-          messageType: savedMessage.messageType
+          messageType: savedMessage.messageType,
+          controlId: savedMessage.messageControlId
         }),
-      });      if (!response.ok) {
+      });if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
 

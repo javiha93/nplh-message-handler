@@ -60,4 +60,8 @@ public class OEWF extends HL7Segment {
         }
         return cleanMessage(oml21 + oSegmentsString);
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

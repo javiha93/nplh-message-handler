@@ -34,4 +34,8 @@ public class SlideUpdate extends HL7Segment {
 
         return cleanMessage(slideUpdate );
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

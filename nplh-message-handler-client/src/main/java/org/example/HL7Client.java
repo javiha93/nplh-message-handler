@@ -1,6 +1,7 @@
 package org.example;
 
 import lombok.Getter;
+import org.example.domain.host.ClientMessage;
 import org.example.domain.host.HL7Host;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,8 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HL7Client extends Client {
 
@@ -22,6 +25,7 @@ public class HL7Client extends Client {
     PrintWriter out;
     BufferedReader in;
 
+    public List<ClientMessage> messageList;
 
     public HL7Client(HL7Host host) {
         this.clientName = host.name();
@@ -29,6 +33,7 @@ public class HL7Client extends Client {
             socket = new Socket(host.getIp(), host.getPort());
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            messageList = new ArrayList<>();
 
         } catch (UnknownHostException e) {
             logger.error("Unknown host {} , {}:{}", host.name(), host.getIp(), host.getPort(), e);
@@ -38,31 +43,33 @@ public class HL7Client extends Client {
     }
 
     @Override
-    public List<String> send(String message) {
+    public List<String> send(String message, String controlId) {
         String llpMessage = textToLlp(message);
+        ClientMessage clientMessage = new ClientMessage(message);
+        messageList.add(clientMessage);
         for (char c : llpMessage.toCharArray()) {
             out.write(c);
         }
         logger.info("\nSent message: \n{}\nto Host {}", message, clientName);
         out.flush();
 
-        return receive();
+        return receive(controlId);
     }
 
-    private List<String> receive() {
+    private List<String> receive(String controlId) {
         List<String> responses = new ArrayList<>();
         final int initialTimeout = 4000;
-        final int extendedTimeout = 2000;
+        final int extendedTimeout = 300;
         try {
             socket.setSoTimeout(initialTimeout);
 
-            String firstResponse = receiveSingle();
+            String firstResponse = receiveSingle(controlId);
             if (firstResponse != null && !firstResponse.trim().isEmpty()) {
                 responses.add(firstResponse);
                 logger.info("Received first response");
 
                 socket.setSoTimeout(extendedTimeout);
-                String extraResponse = receiveSingle();
+                String extraResponse = receiveSingle(controlId);
                 if (extraResponse != null && !extraResponse.trim().isEmpty()) {
                     responses.add(extraResponse);
                     logger.info("Received second response");
@@ -75,7 +82,7 @@ public class HL7Client extends Client {
         return responses;
     }
 
-    private String receiveSingle() {
+    private String receiveSingle(String controlId) {
         try {
             StringBuilder response = new StringBuilder();
             int c;
@@ -86,6 +93,24 @@ public class HL7Client extends Client {
                 }
             }
             String responseText = llpToText(response.toString());
+            if (!responseText.contains(controlId)) {
+                logger.info("\nReceived response for another message, expected: \n{}\nfrom Host {}", responseText, clientName);
+                List<String> uuids = extractUUIDs(responseText);
+                for (String uuid: uuids) {
+                    ClientMessage clientMessage = getMessageByControlId(uuid);
+                    if (clientMessage != null) {
+                        clientMessage.addResponse(responseText);
+                        break;
+                    }
+                }
+
+                socket.setSoTimeout(4000);
+                return receiveSingle(controlId);
+            }
+            ClientMessage message = getMessageByControlId(controlId);
+            if (message != null) {
+                message.addResponse(responseText);
+            }
             logger.info("\nReceived response: \n{}\nfrom Host {}", responseText, clientName);
             return responseText;
         } catch (SocketTimeoutException e) {
@@ -137,5 +162,29 @@ public class HL7Client extends Client {
             return String.valueOf(character);
         }
 
+    }
+
+    private ClientMessage getMessageByControlId(String messageControlID) {
+        for (ClientMessage message: messageList) {
+            if (message.getMessage().contains(messageControlID)) {
+                return message;
+            }
+        }
+        logger.error("Not found any message with the following control Id {}", messageControlID);
+        return null;
+    }
+
+    public List<String> extractUUIDs(String message) {
+        List<String> uuids = new ArrayList<>();
+        Pattern uuidPattern = Pattern.compile(
+                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+                Pattern.CASE_INSENSITIVE);
+
+        Matcher matcher = uuidPattern.matcher(message);
+        while (matcher.find()) {
+            uuids.add(matcher.group());
+        }
+
+        return uuids;
     }
 }

@@ -34,4 +34,8 @@ public class ADTA28 extends HL7Segment {
 
         return cleanMessage(caseUpdate);
     }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
 }

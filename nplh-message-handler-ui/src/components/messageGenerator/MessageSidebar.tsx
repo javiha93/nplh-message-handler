@@ -8,6 +8,7 @@ interface SavedMessage {
   content: string;
   host: string;
   messageType: string;
+  messageControlId?: string;
   timestamp: Date;
   responses?: string[];
 }
@@ -36,8 +37,41 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onReorderMessages,
   isSendingAll,
   onMessageClick
-}) => {
-  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+}) => {  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());  // Función para formatear XML de manera simple y directa
+  const formatXML = (xmlString: string): string => {
+    if (!xmlString.trim().startsWith('<')) {
+      return xmlString;
+    }
+    
+    try {
+      let result = xmlString
+        .replace(/></g, '>\n<')
+        .replace(/^\s+|\s+$/g, '')
+        .split('\n');
+      
+      let formatted = '';
+      let indent = 0;
+      
+      for (let line of result) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (trimmed.startsWith('</')) {
+          indent = Math.max(0, indent - 1);
+        }
+
+        formatted += '  '.repeat(indent) + trimmed + '\n';
+
+        if (trimmed.startsWith('<') && !trimmed.startsWith('</') && !trimmed.endsWith('/>') && !trimmed.includes('</', 1)) {
+          indent++;
+        }
+      }
+      
+      return formatted.trim();
+    } catch (error) {
+      return xmlString;
+    }
+  };
   const [width, setWidth] = useState<number>(384);
   const [isResizing, setIsResizing] = useState(false);
   const isResizingRef = useRef(false);
@@ -56,12 +90,10 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     useEffect(() => {
       setWidth(maxCombinedLength);
     }, [maxCombinedLength]);
-
-
     const resize = (e: MouseEvent) => {
       if (isResizingRef.current) {
         const newWidth = window.innerWidth - e.clientX;
-        setWidth(Math.min(Math.max(newWidth, 300), 600));
+        setWidth(Math.min(Math.max(newWidth, 250), 450));
       }
     };
 
@@ -128,9 +160,9 @@ useEffect(() => {
                 className="absolute left-0 top-0 bottom-0 w-2 -ml-1 cursor-col-resize hover:bg-blue-200 active:bg-blue-300 z-10"
                 onMouseDown={startResizing}
               />        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-3 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800">Saved Messages</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {savedMessages.length > 0 && (
               <button
                 onClick={onClearAllResponses}
@@ -156,9 +188,8 @@ useEffect(() => {
           ) : (
             <DragDropContext onDragEnd={handleOnDragEnd}>
               <Droppable droppableId="messages">
-                {(provided) => (
-                  <div 
-                    className="p-4 space-y-4"
+                {(provided) => (                  <div 
+                    className="p-3 space-y-3"
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                   >
@@ -201,11 +232,10 @@ useEffect(() => {
                                   </div>
                                 </div>
                               </div>
-                              
-                              {/* Content Area */}
+                                {/* Content Area */}
                               <div className="cursor-pointer" onClick={() => onMessageClick(message)}>
-                                <div className="p-3">
-                                  <div className="flex items-center justify-between mb-2">
+                                <div className="p-2">
+                                  <div className="flex items-center justify-between mb-1">
                                     <div className="text-xs text-gray-500">
                                       {formatTimestamp(message.timestamp)}
                                     </div>
@@ -261,11 +291,11 @@ useEffect(() => {
                                       <div className="text-xs font-medium text-gray-700 mb-1">
                                         Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''}:
                                       </div>
-                                      <div className="space-y-2">
-                                        {message.responses?.map((response, index) => {
+                                      <div className="space-y-2">                                        {message.responses?.map((response, index) => {
                                           const isError = response.includes('ERR|');
+                                          const formattedResponse = formatXML(response);
                                           return (
-                                            <div key={index} className={`p-2 rounded text-xs font-mono max-h-32 overflow-y-auto border cursor-text ${
+                                            <div key={index} className={`p-2 rounded text-xs font-mono max-h-40 overflow-y-auto border cursor-text ${
                                               isError 
                                                 ? 'bg-red-50 border-red-200' 
                                                 : 'bg-green-50 border-green-200'
@@ -276,10 +306,17 @@ useEffect(() => {
                                                 }`}>
                                                   #{index + 1}:
                                                 </div>
-                                              )}
-                                              <span className={isError ? 'text-red-800' : 'text-green-800'}>
-                                                {response}
-                                              </span>
+                                              )}                                              <div 
+                                                className={`text-xs leading-relaxed font-mono ${isError ? 'text-red-800' : 'text-green-800'}`}
+                                                dangerouslySetInnerHTML={{ 
+                                                  __html: formattedResponse
+                                                    .replace(/&/g, '&amp;')
+                                                    .replace(/</g, '&lt;')
+                                                    .replace(/>/g, '&gt;')
+                                                    .replace(/\n/g, '<br/>')
+                                                    .replace(/ /g, '&nbsp;')
+                                                }}
+                                              />
                                             </div>
                                           );
                                         })}
@@ -300,11 +337,11 @@ useEffect(() => {
           )}
         </div>        {/* Footer con botón de enviar todos */}
         {savedMessages.length > 0 && (
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-3 border-t border-gray-200">
             <button
               onClick={onSendAllMessages}
               disabled={isSendingAll}
-              className={`w-full py-2 px-4 rounded-lg text-white font-medium transition-colors ${
+              className={`w-full py-2 px-3 rounded-lg text-white font-medium transition-colors text-sm ${
                 isSendingAll
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-green-600 hover:bg-green-700'
