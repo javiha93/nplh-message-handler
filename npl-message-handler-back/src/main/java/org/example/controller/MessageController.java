@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.*;
+import org.example.domain.host.HL7Host;
 import org.example.domain.host.Host;
 import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;

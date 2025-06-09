@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageType, Patient, Physician, Pathologist, Technician, Message } from '../types/MessageType';
 import { Specimen, Block, Slide } from '../types/Message';
+import { messageUpdateService } from '../services/messageUpdateService';
 
 interface SavedMessage {
   id: string;
@@ -137,13 +138,27 @@ export const useMessageGenerator = () => {
       setSelectedEntity(null);
     }
   }, [selectedHost]);
-
   useEffect(() => {
     setSelectedSpecimen(null);
     setSelectedBlock(null);
     setSelectedSlide(null);
     setSelectedEntity(null);
   }, [selectedType]);
+  // Register for message update notifications
+  useEffect(() => {
+    const handleMessageUpdate = (controlId: string, responses: string[]) => {
+      console.log(`handleMessageUpdate called with controlId: ${controlId}`, responses);
+      updateMessageResponses(controlId, responses);
+    };
+
+    console.log('Registering message update callback');
+    messageUpdateService.registerUpdateCallback(handleMessageUpdate);
+
+    return () => {
+      console.log('Unregistering message update callback');
+      messageUpdateService.unregisterUpdateCallback(handleMessageUpdate);
+    };
+  }, []);
 
   const fetchMessageData = async (sampleIdValue: string) => {
     if (!sampleIdValue) {
@@ -570,7 +585,6 @@ export const useMessageGenerator = () => {
       setError('Error al enviar mensaje guardado.');
     }
   };
-
   const sendAllSavedMessages = async () => {
     if (savedMessages.length === 0) {
       setError('No hay mensajes guardados para enviar.');
@@ -591,6 +605,23 @@ export const useMessageGenerator = () => {
     } finally {
       setIsSendingAll(false);
     }
+  };
+  const updateMessageResponses = (controlId: string, responses: string[]) => {
+    console.log(`updateMessageResponses called with controlId: ${controlId}`, responses);
+    console.log('Current saved messages:', savedMessages.map(msg => ({ id: msg.id, messageControlId: msg.messageControlId })));
+    
+    setSavedMessages(prev => {
+      const updated = prev.map(msg => {
+        if (msg.messageControlId === controlId) {
+          console.log(`Updating message with controlId ${controlId} - old responses:`, msg.responses, 'new responses:', responses);
+          return { ...msg, responses: responses };
+        }
+        return msg;
+      });
+      
+      console.log('Updated saved messages:', updated.map(msg => ({ id: msg.id, messageControlId: msg.messageControlId, responsesCount: msg.responses?.length || 0 })));
+      return updated;
+    });
   };
 
   const showSpecimenSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN') ||
@@ -664,10 +695,10 @@ export const useMessageGenerator = () => {
     snackbar,
     closeSnackbar,    toggleSidebar,    saveMessageToSidebar,
     removeSavedMessage,
-    clearAllResponses,
-    reorderSavedMessages,
+    clearAllResponses,    reorderSavedMessages,
     sendSavedMessage,
     sendAllSavedMessages,
+    updateMessageResponses,
     handleSampleIdChange,
     handleHostChange,
     handleTypeChange,

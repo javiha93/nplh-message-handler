@@ -1,5 +1,6 @@
 package org.example;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.example.domain.host.ClientMessage;
 import org.example.domain.host.HL7Host;
@@ -13,10 +14,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class HL7Client extends Client {
 
@@ -24,8 +27,7 @@ public class HL7Client extends Client {
     Socket socket;
     PrintWriter out;
     BufferedReader in;
-
-    public List<ClientMessage> messageList;
+    ClientMessageList clientMessageList;
 
     public HL7Client(HL7Host host) {
         this.clientName = host.name();
@@ -33,7 +35,7 @@ public class HL7Client extends Client {
             socket = new Socket(host.getIp(), host.getPort());
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            messageList = new ArrayList<>();
+            clientMessageList = new ClientMessageList();
 
         } catch (UnknownHostException e) {
             logger.error("Unknown host {} , {}:{}", host.name(), host.getIp(), host.getPort(), e);
@@ -45,8 +47,8 @@ public class HL7Client extends Client {
     @Override
     public List<String> send(String message, String controlId) {
         String llpMessage = textToLlp(message);
-        ClientMessage clientMessage = new ClientMessage(message);
-        messageList.add(clientMessage);
+        ClientMessage clientMessage = new ClientMessage(message, controlId);
+        clientMessageList.add(clientMessage);
         for (char c : llpMessage.toCharArray()) {
             out.write(c);
         }
@@ -96,10 +98,12 @@ public class HL7Client extends Client {
             if (!responseText.contains(controlId)) {
                 logger.info("\nReceived response for another message, expected: \n{}\nfrom Host {}", responseText, clientName);
                 List<String> uuids = extractUUIDs(responseText);
-                for (String uuid: uuids) {
-                    ClientMessage clientMessage = getMessageByControlId(uuid);
+                for (String uuid : uuids) {
+                    ClientMessage clientMessage = clientMessageList.getMessageByControlId(uuid);
                     if (clientMessage != null) {
                         clientMessage.addResponse(responseText);
+                        //ONLY UI CODE NOT FOR AT SOLUTION
+                        notifyUIMessageUpdate(uuid, clientMessage.getResponses());
                         break;
                     }
                 }
@@ -107,7 +111,7 @@ public class HL7Client extends Client {
                 socket.setSoTimeout(4000);
                 return receiveSingle(controlId);
             }
-            ClientMessage message = getMessageByControlId(controlId);
+            ClientMessage message = clientMessageList.getMessageByControlId(controlId);
             if (message != null) {
                 message.addResponse(responseText);
             }
@@ -164,16 +168,6 @@ public class HL7Client extends Client {
 
     }
 
-    private ClientMessage getMessageByControlId(String messageControlID) {
-        for (ClientMessage message: messageList) {
-            if (message.getMessage().contains(messageControlID)) {
-                return message;
-            }
-        }
-        logger.error("Not found any message with the following control Id {}", messageControlID);
-        return null;
-    }
-
     public List<String> extractUUIDs(String message) {
         List<String> uuids = new ArrayList<>();
         Pattern uuidPattern = Pattern.compile(
@@ -186,5 +180,66 @@ public class HL7Client extends Client {
         }
 
         return uuids;
+    }
+
+    //ONLY UI CODE NOT FOR AT SOLUTION
+    public void notifyUIMessageUpdate(String controlId, List<String> responses) {
+        // Execute notification asynchronously with delay to avoid blocking the main request
+        CompletableFuture.runAsync(() -> {
+            try {
+                // Wait a bit to ensure the main HTTP request has been fully processed
+                Thread.sleep(500);
+                notifyUIMessageUpdateSync(controlId, responses);
+            } catch (InterruptedException e) {
+                logger.warn("UI notification interrupted for controlId: {}", controlId);
+                Thread.currentThread().interrupt();
+            }
+        });
+    }
+
+    public void notifyUIMessageUpdateSync(String controlId, List<String> responses) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("controlId", controlId);
+            payload.put("responses", responses);
+
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonPayload = mapper.writeValueAsString(payload);
+
+            // Opción 1: Usar Base64 para evitar problemas de escape
+            String base64Json = Base64.getEncoder().encodeToString(jsonPayload.getBytes(StandardCharsets.UTF_8));
+
+            String powerShellCommand = String.format(
+                    "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; " +
+                            "$jsonBytes = [Convert]::FromBase64String('%s'); " +
+                            "$body = [System.Text.Encoding]::UTF8.GetString($jsonBytes); " +
+                            "Invoke-RestMethod -Uri 'http://localhost:8084/api/ui/messages/update-responses' " +
+                            "-Method POST -ContentType 'application/json' -Body $body",
+                    base64Json
+            );
+
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    "powershell.exe",
+                    "-Command",
+                    powerShellCommand
+            );
+
+            Process process = processBuilder.start();
+            String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
+                    .lines().collect(Collectors.joining("\n"));
+            String errors = new BufferedReader(new InputStreamReader(process.getErrorStream()))
+                    .lines().collect(Collectors.joining("\n"));
+
+            int exitCode = process.waitFor();
+
+            if (exitCode == 0) {
+                logger.info("PowerShell ejecutado correctamente. Salida:\n{}", output);
+            } else {
+                logger.error("Error en PowerShell (Código {}):\n{}", exitCode, errors);
+            }
+        } catch (IOException | InterruptedException e) {
+            logger.error("Error al ejecutar PowerShell: ", e);
+            Thread.currentThread().interrupt();
+        }
     }
 }

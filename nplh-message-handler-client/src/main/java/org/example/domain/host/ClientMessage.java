@@ -11,10 +11,12 @@ import java.util.List;
 @Setter
 public class ClientMessage {
     public String message;
+    public String controlId;
     public List<String> responses;
 
-    public ClientMessage(String message) {
+    public ClientMessage(String message, String controlId) {
         this.message = message;
+        this.controlId = controlId;
         this.responses = new ArrayList<>();
     }
 
@@ -22,6 +24,8 @@ public class ClientMessage {
         if (responses == null) {
             responses = new ArrayList<>();
         }
-        responses.add(message);
+        if (message != null) {
+            responses.add(message);
+        }
     }
 }
