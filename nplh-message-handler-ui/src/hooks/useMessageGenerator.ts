@@ -42,8 +42,8 @@ export const useMessageGenerator = () => {
   const [isEntitySelectorModalOpen, setIsEntitySelectorModalOpen] = useState<boolean>(false);  const [selectedEntity, setSelectedEntity] = useState<{ type: string; id: string } | null>(null);
   const [sendResponse, setSendResponse] = useState<string[]>([]);  // New state for sidebar panel
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);
-  const [isSendingAll, setIsSendingAll] = useState<boolean>(false);
+  const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);  const [isSendingAll, setIsSendingAll] = useState<boolean>(false);
+  const [isClearingAll, setIsClearingAll] = useState<boolean>(false);
   const [isMessageSaved, setIsMessageSaved] = useState<boolean>(false);
   const [currentMessageControlId, setCurrentMessageControlId] = useState<string | undefined>(undefined);
 
@@ -521,20 +521,65 @@ export const useMessageGenerator = () => {
   };
   const removeSavedMessage = (id: string) => {
     setSavedMessages(prev => prev.filter(msg => msg.id !== id));
+  };  const clearAllResponses = async () => {
+    setIsClearingAll(true);
+    try {
+      // Call the backend endpoint to delete all messages
+      const response = await fetch('http://localhost:8085/api/messages/deleteAll', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // If successful, clear all responses locally as well
+        setSavedMessages(prev => prev.map(msg => ({
+          ...msg,
+          responses: undefined
+        })));
+
+        setSnackbar({
+          isVisible: true,
+          message: 'All acks deleted successfully',
+          type: 'success'
+        });
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Error al eliminar respuestas');
+      }
+    } catch (error) {
+      console.error('Error calling deleteAll endpoint:', error);
+      
+      // Fallback: clear locally even if backend call fails
+      setSavedMessages(prev => prev.map(msg => ({
+        ...msg,
+        responses: undefined
+      })));
+
+      setSnackbar({
+        isVisible: true,
+        message: 'Ack deleted (Server error)',
+        type: 'warning'
+      });
+    } finally {
+      setIsClearingAll(false);
+    }
   };
-  const clearAllResponses = () => {
-    setSavedMessages(prev => prev.map(msg => ({
-      ...msg,
-      responses: undefined
-    })));
+
+  const clearMessageResponses = (messageId: string) => {
+    setSavedMessages(prev => prev.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, responses: undefined }
+        : msg
+    ));
 
     setSnackbar({
       isVisible: true,
-      message: 'Respuestas de mensajes limpiadas exitosamente',
+      message: 'All messages deleted successfully',
       type: 'info'
     });
   };
-
   const reorderSavedMessages = (startIndex: number, endIndex: number) => {
     setSavedMessages(prev => {
       const result = Array.from(prev);
@@ -693,9 +738,10 @@ export const useMessageGenerator = () => {
     isSendingAll,
     isMessageSaved,
     snackbar,
-    closeSnackbar,    toggleSidebar,    saveMessageToSidebar,
-    removeSavedMessage,
-    clearAllResponses,    reorderSavedMessages,
+    closeSnackbar,    toggleSidebar,    saveMessageToSidebar,    removeSavedMessage,
+    clearAllResponses,
+    clearMessageResponses,
+    reorderSavedMessages,
     sendSavedMessage,
     sendAllSavedMessages,
     updateMessageResponses,

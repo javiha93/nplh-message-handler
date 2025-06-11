@@ -8,9 +8,38 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Custom plugin to handle message update endpoint
 const messageUpdatePlugin = () => {
+  let sseClients: any[] = [];
+  
   return {
     name: 'message-update',
     configureServer(server: any) {
+      // SSE endpoint for clients to connect and receive updates
+      server.middlewares.use('/api/ui/messages/sse', (req: any, res: any) => {
+        if (req.method === 'GET') {
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
+          });
+
+          // Add client to list
+          sseClients.push(res);
+          console.log(`SSE client connected. Total clients: ${sseClients.length}`);
+
+          // Send initial connection message
+          res.write('data: {"type":"connected"}\n\n');
+
+          // Remove client when connection closes
+          req.on('close', () => {
+            sseClients = sseClients.filter(client => client !== res);
+            console.log(`SSE client disconnected. Total clients: ${sseClients.length}`);
+          });
+        }
+      });
+
+      // Message update endpoint that broadcasts to SSE clients
       server.middlewares.use('/api/ui/messages/update-responses', (req: any, res: any) => {
         if (req.method === 'POST') {
           let body = '';
@@ -26,22 +55,26 @@ const messageUpdatePlugin = () => {
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({ error: 'Invalid request body. Expected controlId and responses array.' }));
                 return;
-              }              // Broadcast the update to the client via the global function
-              // This will be handled by the messageUpdateService
+              }
+
               console.log(`Received message update for controlId: ${controlId}`, responses);
               
-              // Store the update in a temporary queue for client polling
-              server.messageUpdates = server.messageUpdates || [];
-              server.messageUpdates.push({ 
-                controlId, 
-                responses, 
-                timestamp: Date.now() 
+              // Broadcast to all connected SSE clients
+              const eventData = JSON.stringify({
+                type: 'messageUpdate',
+                controlId,
+                responses
               });
               
-              // Keep only the last 50 updates to prevent memory leaks
-              if (server.messageUpdates.length > 50) {
-                server.messageUpdates = server.messageUpdates.slice(-50);
-              }
+              sseClients.forEach(client => {
+                try {
+                  client.write(`data: ${eventData}\n\n`);
+                } catch (error) {
+                  console.error('Error sending SSE message:', error);
+                }
+              });
+              
+              console.log(`Broadcasted update to ${sseClients.length} SSE clients`);
               
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
@@ -55,28 +88,8 @@ const messageUpdatePlugin = () => {
               res.statusCode = 400;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: 'Invalid JSON body' }));
-            }          });
-        } else {
-          res.statusCode = 405;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Method not allowed' }));
-        }
-      });
-
-      // Add polling endpoint for client-side retrieval of updates
-      server.middlewares.use('/api/ui/messages/poll-updates', (req: any, res: any) => {
-        if (req.method === 'GET') {
-          const updates = server.messageUpdates || [];
-          const urlParams = new URL(req.url, 'http://localhost').searchParams;
-          const since = parseInt(urlParams.get('since') || '0');
-          
-          // Filter updates that are newer than the 'since' timestamp
-          const newUpdates = updates.filter((update: any) => update.timestamp > since);
-          
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'application/json');
-          res.setHeader('Access-Control-Allow-Origin', '*');
-          res.end(JSON.stringify(newUpdates));
+            }
+          });
         } else {
           res.statusCode = 405;
           res.setHeader('Content-Type', 'application/json');

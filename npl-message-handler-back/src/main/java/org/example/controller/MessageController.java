@@ -8,6 +8,7 @@ import org.example.domain.host.HL7Host;
 import org.example.domain.host.Host;
 import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;
+import org.example.service.IrisService;
 import org.example.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +23,13 @@ import java.util.List;
 public class MessageController {
 
     private final MessageService messageService;
+    private final IrisService irisService;
     private final Clients clients;
 
     @Autowired
-    public MessageController(MessageService messageService) {
+    public MessageController(MessageService messageService, IrisService irisService) {
         this.messageService = messageService;
+        this.irisService = irisService;
         this.clients = new Clients();
     }
 
@@ -52,6 +55,17 @@ public class MessageController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/deleteAll")
+    public ResponseEntity<String> deleteAllMessages() {
+        try {
+            irisService.deleteAllMessages();
+            return ResponseEntity.ok("Todos los mensajes han sido eliminados correctamente.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error al eliminar mensajes: " + e.getMessage());
+        }
+    }
+
 
     @PostMapping("/convert")
     public ResponseEntity<MessageService.MessageResponse> convertMessage(@RequestBody UnifiedConvertRequest request) {

@@ -81,6 +81,7 @@ const MessageGenerator: React.FC = () => {
     closeSnackbar,    toggleSidebar,
     saveMessageToSidebar,    removeSavedMessage,
     clearAllResponses,
+    clearMessageResponses,
     reorderSavedMessages,
     sendSavedMessage,
     sendAllSavedMessages,
@@ -270,6 +271,7 @@ const MessageGenerator: React.FC = () => {
         onSendMessage={sendSavedMessage}
         onSendAllMessages={sendAllSavedMessages}
         onClearAllResponses={clearAllResponses}
+        onClearMessageResponses={clearMessageResponses}
         onReorderMessages={reorderSavedMessages}
         isSendingAll={isSendingAll}
         onMessageClick={handleMessageClick}

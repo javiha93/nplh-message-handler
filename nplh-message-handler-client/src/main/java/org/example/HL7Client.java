@@ -1,7 +1,7 @@
 package org.example;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.domain.HL7LLPCharacters;
+import lombok.Getter;
 import org.example.domain.host.ClientMessage;
 import org.example.domain.host.HL7Host;
 import org.slf4j.Logger;
@@ -17,9 +17,9 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static org.example.utils.MessageHandler.*;
 
 public class HL7Client extends Client {
 
@@ -60,15 +60,17 @@ public class HL7Client extends Client {
 
     private List<String> receive(String controlId) {
         List<String> responses = new ArrayList<>();
+        final int initialTimeout = 4000;
+        final int extendedTimeout = 300;
         try {
-            socket.setSoTimeout(4000);
+            socket.setSoTimeout(initialTimeout);
 
             String firstResponse = receiveSingle(controlId);
             if (firstResponse != null && !firstResponse.trim().isEmpty()) {
                 responses.add(firstResponse);
                 logger.info("Received first response");
 
-                socket.setSoTimeout(300);
+                socket.setSoTimeout(extendedTimeout);
                 String extraResponse = receiveSingle(controlId);
                 if (extraResponse != null && !extraResponse.trim().isEmpty()) {
                     responses.add(extraResponse);
@@ -95,7 +97,17 @@ public class HL7Client extends Client {
             String responseText = llpToText(response.toString());
             if (!responseText.contains(controlId)) {
                 logger.info("\nReceived response for another message, expected: \n{}\nfrom Host {}", responseText, clientName);
-                addResponseToPreviousMessage(responseText);
+                List<String> uuids = extractUUIDs(responseText);
+                for (String uuid : uuids) {
+                    ClientMessage clientMessage = clientMessageList.getMessageByControlId(uuid);
+                    if (clientMessage != null) {
+                        clientMessage.addResponse(responseText);
+                        //ONLY UI CODE NOT FOR AT SOLUTION
+                        notifyUIMessageUpdate(uuid, clientMessage.getResponses());
+                        break;
+                    }
+                }
+
                 socket.setSoTimeout(4000);
                 return receiveSingle(controlId);
             }
@@ -114,17 +126,60 @@ public class HL7Client extends Client {
         }
     }
 
-    private void addResponseToPreviousMessage(String responseText) {
-        List<String> uuids = extractUUIDs(responseText);
-        for (String uuid : uuids) {
-            ClientMessage clientMessage = clientMessageList.getMessageByControlId(uuid);
-            if (clientMessage != null) {
-                clientMessage.addResponse(responseText);
-                //ONLY UI CODE NOT FOR AT SOLUTION
-                notifyUIMessageUpdate(uuid, clientMessage.getResponses());
-                break;
-            }
+    private String textToLlp(String textMessage) {
+        return HL7LLPCharacters.VT.getCharacter()
+                + textMessage.trim().replaceAll("\\n", HL7LLPCharacters.CR.getCharacterAsString())
+                + HL7LLPCharacters.CR.getCharacter()
+                + HL7LLPCharacters.FS.getCharacter()
+                + HL7LLPCharacters.CR.getCharacter();
+    }
+
+    private String llpToText(String llpMessage) {
+        if (llpMessage == null || llpMessage.isEmpty()) {
+            return llpMessage;
         }
+
+        String trimmedMessage = llpMessage.startsWith(HL7LLPCharacters.VT.getCharacterAsString())
+                ? llpMessage.substring(1)
+                : llpMessage;
+
+        int fsIndex = trimmedMessage.indexOf(HL7LLPCharacters.FS.getCharacter());
+        if (fsIndex >= 0) {
+            trimmedMessage = trimmedMessage.substring(0, fsIndex);
+        }
+
+        return trimmedMessage.replaceAll(HL7LLPCharacters.CR.getCharacterAsString(), "\n").trim();
+    }
+
+    @Getter
+    public enum HL7LLPCharacters {
+
+        VT(0x0b), FS(0x1c), CR(0x0d);
+
+        final char character;
+
+        HL7LLPCharacters(int character) {
+            this.character = (char) character;
+        }
+
+        public String getCharacterAsString() {
+            return String.valueOf(character);
+        }
+
+    }
+
+    public List<String> extractUUIDs(String message) {
+        List<String> uuids = new ArrayList<>();
+        Pattern uuidPattern = Pattern.compile(
+                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+                Pattern.CASE_INSENSITIVE);
+
+        Matcher matcher = uuidPattern.matcher(message);
+        while (matcher.find()) {
+            uuids.add(matcher.group());
+        }
+
+        return uuids;
     }
 
     //ONLY UI CODE NOT FOR AT SOLUTION

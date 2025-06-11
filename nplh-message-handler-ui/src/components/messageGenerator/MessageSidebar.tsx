@@ -21,6 +21,7 @@ interface MessageSidebarProps {
   onSendMessage: (message: SavedMessage) => void;
   onSendAllMessages: () => void;
   onClearAllResponses: () => void;
+  onClearMessageResponses: (messageId: string) => void;
   onReorderMessages: (startIndex: number, endIndex: number) => void;
   isSendingAll: boolean;
   onMessageClick: (message: SavedMessage) => void;
@@ -34,10 +35,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onSendMessage,
   onSendAllMessages,
   onClearAllResponses,
+  onClearMessageResponses,
   onReorderMessages,
   isSendingAll,
   onMessageClick
-}) => {  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());  // Función para formatear XML de manera simple y directa
+}) => {const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());  // Función para formatear XML de manera simple y directa
   const formatXML = (xmlString: string): string => {
     if (!xmlString.trim().startsWith('<')) {
       return xmlString;
@@ -239,8 +241,7 @@ useEffect(() => {
                                     <div className="text-xs text-gray-500">
                                       {formatTimestamp(message.timestamp)}
                                     </div>
-                                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                                      <button
+                                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>                                      <button
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           toggleMessageExpansion(message.id);
@@ -249,6 +250,16 @@ useEffect(() => {
                                         title="Ver/ocultar respuesta"
                                       >
                                         {expandedMessages.has(message.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                      </button>                                      {/* Temporal: mostrar siempre el botón para testing */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onClearMessageResponses(message.id);
+                                        }}
+                                        className="p-1 text-orange-600 hover:bg-orange-100 rounded"
+                                        title="Limpiar respuestas"
+                                      >
+                                        <RotateCcw size={16} />
                                       </button>
                                       <button
                                         onClick={(e) => {
