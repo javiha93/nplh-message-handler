@@ -1,16 +1,6 @@
-
 import React from 'react';
 import { X } from 'lucide-react';
-
-interface SavedMessage {
-  id: string;
-  content: string;
-  host: string;
-  messageType: string;
-  messageControlId?: string;
-  timestamp: Date;
-  responses?: string[];
-}
+import { SavedMessage } from '../services/SavedMessagesService';
 
 interface MessageViewModalProps {
   isOpen: boolean;
@@ -66,10 +56,14 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
                   {message.content}
                 </pre>
               </div>
-            </div>            {message.responses && message.responses.length > 0 && (
-              <div>                <h3 className="text-sm font-medium text-gray-700 mb-2">
+            </div>
+
+            {message.responses && message.responses.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''} del Servidor:
-                </h3>                <div className="space-y-3">
+                </h3>
+                <div className="space-y-3">
                   {message.responses?.map((response, index) => {
                     const isError = response.includes('ERR|');
                     return (

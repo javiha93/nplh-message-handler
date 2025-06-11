@@ -1,293 +1,127 @@
-import React, { useState } from 'react';
-import { MessagesSquare } from 'lucide-react';
+import React from 'react';
 import { useMessageGenerator } from '../hooks/useMessageGenerator';
-import SampleIdInput from './messageGenerator/SampleIdInput';
-import MessageOptions from './messageGenerator/MessageOptions';
-import GenerateButton from './messageGenerator/GenerateButton';
-import GeneratedMessage from './messageGenerator/GeneratedMessage';
-import SendResponse from './messageGenerator/SendResponse';
-import MessageSidebar from './messageGenerator/MessageSidebar';
-import MessageViewModal from './messageGenerator/MessageViewModal';
-import PatientEditModal from './editModals/PatientEditModal';
-import PhysicianEditModal from './editModals/PhysicianEditModal';
-import PathologistEditModal from './editModals/PathologistEditModal';
-import TechnicianEditModal from './editModals/TechnicianEditModal';
-import HierarchyEditModal from './HierarchyEditModal';
-import SpecimenSelectorModal from './messageGenerator/SpecimenSelectorModal';
-import BlockSelectorModal from './messageGenerator/BlockSelectorModal';
-import SlideSelectorModal from './messageGenerator/SlideSelectorModal';
-import EntitySelectorModal from './messageGenerator/EntitySelectorModal';
-import Snackbar from './Snackbar';
-
-interface SavedMessage {
-  id: string;
-  content: string;
-  host: string;
-  messageType: string;
-  messageControlId?: string;
-  timestamp: Date;
-  responses?: string[];
-}
+import { useMessageGeneratorState } from '../hooks/useMessageGeneratorState';
+import MessageGeneratorLayout from './messageGenerator/MessageGeneratorLayout';
+import MessageFormSection from './messageGenerator/MessageFormSection';
+import EditModalsContainer from './editModals/EditModalsContainer';
+import SelectorModalsContainer from './messageGenerator/SelectorModalsContainer';
+import MessageSidebarSection from './savedMessages/components/MessageSidebarSection';
 
 const MessageGenerator: React.FC = () => {
-  const [isMessageViewModalOpen, setIsMessageViewModalOpen] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<SavedMessage | null>(null);
+  // Local state for message view modal
+  const { isMessageViewModalOpen, selectedMessage, handleMessageClick, closeMessageViewModal } = useMessageGeneratorState();
 
-  const {
-    message,
-    sampleId,
-    selectedHost,
-    selectedType,
-    selectedStatus,
-    generatedMessage,
-    messageCopied,
-    isPatientModalOpen,
-    isPhysicianModalOpen,
-    isPathologistModalOpen,
-    isHierarchyModalOpen,
-    isFetchingData,
-    isGeneratingMessage,
-    isSendingMessage,
-    error,
-    patientInfo,
-    physicianInfo,
-    pathologistInfo,
-    isTechnicianModalOpen,
-    technicianInfo,
-    isSpecimenSelectorModalOpen,
-    selectedSpecimen,
-    isBlockSelectorModalOpen,
-    selectedBlock,
-    isSlideSelectorModalOpen,
-    selectedSlide,
-    isEntitySelectorModalOpen,
-    selectedEntity,
-    hosts,
-    statusOptions,
-    statusVTGWSOptions,
-    messageTypes,
-    showSpecimenSelector,
-    showBlockSelector,
-    showSlideSelector,
-    showEntitySelector,
-    showStatusSelector,
-    generateButtonDisabled,
-    sendResponse,
-    isSidebarOpen,
-    savedMessages,
-    isSendingAll,
-    isMessageSaved,
-    snackbar,
-    closeSnackbar,    toggleSidebar,
-    saveMessageToSidebar,    removeSavedMessage,
-    clearAllResponses,
-    clearMessageResponses,
-    reorderSavedMessages,
-    sendSavedMessage,
-    sendAllSavedMessages,
-    handleSampleIdChange,
-    handleHostChange,
-    handleTypeChange,
-    handleStatusChange,
-    handlePatientInfoSave,
-    handlePhysicianInfoSave,
-    handlePathologistInfoSave,
-    handleTechnicianInfoSave,
-    handleSpecimenSelect,
-    handleBlockSelect,
-    handleSlideSelect,
-    handleEntitySelect,
-    togglePatientModal,
-    togglePhysicianModal,
-    togglePathologistModal,
-    toggleHierarchyModal,
-    toggleTechnicianModal,
-    toggleSpecimenSelectorModal,
-    toggleBlockSelectorModal,    toggleSlideSelectorModal,
-    toggleEntitySelectorModal,
-    generateMessage,
-    sendMessage,
-    copyToClipboard,
-    updateGeneratedMessage
-  } = useMessageGenerator();
-
-  const handleMessageClick = (message: SavedMessage) => {
-    setSelectedMessage(message);
-    setIsMessageViewModalOpen(true);
-  };
-
-  const closeMessageViewModal = () => {
-    setIsMessageViewModalOpen(false);
-    setSelectedMessage(null);
-  };
+  // Get all state and handlers from the main hook
+  const hookData = useMessageGenerator();
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'mr-96' : ''}`}>
-        <div className="max-w-4xl mx-auto my-8 p-8 bg-white rounded-xl shadow-lg">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Message Generator</h1>            <button
-              onClick={toggleSidebar}
-              className={`p-2 rounded-lg transition-colors ${
-                isMessageSaved 
-                  ? 'bg-green-600 text-white hover:bg-green-700' 
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-              }`}
-              title="Abrir panel de mensajes"
-            >
-              <MessagesSquare size={24} />
-            </button>
-          </div>
-          
-          <SampleIdInput
-            sampleId={sampleId}
-            isFetchingData={isFetchingData}
-            handleSampleIdChange={handleSampleIdChange}
-            togglePatientModal={togglePatientModal}
-            togglePhysicianModal={togglePhysicianModal}
-            togglePathologistModal={togglePathologistModal}
-            toggleTechnicianModal={toggleTechnicianModal}
-            toggleHierarchyModal={toggleHierarchyModal}
-          />
+    <MessageGeneratorLayout
+      isSidebarOpen={hookData.isSidebarOpen}
+      isMessageSaved={hookData.isMessageSaved}
+      onToggleSidebar={hookData.toggleSidebar}
+    >
+      <MessageFormSection
+        sampleId={hookData.sampleId}
+        selectedHost={hookData.selectedHost}
+        selectedType={hookData.selectedType}
+        selectedStatus={hookData.selectedStatus}
+        generatedMessage={hookData.generatedMessage}
+        messageCopied={hookData.messageCopied}
+        isFetchingData={hookData.isFetchingData}
+        isGeneratingMessage={hookData.isGeneratingMessage}
+        isSendingMessage={hookData.isSendingMessage}
+        generateButtonDisabled={hookData.generateButtonDisabled}
+        messageTypes={hookData.messageTypes}
+        hosts={hookData.hosts}
+        selectedSpecimen={hookData.selectedSpecimen}
+        selectedBlock={hookData.selectedBlock}
+        selectedSlide={hookData.selectedSlide}
+        selectedEntity={hookData.selectedEntity}
+        showSpecimenSelector={hookData.showSpecimenSelector}
+        showBlockSelector={hookData.showBlockSelector}
+        showSlideSelector={hookData.showSlideSelector}
+        showEntitySelector={hookData.showEntitySelector}
+        showStatusSelector={hookData.showStatusSelector}
+        message={hookData.message}
+        sendResponse={hookData.sendResponse}
+        error={hookData.error}
+        handleSampleIdChange={hookData.handleSampleIdChange}
+        handleHostChange={hookData.handleHostChange}
+        handleTypeChange={hookData.handleTypeChange}
+        handleStatusChange={hookData.handleStatusChange}
+        togglePatientModal={hookData.togglePatientModal}
+        togglePhysicianModal={hookData.togglePhysicianModal}
+        togglePathologistModal={hookData.togglePathologistModal}
+        toggleTechnicianModal={hookData.toggleTechnicianModal}
+        toggleHierarchyModal={hookData.toggleHierarchyModal}
+        toggleSpecimenSelectorModal={hookData.toggleSpecimenSelectorModal}
+        toggleBlockSelectorModal={hookData.toggleBlockSelectorModal}
+        toggleSlideSelectorModal={hookData.toggleSlideSelectorModal}
+        toggleEntitySelectorModal={hookData.toggleEntitySelectorModal}
+        generateMessage={hookData.generateMessage}
+        sendMessage={hookData.sendMessage}
+        copyToClipboard={hookData.copyToClipboard}
+        updateGeneratedMessage={hookData.updateGeneratedMessage}
+        saveMessageToSidebar={hookData.saveMessageToSidebar}
+      />
 
-          <MessageOptions
-            selectedHost={selectedHost}
-            selectedType={selectedType}
-            selectedStatus={selectedStatus}
-            messageTypes={messageTypes}
-            hosts={hosts}
-            statusOptions={statusOptions}
-            statusVTGWSOptions={statusVTGWSOptions}
-            handleHostChange={handleHostChange}
-            handleTypeChange={handleTypeChange}
-            handleStatusChange={handleStatusChange}
-            toggleSpecimenSelectorModal={toggleSpecimenSelectorModal}
-            toggleBlockSelectorModal={toggleBlockSelectorModal}
-            toggleSlideSelectorModal={toggleSlideSelectorModal}
-            toggleEntitySelectorModal={toggleEntitySelectorModal}
-            showSpecimenSelector={showSpecimenSelector}
-            showBlockSelector={showBlockSelector}
-            showSlideSelector={showSlideSelector}
-            showEntitySelector={showEntitySelector}
-            showStatusSelector={showStatusSelector}
-            message={message}
-            selectedSpecimen={selectedSpecimen}
-            selectedSlide={selectedSlide}
-            selectedBlock={selectedBlock}
-            selectedEntity={selectedEntity}
-          />
+      <EditModalsContainer
+        isPatientModalOpen={hookData.isPatientModalOpen}
+        isPhysicianModalOpen={hookData.isPhysicianModalOpen}
+        isPathologistModalOpen={hookData.isPathologistModalOpen}
+        isHierarchyModalOpen={hookData.isHierarchyModalOpen}
+        isTechnicianModalOpen={hookData.isTechnicianModalOpen}
+        patientInfo={hookData.patientInfo}
+        physicianInfo={hookData.physicianInfo}
+        pathologistInfo={hookData.pathologistInfo}
+        technicianInfo={hookData.technicianInfo}
+        message={hookData.message}
+        togglePatientModal={hookData.togglePatientModal}
+        togglePhysicianModal={hookData.togglePhysicianModal}
+        togglePathologistModal={hookData.togglePathologistModal}
+        toggleHierarchyModal={hookData.toggleHierarchyModal}
+        toggleTechnicianModal={hookData.toggleTechnicianModal}
+        handlePatientInfoSave={hookData.handlePatientInfoSave}
+        handlePhysicianInfoSave={hookData.handlePhysicianInfoSave}
+        handlePathologistInfoSave={hookData.handlePathologistInfoSave}
+        handleTechnicianInfoSave={hookData.handleTechnicianInfoSave}
+      />
 
-          <GenerateButton
-            generateMessage={generateMessage}
-            isGeneratingMessage={isGeneratingMessage}
-            disabled={generateButtonDisabled}
-          />
+      <SelectorModalsContainer
+        isSpecimenSelectorModalOpen={hookData.isSpecimenSelectorModalOpen}
+        isBlockSelectorModalOpen={hookData.isBlockSelectorModalOpen}
+        isSlideSelectorModalOpen={hookData.isSlideSelectorModalOpen}
+        isEntitySelectorModalOpen={hookData.isEntitySelectorModalOpen}
+        message={hookData.message}
+        toggleSpecimenSelectorModal={hookData.toggleSpecimenSelectorModal}
+        toggleBlockSelectorModal={hookData.toggleBlockSelectorModal}
+        toggleSlideSelectorModal={hookData.toggleSlideSelectorModal}
+        toggleEntitySelectorModal={hookData.toggleEntitySelectorModal}
+        handleSpecimenSelect={hookData.handleSpecimenSelect}
+        handleBlockSelect={hookData.handleBlockSelect}
+        handleSlideSelect={hookData.handleSlideSelect}
+        handleEntitySelect={hookData.handleEntitySelect}
+      />
 
-          {error && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          <GeneratedMessage
-            generatedMessage={generatedMessage}
-            messageCopied={messageCopied}
-            copyToClipboard={copyToClipboard}
-            onSendMessage={sendMessage}
-            isSendingMessage={isSendingMessage}
-            onMessageUpdate={updateGeneratedMessage}
-            onSaveMessage={saveMessageToSidebar}
-          />
-
-          <SendResponse sendResponse={sendResponse} />
-
-          <PatientEditModal
-            isOpen={isPatientModalOpen}
-            onClose={togglePatientModal}
-            patientInfo={patientInfo}
-            onSave={handlePatientInfoSave}
-          />
-
-          <PhysicianEditModal
-            isOpen={isPhysicianModalOpen}
-            onClose={togglePhysicianModal}
-            physicianInfo={physicianInfo}
-            onSave={handlePhysicianInfoSave}
-          />
-
-          <PathologistEditModal
-            isOpen={isPathologistModalOpen}
-            onClose={togglePathologistModal}
-            pathologistInfo={pathologistInfo}
-            onSave={handlePathologistInfoSave}
-          />
-
-          <HierarchyEditModal
-            isOpen={isHierarchyModalOpen}
-            onClose={toggleHierarchyModal}
-            message={message}
-          />
-
-          <TechnicianEditModal
-            isOpen={isTechnicianModalOpen}
-            onClose={toggleTechnicianModal}
-            technicianInfo={technicianInfo}
-            onSave={handleTechnicianInfoSave}
-          />
-
-          <SpecimenSelectorModal
-            isOpen={isSpecimenSelectorModalOpen}
-            onClose={toggleSpecimenSelectorModal}
-            message={message}
-            onSelectSpecimen={handleSpecimenSelect}
-          />
-          
-          <BlockSelectorModal
-            isOpen={isBlockSelectorModalOpen}
-            onClose={toggleBlockSelectorModal}
-            message={message}
-            onSelectBlock={handleBlockSelect}
-          />
-          
-          <SlideSelectorModal
-            isOpen={isSlideSelectorModalOpen}
-            onClose={toggleSlideSelectorModal}
-            message={message}
-            onSelectSlide={handleSlideSelect}
-          />
-
-          <EntitySelectorModal
-            isOpen={isEntitySelectorModalOpen}
-            onClose={toggleEntitySelectorModal}
-            message={message}
-            onSelectEntity={handleEntitySelect}
-          />
-        </div>
-      </div>      <MessageSidebar
-        isOpen={isSidebarOpen}
-        onClose={toggleSidebar}
-        savedMessages={savedMessages}
-        onRemoveMessage={removeSavedMessage}
-        onSendMessage={sendSavedMessage}
-        onSendAllMessages={sendAllSavedMessages}
-        onClearAllResponses={clearAllResponses}
-        onClearMessageResponses={clearMessageResponses}
-        onReorderMessages={reorderSavedMessages}
-        isSendingAll={isSendingAll}
+      <MessageSidebarSection
+        isSidebarOpen={hookData.isSidebarOpen}
+        savedMessages={hookData.savedMessages}
+        isSendingAll={hookData.isSendingAll}
+        isMessageViewModalOpen={isMessageViewModalOpen}
+        selectedMessage={selectedMessage}
+        snackbar={hookData.snackbar}
+        onToggleSidebar={hookData.toggleSidebar}
+        onRemoveMessage={hookData.removeSavedMessage}
+        onSendMessage={hookData.sendSavedMessage}
+        onSendAllMessages={hookData.sendAllSavedMessages}
+        onClearAllResponses={hookData.clearAllResponses}
+        onClearMessageResponses={hookData.clearMessageResponses}
+        onReorderMessages={hookData.reorderSavedMessages}
         onMessageClick={handleMessageClick}
-      /><MessageViewModal
-        isOpen={isMessageViewModalOpen}
-        onClose={closeMessageViewModal}
-        message={selectedMessage}
+        onCloseMessageViewModal={closeMessageViewModal}
+        onCloseSnackbar={hookData.closeSnackbar}
       />
-
-      <Snackbar
-        message={snackbar.message}
-        type={snackbar.type}
-        isVisible={snackbar.isVisible}
-        onClose={closeSnackbar}
-      />
-    </div>
+    </MessageGeneratorLayout>
   );
 };
 

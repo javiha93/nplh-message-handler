@@ -1,750 +1,381 @@
 import { useState, useEffect } from 'react';
-import { MessageType, Patient, Physician, Pathologist, Technician, Message } from '../types/MessageType';
+import { Patient, Physician, Pathologist, Technician } from '../types/MessageType';
 import { Specimen, Block, Slide } from '../types/Message';
+
+// Import services
+import { messageService } from '../services/MessageService';
+import { savedMessagesService, SavedMessage } from '../components/savedMessages';
+import { uiStateService } from '../services/UIStateService';
+import { formStateService } from '../services/FormStateService';
+import { snackbarService } from '../services/SnackbarService';
 import { messageUpdateService } from '../services/messageUpdateService';
 
-interface SavedMessage {
-  id: string;
-  content: string;
-  host: string;
-  messageType: string;
-  messageControlId?: string;
-  timestamp: Date;
-  responses?: string[];
-}
-
 export const useMessageGenerator = () => {
-  const [message, setMessage] = useState<Message | null>(null);
-  const [sampleId, setSampleId] = useState<string>('');
-  const [selectedHost, setSelectedHost] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('IN_PROGRESS');
-  const [generatedMessage, setGeneratedMessage] = useState<string>('');
-  const [messageCopied, setMessageCopied] = useState<boolean>(false);
-  const [isPatientModalOpen, setIsPatientModalOpen] = useState<boolean>(false);
-  const [isPhysicianModalOpen, setIsPhysicianModalOpen] = useState<boolean>(false);
-  const [isPathologistModalOpen, setIsPathologistModalOpen] = useState<boolean>(false);
-  const [isHierarchyModalOpen, setIsHierarchyModalOpen] = useState<boolean>(false);
-  const [isFetchingData, setIsFetchingData] = useState<boolean>(false);
-  const [isGeneratingMessage, setIsGeneratingMessage] = useState<boolean>(false);
-  const [isSendingMessage, setIsSendingMessage] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [patientInfo, setPatientInfo] = useState<Patient | null>(null);
-  const [physicianInfo, setPhysicianInfo] = useState<Physician | null>(null);
-  const [pathologistInfo, setPathologistInfo] = useState<Pathologist | null>(null);
-  const [isTechnicianModalOpen, setIsTechnicianModalOpen] = useState<boolean>(false);
-  const [technicianInfo, setTechnicianInfo] = useState<Technician | null>(null);
-  const [isSpecimenSelectorModalOpen, setIsSpecimenSelectorModalOpen] = useState<boolean>(false);
-  const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null);
-  const [isBlockSelectorModalOpen, setIsBlockSelectorModalOpen] = useState<boolean>(false);
-  const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
-  const [isSlideSelectorModalOpen, setIsSlideSelectorModalOpen] = useState<boolean>(false);  const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
-  const [isEntitySelectorModalOpen, setIsEntitySelectorModalOpen] = useState<boolean>(false);  const [selectedEntity, setSelectedEntity] = useState<{ type: string; id: string } | null>(null);
-  const [sendResponse, setSendResponse] = useState<string[]>([]);  // New state for sidebar panel
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [savedMessages, setSavedMessages] = useState<SavedMessage[]>([]);  const [isSendingAll, setIsSendingAll] = useState<boolean>(false);
-  const [isClearingAll, setIsClearingAll] = useState<boolean>(false);
-  const [isMessageSaved, setIsMessageSaved] = useState<boolean>(false);
-  const [currentMessageControlId, setCurrentMessageControlId] = useState<string | undefined>(undefined);
+  // State from services
+  const [uiState, setUIState] = useState(uiStateService.getState());
+  const [formState, setFormState] = useState(formStateService.getState());
+  const [savedMessages, setSavedMessages] = useState(savedMessagesService.getMessages());
+  const [snackbarState, setSnackbarState] = useState(snackbarService.getState());
 
-  const [snackbar, setSnackbar] = useState<{
-    isVisible: boolean;
-    message: string;
-    type: 'success' | 'error' | 'warning' | 'info';
-  }>({
-    isVisible: false,
-    message: '',
-    type: 'info'
-  });
-
-  const hosts = [
-    { id: 'LIS', name: 'LIS' },
-    { id: 'VTG', name: 'VTG' },
-    { id: 'VANTAGE_WS', name: 'VANTAGE WS' },
-    { id: 'UPATH_CLOUD', name: 'UPATH CLOUD' }
-  ];
-
-  const statusOptions = [
-    { id: 'IN_PROGRESS', name: 'IN_PROGRESS' },
-    { id: 'SIGN_OUT', name: 'SIGN_OUT' },
-    { id: 'ADDEND', name: 'ADDEND' },
-    { id: 'AMEND', name: 'AMEND' },
-    { id: 'CANCEL', name: 'CANCEL' }
-  ];
-
-  const statusVTGWSOptions = [
-      { id: 'EMBEDDED', name: 'EMBEDDED' },
-      { id: 'MARKED', name: 'MARKED' },
-      { id: 'VERIFIED', name: 'VERIFIED' },
-      { id: 'ASSEMBLED', name: 'ASSEMBLED' },
-      { id: 'ASSIGNED', name: 'ASSIGNED' },
-      { id: 'ADDITION', name: 'ADDITION' },
-      { id: 'CANCELED', name: 'CANCELED' }
-    ];
-
-  const [messageTypes, setMessageTypes] = useState<MessageType[]>([]);
-
-  const hostMessageTypes = {
-    LIS: [
-      { id: 'OML21', name: 'OML21' },
-      { id: 'ADTA28', name: 'ADTA28' },
-      { id: 'ADTA08', name: 'ADTA08' },
-      { id: 'CASE_UPDATE', name: 'CASE_UPDATE' },
-      { id: 'DELETE_CASE', name: 'DELETE_CASE' },
-      { id: 'DELETE_SPECIMEN', name: 'DELETE_SPECIMEN' },
-      { id: 'DELETE_SLIDE', name: 'DELETE_SLIDE' }
-    ],
-    VTG: [
-      { id: 'OEWF', name: 'OEWF' },
-      { id: 'ADDITION', name: 'ADDITION' },
-      { id: 'SPECIMEN_UPDATE', name: 'SPECIMEN_UPDATE' },
-      { id: 'BLOCK_UPDATE', name: 'BLOCK_UPDATE' },
-      { id: 'SLIDE_UPDATE', name: 'SLIDE_UPDATE' }
-    ],
-    VANTAGE_WS: [
-      { id: 'ProcessVANTAGEEvent', name: 'ProcessVANTAGEEvent' },
-      { id: 'ProcessNewOrderRequest', name: 'ProcessNewOrderRequest' },
-      { id: 'ProcessChangeOrderRequest', name: 'ProcessChangeOrderRequest' },
-      { id: 'ProcessCancelOrderRequest', name: 'ProcessCancelOrderRequest' },
-      { id: 'ProcessNewOrder', name: 'ProcessNewOrder' },
-      { id: 'ProcessChangeOrder', name: 'ProcessChangeOrder' },
-      { id: 'ProcessCancelOrder', name: 'ProcessCancelOrder' },
-      { id: 'ProcessAssignedPathologistUpdate', name: 'ProcessAssignedPathologistUpdate' },
-      { id: 'ProcessPhysicianUpdate', name: 'ProcessPhysicianUpdate' },
-      { id: 'ProcessPatientUpdate', name: 'ProcessPatientUpdate' }
-    ],
-    UPATH_CLOUD: [
-          { id: 'sendScannedSlideImageLabelId', name: 'sendScannedSlideImageLabelId' },
-          { id: 'sendReleasedSpecimen', name: 'sendReleasedSpecimen' },
-          { id: 'sendSlideWSAData', name: 'sendSlideWSAData' },
-          { id: 'BLOCK_UPDATE', name: 'BLOCK_UPDATE' },
-          { id: 'SLIDE_UPDATE', name: 'SLIDE_UPDATE' }
-        ]
-  };
-
+  // Subscribe to service updates
   useEffect(() => {
-    if (selectedHost) {
-      setMessageTypes(hostMessageTypes[selectedHost as keyof typeof hostMessageTypes] || []);
-      setSelectedType('');
-      setSelectedSpecimen(null);
-      setSelectedBlock(null);
-      setSelectedSlide(null);
-      setSelectedEntity(null);
-    } else {
-      setMessageTypes([]);
-      setSelectedSpecimen(null);
-      setSelectedBlock(null);
-      setSelectedSlide(null);
-      setSelectedEntity(null);
-    }
-  }, [selectedHost]);
-  useEffect(() => {
-    setSelectedSpecimen(null);
-    setSelectedBlock(null);
-    setSelectedSlide(null);
-    setSelectedEntity(null);
-  }, [selectedType]);
-  // Register for message update notifications
-  useEffect(() => {
+    const unsubscribeUI = uiStateService.subscribe(setUIState);
+    const unsubscribeForm = formStateService.subscribe(setFormState);
+    const unsubscribeSaved = savedMessagesService.subscribe(setSavedMessages);
+    const unsubscribeSnackbar = snackbarService.subscribe(setSnackbarState);
+
+    // Register for real-time message updates
     const handleMessageUpdate = (controlId: string, responses: string[]) => {
       console.log(`handleMessageUpdate called with controlId: ${controlId}`, responses);
-      updateMessageResponses(controlId, responses);
+      savedMessagesService.updateMessageResponses(controlId, responses);
     };
 
     console.log('Registering message update callback');
     messageUpdateService.registerUpdateCallback(handleMessageUpdate);
 
     return () => {
+      unsubscribeUI();
+      unsubscribeForm();
+      unsubscribeSaved();
+      unsubscribeSnackbar();
       console.log('Unregistering message update callback');
       messageUpdateService.unregisterUpdateCallback(handleMessageUpdate);
     };
   }, []);
 
-  const fetchMessageData = async (sampleIdValue: string) => {
-    if (!sampleIdValue) {
-      setIsFetchingData(false);
-      return;
-    }
-
-    setIsFetchingData(true);
-    setError(null);
-
-    try {
-      const response = await fetch('http://localhost:8085/api/messages/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sampleId: sampleIdValue }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setMessage(data);
-      setPatientInfo(data.patient || null);
-      setPhysicianInfo(data.physician || null);
-
-      const pathologist = data.patient?.orders?.orderList?.[0]?.pathologist || null;
-      setPathologistInfo(pathologist);
-
-      const technician = data.patient?.orders?.orderList?.[0]?.technician || null;
-      setTechnicianInfo(technician);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('Error al obtener los datos. Por favor intente nuevamente.');
-    } finally {
-      setIsFetchingData(false);
-    }
-  };
-
-  const handleSampleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handlers for form changes
+  const handleSampleIdChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSampleId = e.target.value;
-    setSampleId(newSampleId);
+    formStateService.setSampleId(newSampleId);
 
-    const timeoutId = setTimeout(() => {
-      if (newSampleId.trim()) {
-        fetchMessageData(newSampleId);
-      } else {
-        setMessage(null);
-        setPatientInfo(null);
-        setPhysicianInfo(null);
-        setPathologistInfo(null);
-        setTechnicianInfo(null);
-        setIsFetchingData(false);
+    // Debounced fetch
+    setTimeout(async () => {  
+      if (newSampleId.trim() === formStateService.getState().sampleId) {
+        if (newSampleId.trim()) {
+          await fetchMessageData(newSampleId);
+        } else {
+          // Clear data when sample ID is empty
+          formStateService.setMessage(null);
+          formStateService.clearEntityInformation();
+          uiStateService.setFetchingData(false);
+        }
       }
     }, 500);
-
-    return () => clearTimeout(timeoutId);
   };
 
   const handleHostChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedHost(e.target.value);
+    formStateService.setSelectedHost(e.target.value);
   };
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedType(e.target.value);
+    formStateService.setSelectedType(e.target.value);
   };
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedStatus(e.target.value);
+    formStateService.setSelectedStatus(e.target.value);
   };
 
+  // Entity handlers
   const handlePatientInfoSave = (updatedInfo: Patient) => {
-    setPatientInfo(updatedInfo);
-
-    if (message) {
-      setMessage(prevMessage => ({
-        ...prevMessage,
-        patient: updatedInfo
-      }));
-    }
+    formStateService.setPatientInfo(updatedInfo);
   };
 
   const handlePhysicianInfoSave = (updatedInfo: Physician) => {
-    setPhysicianInfo(updatedInfo);
-
-    if (message) {
-      setMessage(prevMessage => ({
-        ...prevMessage,
-        physician: updatedInfo
-      }));
-    }
+    formStateService.setPhysicianInfo(updatedInfo);
   };
-  const handlePathologistInfoSave = (updatedInfo: Pathologist) => {
-    setPathologistInfo(updatedInfo);
 
-    if (message && message.patient && message.patient.orders && message.patient.orders.orderList) {
-      const updatedMessage = { ...message };
-      if (updatedMessage.patient && updatedMessage.patient.orders) {
-        updatedMessage.patient.orders.orderList = updatedMessage.patient.orders.orderList.map(order => ({
-          ...order,
-          pathologist: updatedInfo,
-        }));
-      }
-      setMessage(updatedMessage);
-    }
+  const handlePathologistInfoSave = (updatedInfo: Pathologist) => {
+    formStateService.setPathologistInfo(updatedInfo);
   };
 
   const handleTechnicianInfoSave = (updatedInfo: Technician) => {
-    setTechnicianInfo(updatedInfo);
-
-    if (message && message.patient && message.patient.orders && message.patient.orders.orderList) {
-      const updatedMessage = { ...message };
-      if (updatedMessage.patient && updatedMessage.patient.orders) {
-        updatedMessage.patient.orders.orderList = updatedMessage.patient.orders.orderList.map(order => ({
-          ...order,
-          technician: updatedInfo,
-        }));
-      }
-      setMessage(updatedMessage);
-    }
+    formStateService.setTechnicianInfo(updatedInfo);
   };
 
   const handleSpecimenSelect = (specimen: Specimen) => {
-    setSelectedSpecimen(specimen);
+    formStateService.setSelectedSpecimen(specimen);
   };
 
   const handleBlockSelect = (block: Block) => {
-    setSelectedBlock(block);
+    formStateService.setSelectedBlock(block);
   };
 
   const handleSlideSelect = (slide: Slide) => {
-    setSelectedSlide(slide);
+    formStateService.setSelectedSlide(slide);
   };
 
   const handleEntitySelect = (entityType: string, entity: Specimen | Block | Slide) => {
-    if (entityType === 'Specimen') {
-      setSelectedSpecimen(entity as Specimen);
-      setSelectedBlock(null);
-      setSelectedSlide(null);
-    } else if (entityType === 'Block') {
-      setSelectedSpecimen(null);
-      setSelectedBlock(entity as Block);
-      setSelectedSlide(null);
-    } else if (entityType === 'Slide') {
-      setSelectedSpecimen(null);
-      setSelectedBlock(null);
-      setSelectedSlide(entity as Slide);
+    formStateService.setSelectedEntity(entityType, entity);
+  };
+
+  // Core functionality
+  const fetchMessageData = async (sampleIdValue: string) => {
+    if (!sampleIdValue) {
+      uiStateService.setFetchingData(false);
+      return;
     }
 
-    setSelectedEntity({
-      type: entityType,
-      id: (entity as any).id
-    });
-  };
+    try {
+      uiStateService.setFetchingData(true);
+      uiStateService.clearError();
 
-  const togglePatientModal = () => {
-    setIsPatientModalOpen(!isPatientModalOpen);
-  };
-
-  const togglePhysicianModal = () => {
-    setIsPhysicianModalOpen(!isPhysicianModalOpen);
-  };
-
-  const togglePathologistModal = () => {
-    setIsPathologistModalOpen(!isPathologistModalOpen);
-  };
-
-  const toggleHierarchyModal = () => {
-    setIsHierarchyModalOpen(!isHierarchyModalOpen);
-  };
-
-  const toggleTechnicianModal = () => {
-    setIsTechnicianModalOpen(!isTechnicianModalOpen);
-  };
-
-  const toggleSpecimenSelectorModal = () => {
-    setIsSpecimenSelectorModalOpen(!isSpecimenSelectorModalOpen);
-  };
-
-  const toggleBlockSelectorModal = () => {
-    setIsBlockSelectorModalOpen(!isBlockSelectorModalOpen);
-  };
-
-  const toggleSlideSelectorModal = () => {
-    setIsSlideSelectorModalOpen(!isSlideSelectorModalOpen);
-  };
-
-  const toggleEntitySelectorModal = () => {
-    setIsEntitySelectorModalOpen(!isEntitySelectorModalOpen);
+      const message = await messageService.fetchMessageData(sampleIdValue);
+      formStateService.setMessage(message);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      uiStateService.setError('Error al obtener los datos. Por favor intente nuevamente.');
+    } finally {
+      uiStateService.setFetchingData(false);
+    }
   };
 
   const generateMessage = async () => {
-    if (!sampleId || !selectedType) {
-      setGeneratedMessage('Por favor, completa todos los campos.');
-      return;
-    }
-
-    if ((selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN' && !selectedSpecimen) ||
-    (selectedHost === "UPATH_CLOUD" && selectedType === 'sendReleasedSpecimen' && !selectedSpecimen)
-    ){
-      setGeneratedMessage('Por favor, selecciona un specimen para eliminar.');
-      return;
-    }
-
-    if ((selectedHost === 'LIS' && selectedType === 'DELETE_SLIDE' && !selectedSlide) ||
-        (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendScannedSlideImageLabelId' && !selectedSlide) ||
-        (selectedHost === 'VANTAGE_WS' && selectedType === 'ProcessVANTAGEEvent' && !selectedEntity)) {
-      setGeneratedMessage('Por favor, selecciona una entidad para procesar.');
-      return;
-    }    setIsGeneratingMessage(true);
-    setError(null);
-    setSendResponse([]); // Clear previous send response when generating new message
+    const state = formStateService.getState();
     
-    try {
-      if (!message) {
-        throw new Error('No hay datos iniciales disponibles.');
-      }
-
-      let requestBody: any = {
-        message,
-        messageType: selectedType,
-        status: showStatusSelector ? selectedStatus : null
-      };
-
-      // Add the selected entity based on entity type
-      if (selectedEntity) {
-        if (selectedEntity.type === 'Specimen') {
-          requestBody.specimen = selectedSpecimen;
-        } else if (selectedEntity.type === 'Block') {
-          requestBody.block = selectedBlock;
-        } else if (selectedEntity.type === 'Slide') {
-          requestBody.slide = selectedSlide;
-        }
-      } else {
-        // For backward compatibility with existing code
-        if (selectedSpecimen) requestBody.specimen = selectedSpecimen;
-        if (selectedBlock) requestBody.block = selectedBlock;
-        if (selectedSlide) requestBody.slide = selectedSlide;
-      }
-
-      const response = await fetch('http://localhost:8085/api/messages/convert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-
-      const messageResponse = await response.json();
-      setGeneratedMessage(messageResponse.message);
-      setCurrentMessageControlId(messageResponse.controlId);
-      
-    } catch (err) {
-      console.error('Error generating message:', err);
-      setError('Error al generar mensaje. Por favor intente nuevamente.');
-      setGeneratedMessage('');
-    } finally {
-      setIsGeneratingMessage(false);
-    }
-  };  const sendMessage = async () => {
-    if (!generatedMessage || !selectedHost || !selectedType) {
-      setError('No hay mensaje para enviar o faltan datos.');
+    if (!state.sampleId || !state.selectedType) {
+      formStateService.setGeneratedMessage('Por favor, completa todos los campos.');
       return;
     }
 
-    setIsSendingMessage(true);
-    setError(null);
+    // Validation logic
+    if ((state.selectedHost === 'LIS' && state.selectedType === 'DELETE_SPECIMEN' && !state.selectedSpecimen) ||
+        (state.selectedHost === "UPATH_CLOUD" && state.selectedType === 'sendReleasedSpecimen' && !state.selectedSpecimen)) {
+      formStateService.setGeneratedMessage('Por favor, selecciona un specimen para eliminar.');
+      return;
+    }
+
+    if ((state.selectedHost === 'LIS' && state.selectedType === 'DELETE_SLIDE' && !state.selectedSlide) ||
+        (state.selectedHost === 'UPATH_CLOUD' && state.selectedType === 'sendScannedSlideImageLabelId' && !state.selectedSlide) ||
+        (state.selectedHost === 'VANTAGE_WS' && state.selectedType === 'ProcessVANTAGEEvent' && !state.selectedEntity)) {
+      formStateService.setGeneratedMessage('Por favor, selecciona una entidad para procesar.');
+      return;
+    }
 
     try {
-      const response = await fetch('http://localhost:8085/api/messages/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: generatedMessage,
-          hostName: selectedHost,
-          messageType: selectedType,
-          controlId: currentMessageControlId
-        }),
-      });if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
+      uiStateService.setGeneratingMessage(true);
+      uiStateService.clearError();
+      formStateService.clearSendResponse();
 
-      const contentType = response.headers.get('content-type');
-      let responseData: string[];
-      
-      if (contentType && contentType.includes('application/json')) {
-        // Handle JSON response (array of strings)
-        responseData = await response.json();
-      } else {
-        // Handle plain text response (single HL7 message)
-        const textResponse = await response.text();
-        responseData = [textResponse];
-      }
-      
-      setSendResponse(responseData);
-      console.log('Mensaje enviado exitosamente');
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setError('Error al enviar mensaje. Por favor intente nuevamente.');
+      const result = await messageService.generateMessage(
+        state.message!,
+        state.selectedType,
+        formStateService.getShowStatusSelector() ? state.selectedStatus : undefined,
+        state.selectedSpecimen || undefined,
+        state.selectedBlock || undefined,
+        state.selectedSlide || undefined,
+        state.selectedEntity || undefined
+      );
+
+      formStateService.setGeneratedMessage(result.message);
+      formStateService.setCurrentMessageControlId(result.controlId);
+    } catch (error) {
+      console.error('Error generating message:', error);
+      uiStateService.setError('Error al generar mensaje. Por favor intente nuevamente.');
+      formStateService.setGeneratedMessage('');
     } finally {
-      setIsSendingMessage(false);
+      uiStateService.setGeneratingMessage(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    const state = formStateService.getState();
+    
+    if (!state.generatedMessage || !state.selectedHost || !state.selectedType) {
+      uiStateService.setError('No hay mensaje para enviar o faltan datos.');
+      return;
+    }
+
+    try {
+      uiStateService.setSendingMessage(true);
+      uiStateService.clearError();
+
+      const response = await messageService.sendMessage({
+        message: state.generatedMessage,
+        hostName: state.selectedHost,
+        messageType: state.selectedType,
+        controlId: state.currentMessageControlId
+      });
+
+      formStateService.setSendResponse(response);
+      console.log('Mensaje enviado exitosamente');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      uiStateService.setError('Error al enviar mensaje. Por favor intente nuevamente.');
+    } finally {
+      uiStateService.setSendingMessage(false);
     }
   };
 
   const copyToClipboard = () => {
-    if (generatedMessage) {
-      navigator.clipboard.writeText(generatedMessage)
+    const state = formStateService.getState();
+    if (state.generatedMessage) {
+      navigator.clipboard.writeText(state.generatedMessage)
         .then(() => {
-          setMessageCopied(true);
-          setTimeout(() => setMessageCopied(false), 2000);
+          uiStateService.setMessageCopied(true);
         })
         .catch(err => {
           console.error('Error al copiar: ', err);
         });
     }
   };
+
   const updateGeneratedMessage = (updatedMessage: string) => {
-    setGeneratedMessage(updatedMessage);
-  };
-  const closeSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, isVisible: false }));
+    formStateService.setGeneratedMessage(updatedMessage);
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };  const saveMessageToSidebar = () => {
-    if (!generatedMessage || !selectedHost || !selectedType) {
-      setError('No hay mensaje para guardar o faltan datos.');
+  // Sidebar functionality
+  const saveMessageToSidebar = () => {
+    const state = formStateService.getState();
+    
+    if (!state.generatedMessage || !state.selectedHost || !state.selectedType) {
+      uiStateService.setError('No hay mensaje para guardar o faltan datos.');
       return;
     }
 
-    const newSavedMessage: SavedMessage = {
-      id: Date.now().toString(),
-      content: generatedMessage,
-      host: selectedHost,
-      messageType: selectedType,
-      messageControlId: currentMessageControlId,
-      timestamp: new Date()
-    };
+    savedMessagesService.addMessage(
+      state.generatedMessage,
+      state.selectedHost,
+      state.selectedType,
+      state.currentMessageControlId
+    );
 
-    setSavedMessages(prev => [...prev, newSavedMessage]);
-
-    setIsMessageSaved(true);
-
-    setSnackbar({
-      isVisible: true,
-      message: 'Mensaje guardado exitosamente',
-      type: 'success'
-    });
-
-    setTimeout(() => {
-      setIsMessageSaved(false);
-    }, 1500);
+    uiStateService.setMessageSaved(true);
+    snackbarService.showSuccess('Mensaje guardado exitosamente');
   };
+
   const removeSavedMessage = (id: string) => {
-    setSavedMessages(prev => prev.filter(msg => msg.id !== id));
-  };  const clearAllResponses = async () => {
-    setIsClearingAll(true);
+    savedMessagesService.removeMessage(id);
+  };
+
+  const clearAllResponses = async () => {
     try {
-      // Call the backend endpoint to delete all messages
-      const response = await fetch('http://localhost:8085/api/messages/deleteAll', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        // If successful, clear all responses locally as well
-        setSavedMessages(prev => prev.map(msg => ({
-          ...msg,
-          responses: undefined
-        })));
-
-        setSnackbar({
-          isVisible: true,
-          message: 'All acks deleted successfully',
-          type: 'success'
-        });
-      } else {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Error al eliminar respuestas');
-      }
+      uiStateService.setClearingAll(true);
+      await messageService.deleteAllMessages();
+      savedMessagesService.clearAllResponses();
+      snackbarService.showSuccess('All acks deleted successfully');
     } catch (error) {
       console.error('Error calling deleteAll endpoint:', error);
-      
-      // Fallback: clear locally even if backend call fails
-      setSavedMessages(prev => prev.map(msg => ({
-        ...msg,
-        responses: undefined
-      })));
-
-      setSnackbar({
-        isVisible: true,
-        message: 'Ack deleted (Server error)',
-        type: 'warning'
-      });
+      savedMessagesService.clearAllResponses();
+      snackbarService.showWarning('Ack deleted (Server error)');
     } finally {
-      setIsClearingAll(false);
+      uiStateService.setClearingAll(false);
     }
   };
 
   const clearMessageResponses = (messageId: string) => {
-    setSavedMessages(prev => prev.map(msg => 
-      msg.id === messageId 
-        ? { ...msg, responses: undefined }
-        : msg
-    ));
+    savedMessagesService.clearMessageResponses(messageId);
+    snackbarService.showInfo('All messages deleted successfully');
+  };
 
-    setSnackbar({
-      isVisible: true,
-      message: 'All messages deleted successfully',
-      type: 'info'
-    });
-  };
   const reorderSavedMessages = (startIndex: number, endIndex: number) => {
-    setSavedMessages(prev => {
-      const result = Array.from(prev);
-      const [removed] = result.splice(startIndex, 1);
-      result.splice(endIndex, 0, removed);
-      return result;
-    });
+    savedMessagesService.reorderMessages(startIndex, endIndex);
   };
+
   const sendSavedMessage = async (savedMessage: SavedMessage) => {
     try {
-      const response = await fetch('http://localhost:8085/api/messages/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: savedMessage.content,
-          hostName: savedMessage.host,
-          messageType: savedMessage.messageType,
-          controlId: savedMessage.messageControlId
-        }),
-      });if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      let responseData: string[];
-      
-      if (contentType && contentType.includes('application/json')) {
-        // Handle JSON response (array of strings)
-        responseData = await response.json();
-      } else {
-        // Handle plain text response (single HL7 message)
-        const textResponse = await response.text();
-        responseData = [textResponse];
-      }
-      
-      console.log('Mensaje guardado enviado exitosamente:', responseData);
-      
-      // Actualizar el mensaje guardado con la respuesta
-      setSavedMessages(prev => prev.map(msg => 
-        msg.id === savedMessage.id 
-          ? { ...msg, responses: responseData }
-          : msg
-      ));
-    } catch (err) {
-      console.error('Error sending saved message:', err);
-      setError('Error al enviar mensaje guardado.');
+      const response = await savedMessagesService.sendMessage(savedMessage);
+      console.log('Mensaje guardado enviado exitosamente:', response);
+    } catch (error) {
+      console.error('Error sending saved message:', error);
+      uiStateService.setError('Error al enviar mensaje guardado.');
     }
   };
+
   const sendAllSavedMessages = async () => {
     if (savedMessages.length === 0) {
-      setError('No hay mensajes guardados para enviar.');
+      uiStateService.setError('No hay mensajes guardados para enviar.');
       return;
     }
 
-    setIsSendingAll(true);
-    setError(null);
-
     try {
+      uiStateService.setSendingAll(true);
+      uiStateService.clearError();
+
       for (const savedMessage of savedMessages) {
         await sendSavedMessage(savedMessage);
       }
       console.log('Todos los mensajes enviados exitosamente');
-    } catch (err) {
-      console.error('Error sending all messages:', err);
-      setError('Error al enviar todos los mensajes.');
+    } catch (error) {
+      console.error('Error sending all messages:', error);
+      uiStateService.setError('Error al enviar todos los mensajes.');
     } finally {
-      setIsSendingAll(false);
+      uiStateService.setSendingAll(false);
     }
   };
+
+  // Helper method for backward compatibility
   const updateMessageResponses = (controlId: string, responses: string[]) => {
-    console.log(`updateMessageResponses called with controlId: ${controlId}`, responses);
-    console.log('Current saved messages:', savedMessages.map(msg => ({ id: msg.id, messageControlId: msg.messageControlId })));
-    
-    setSavedMessages(prev => {
-      const updated = prev.map(msg => {
-        if (msg.messageControlId === controlId) {
-          console.log(`Updating message with controlId ${controlId} - old responses:`, msg.responses, 'new responses:', responses);
-          return { ...msg, responses: responses };
-        }
-        return msg;
-      });
-      
-      console.log('Updated saved messages:', updated.map(msg => ({ id: msg.id, messageControlId: msg.messageControlId, responsesCount: msg.responses?.length || 0 })));
-      return updated;
-    });
+    savedMessagesService.updateMessageResponses(controlId, responses);
   };
 
-  const showSpecimenSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SPECIMEN') ||
-                               (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendReleasedSpecimen') ||
-                               (selectedHost === 'VTG' && selectedType === 'SPECIMEN_UPDATE');
-  const showBlockSelector = (selectedHost === 'VTG' && selectedType === 'BLOCK_UPDATE');
-  const showSlideSelector = (selectedHost === 'LIS' && selectedType === 'DELETE_SLIDE') ||
-                            (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendScannedSlideImageLabelId') ||
-                            (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendSlideWSAData') ||
-                            (selectedHost === 'VTG' && selectedType === 'SLIDE_UPDATE');
-  const showEntitySelector = (selectedHost === 'VANTAGE_WS' && selectedType === 'ProcessVANTAGEEvent');
-  const showStatusSelector = (selectedHost === 'LIS' && selectedType === 'CASE_UPDATE') || 
-                            (selectedHost === 'VANTAGE_WS' && selectedType === 'ProcessVANTAGEEvent') || 
-                            (selectedHost === 'VTG' && selectedType === 'SLIDE_UPDATE') || 
-                            (selectedHost === 'VTG' && selectedType === 'BLOCK_UPDATE') || 
-                            (selectedHost === 'VTG' && selectedType === 'SPECIMEN_UPDATE') ||
-                            (selectedHost === 'UPATH_CLOUD' && selectedType === 'sendSlideWSAData');
-
-  const generateButtonDisabled = isGeneratingMessage || 
-                                !selectedHost || 
-                                !selectedType || 
-                                isFetchingData || 
-                                (showSpecimenSelector && !selectedSpecimen) ||
-                                (showSlideSelector && !selectedSlide) ||
-                                (showBlockSelector && !selectedBlock) ||
-                                (showEntitySelector && !selectedEntity);
+  // Computed properties
+  const showSpecimenSelector = formStateService.getShowSpecimenSelector();
+  const showBlockSelector = formStateService.getShowBlockSelector();
+  const showSlideSelector = formStateService.getShowSlideSelector();
+  const showEntitySelector = formStateService.getShowEntitySelector();
+  const showStatusSelector = formStateService.getShowStatusSelector();
+  const generateButtonDisabled = formStateService.isGenerateButtonDisabled(
+    uiState.isFetchingData,
+    uiState.isGeneratingMessage
+  );
 
   return {
-    message,
-    sampleId,
-    selectedHost,
-    selectedType,
-    selectedStatus,
-    generatedMessage,
-    messageCopied,
-    isPatientModalOpen,
-    isPhysicianModalOpen,
-    isPathologistModalOpen,
-    isHierarchyModalOpen,
-    isFetchingData,
-    isGeneratingMessage,
-    isSendingMessage,
-    error,
-    patientInfo,
-    physicianInfo,
-    pathologistInfo,
-    isTechnicianModalOpen,
-    technicianInfo,
-    isSpecimenSelectorModalOpen,
-    selectedSpecimen,
-    isBlockSelectorModalOpen,
-    selectedBlock,
-    isSlideSelectorModalOpen,
-    selectedSlide,
-    isEntitySelectorModalOpen,
-    selectedEntity,
-    hosts,
-    statusOptions,
-    statusVTGWSOptions,
-    messageTypes,
+    // Form state
+    message: formState.message,
+    sampleId: formState.sampleId,
+    selectedHost: formState.selectedHost,
+    selectedType: formState.selectedType,
+    selectedStatus: formState.selectedStatus,
+    generatedMessage: formState.generatedMessage,
+    patientInfo: formState.patientInfo,
+    physicianInfo: formState.physicianInfo,
+    pathologistInfo: formState.pathologistInfo,
+    technicianInfo: formState.technicianInfo,
+    selectedSpecimen: formState.selectedSpecimen,
+    selectedBlock: formState.selectedBlock,
+    selectedSlide: formState.selectedSlide,
+    selectedEntity: formState.selectedEntity,
+    sendResponse: formState.sendResponse,
+    
+    // UI state
+    messageCopied: uiState.messageCopied,
+    isPatientModalOpen: uiState.isPatientModalOpen,
+    isPhysicianModalOpen: uiState.isPhysicianModalOpen,
+    isPathologistModalOpen: uiState.isPathologistModalOpen,
+    isHierarchyModalOpen: uiState.isHierarchyModalOpen,
+    isFetchingData: uiState.isFetchingData,
+    isGeneratingMessage: uiState.isGeneratingMessage,
+    isSendingMessage: uiState.isSendingMessage,
+    error: uiState.error,
+    isTechnicianModalOpen: uiState.isTechnicianModalOpen,
+    isSpecimenSelectorModalOpen: uiState.isSpecimenSelectorModalOpen,
+    isBlockSelectorModalOpen: uiState.isBlockSelectorModalOpen,
+    isSlideSelectorModalOpen: uiState.isSlideSelectorModalOpen,
+    isEntitySelectorModalOpen: uiState.isEntitySelectorModalOpen,
+    isSidebarOpen: uiState.isSidebarOpen,
+    isSendingAll: uiState.isSendingAll,
+    isClearingAll: uiState.isClearingAll,
+    isMessageSaved: uiState.isMessageSaved,
+      // Static data
+    hosts: formStateService.hosts,
+    messageTypes: formState.messageTypes,
+    
+    // Computed properties
     showSpecimenSelector,
     showBlockSelector,
     showSlideSelector,
     showEntitySelector,
     showStatusSelector,
-    generateButtonDisabled,    sendResponse,    // New sidebar state and functions
-    isSidebarOpen,
+    generateButtonDisabled,
+    
+    // Saved messages
     savedMessages,
-    isSendingAll,
-    isMessageSaved,
-    snackbar,
-    closeSnackbar,    toggleSidebar,    saveMessageToSidebar,    removeSavedMessage,
-    clearAllResponses,
-    clearMessageResponses,
-    reorderSavedMessages,
-    sendSavedMessage,
-    sendAllSavedMessages,
-    updateMessageResponses,
+    
+    // Snackbar
+    snackbar: snackbarState,
+    closeSnackbar: () => snackbarService.close(),
+    
+    // Actions
     handleSampleIdChange,
     handleHostChange,
     handleTypeChange,
@@ -757,18 +388,33 @@ export const useMessageGenerator = () => {
     handleBlockSelect,
     handleSlideSelect,
     handleEntitySelect,
-    togglePatientModal,
-    togglePhysicianModal,
-    togglePathologistModal,
-    toggleHierarchyModal,
-    toggleTechnicianModal,
-    toggleSpecimenSelectorModal,
-    toggleBlockSelectorModal,
-    toggleSlideSelectorModal,
-    toggleEntitySelectorModal,
+    
+    // Modal toggles
+    togglePatientModal: () => uiStateService.togglePatientModal(),
+    togglePhysicianModal: () => uiStateService.togglePhysicianModal(),
+    togglePathologistModal: () => uiStateService.togglePathologistModal(),
+    toggleHierarchyModal: () => uiStateService.toggleHierarchyModal(),
+    toggleTechnicianModal: () => uiStateService.toggleTechnicianModal(),
+    toggleSpecimenSelectorModal: () => uiStateService.toggleSpecimenSelectorModal(),
+    toggleBlockSelectorModal: () => uiStateService.toggleBlockSelectorModal(),
+    toggleSlideSelectorModal: () => uiStateService.toggleSlideSelectorModal(),
+    toggleEntitySelectorModal: () => uiStateService.toggleEntitySelectorModal(),
+    toggleSidebar: () => uiStateService.toggleSidebar(),
+    
+    // Core functionality
     generateMessage,
     sendMessage,
     copyToClipboard,
-    updateGeneratedMessage
+    updateGeneratedMessage,
+    
+    // Sidebar functionality
+    saveMessageToSidebar,
+    removeSavedMessage,
+    clearAllResponses,
+    clearMessageResponses,
+    reorderSavedMessages,
+    sendSavedMessage,
+    sendAllSavedMessages,
+    updateMessageResponses
   };
 };

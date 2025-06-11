@@ -2,6 +2,7 @@
 import React from 'react';
 import { MessageType } from '../../types/MessageType';
 import { Specimen, Slide, Block } from '../../types/Message';
+import { MessageConfigHelper } from '../../config/messageConfig';
 
 interface MessageOptionsProps {
   selectedHost: string;
@@ -9,8 +10,6 @@ interface MessageOptionsProps {
   selectedStatus: string;
   messageTypes: MessageType[];
   hosts: { id: string; name: string }[];
-  statusOptions: { id: string; name: string }[];
-  statusVTGWSOptions: { id: string; name: string }[];
   handleHostChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleTypeChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleStatusChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -36,8 +35,6 @@ const MessageOptions: React.FC<MessageOptionsProps> = ({
   selectedStatus,
   messageTypes,
   hosts,
-  statusOptions,
-  statusVTGWSOptions,
   handleHostChange,
   handleTypeChange,
   handleStatusChange,
@@ -56,7 +53,7 @@ const MessageOptions: React.FC<MessageOptionsProps> = ({
   selectedSlide,
   selectedEntity
 }) => {
- const currentStatusOptions = selectedHost === 'VANTAGE_WS' ? statusVTGWSOptions : statusOptions;
+ const currentStatusOptions = MessageConfigHelper.getStatusOptions(selectedHost, selectedType);
 
   return (
     <>
