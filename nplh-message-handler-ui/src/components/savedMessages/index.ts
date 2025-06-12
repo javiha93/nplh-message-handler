@@ -5,3 +5,4 @@ export type { SavedMessage } from './services/SavedMessagesService';
 // Component exports
 export { default as MessageSidebar } from './components/MessageSidebar';
 export { default as MessageViewModal } from './components/MessageViewModal';
+export { default as MessageEditModal } from './components/MessageEditModal';

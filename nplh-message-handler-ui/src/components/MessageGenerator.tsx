@@ -5,7 +5,7 @@ import MessageGeneratorLayout from './messageGenerator/MessageGeneratorLayout';
 import MessageFormSection from './messageGenerator/MessageFormSection';
 import EditModalsContainer from './editModals/EditModalsContainer';
 import SelectorModalsContainer from './messageGenerator/SelectorModalsContainer';
-import MessageSidebarSection from './savedMessages/components/MessageSidebarSection';
+import MessageSidebarSection from './messageGenerator/MessageSidebarSection';
 
 const MessageGenerator: React.FC = () => {
   // Local state for message view modal

@@ -7,6 +7,7 @@ export interface SavedMessage {
   messageType: string;
   messageControlId?: string;
   timestamp: Date;
+  sentTimestamp?: Date;
   responses?: string[];
 }
 
@@ -72,11 +73,11 @@ export class SavedMessagesService {
     );
     this.notifyListeners();
   }
-
   clearAllResponses(): void {
     this.messages = this.messages.map(msg => ({
       ...msg,
-      responses: undefined
+      responses: undefined,
+      sentTimestamp: undefined
     }));
     this.notifyListeners();
   }
@@ -84,7 +85,7 @@ export class SavedMessagesService {
   clearMessageResponses(messageId: string): void {
     this.messages = this.messages.map(msg => 
       msg.id === messageId 
-        ? { ...msg, responses: undefined }
+        ? { ...msg, responses: undefined, sentTimestamp: undefined }
         : msg
     );
     this.notifyListeners();
@@ -97,7 +98,6 @@ export class SavedMessagesService {
     this.messages = result;
     this.notifyListeners();
   }
-
   async sendMessage(savedMessage: SavedMessage): Promise<string[]> {
     const request: SendMessageRequest = {
       message: savedMessage.content,
@@ -108,10 +108,10 @@ export class SavedMessagesService {
 
     const responses = await messageService.sendMessage(request);
     
-    // Update the message with responses
+    // Update the message with responses and sent timestamp
     this.messages = this.messages.map(msg => 
       msg.id === savedMessage.id 
-        ? { ...msg, responses }
+        ? { ...msg, responses, sentTimestamp: new Date() }
         : msg
     );
     this.notifyListeners();
@@ -127,6 +127,15 @@ export class SavedMessagesService {
     for (const savedMessage of this.messages) {
       await this.sendMessage(savedMessage);
     }
+  }
+
+  updateMessageContent(messageId: string, newContent: string): void {
+    this.messages = this.messages.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, content: newContent }
+        : msg
+    );
+    this.notifyListeners();
   }
 }
 

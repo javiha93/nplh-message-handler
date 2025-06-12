@@ -27,7 +27,7 @@ const MessageGeneratorLayout: React.FC<MessageGeneratorLayoutProps> = ({
                   ? 'bg-green-600 text-white hover:bg-green-700' 
                   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               }`}
-              title="Abrir panel de mensajes"
+              title="Saved Messages"
             >
               <MessagesSquare size={24} />
             </button>

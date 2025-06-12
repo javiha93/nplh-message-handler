@@ -14,14 +14,14 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
   message
 }) => {
   if (!isOpen || !message) return null;
-
   const formatTimestamp = (timestamp: Date) => {
     return new Date(timestamp).toLocaleString('es-ES', {
       day: '2-digit',
       month: '2-digit',
       year: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -30,13 +30,16 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div>
-            <h2 className="text-lg font-semibold text-gray-800">Mensaje Completo</h2>
-            <div className="text-sm text-gray-600">
+            <h2 className="text-lg font-semibold text-gray-800">Mensaje Completo</h2>            <div className="text-sm text-gray-600">
               <span className="font-medium text-blue-600">{message.host}</span>
               <span className="text-gray-500 mx-1">•</span>
               <span className="text-gray-700">{message.messageType}</span>
-              <span className="text-gray-500 mx-1">•</span>
-              <span className="text-gray-500">{formatTimestamp(message.timestamp)}</span>
+              {message.sentTimestamp && (
+                <>
+                  <span className="text-gray-500 mx-1">•</span>
+                  <span className="text-gray-500">Enviado: {formatTimestamp(message.sentTimestamp)}</span>
+                </>
+              )}
             </div>
           </div>
           <button

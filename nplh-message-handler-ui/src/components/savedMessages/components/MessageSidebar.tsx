@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical } from 'lucide-react';
+import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { SavedMessage } from '../services/SavedMessagesService';
 
@@ -15,6 +15,7 @@ interface MessageSidebarProps {
   onReorderMessages: (startIndex: number, endIndex: number) => void;
   isSendingAll: boolean;
   onMessageClick: (message: SavedMessage) => void;
+  onEditMessage?: (message: SavedMessage) => void;
 }
 
 const MessageSidebar: React.FC<MessageSidebarProps> = ({
@@ -28,7 +29,8 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onClearMessageResponses,
   onReorderMessages,
   isSendingAll,
-  onMessageClick
+  onMessageClick,
+  onEditMessage
 }) => {
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   
@@ -129,14 +131,14 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     document.addEventListener('mousemove', resize);
     document.addEventListener('mouseup', stopResizing);
   };
-
   const formatTimestamp = (timestamp: Date) => {
     return new Date(timestamp).toLocaleString('es-ES', {
       day: '2-digit',
       month: '2-digit',
       year: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -239,10 +241,9 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
 
                             {/* Content Area */}
                             <div className="cursor-pointer" onClick={() => onMessageClick(message)}>
-                              <div className="p-2">
-                                <div className="flex items-center justify-between mb-1">
+                              <div className="p-2">                                <div className="flex items-center justify-between mb-1">
                                   <div className="text-xs text-gray-500">
-                                    {formatTimestamp(message.timestamp)}
+                                    {message.sentTimestamp ? `Enviado: ${formatTimestamp(message.sentTimestamp)}` : ''}
                                   </div>
                                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     <button
@@ -255,8 +256,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                     >
                                       {expandedMessages.has(message.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                     </button>
-                                    
-                                    <button
+                                      <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         onClearMessageResponses(message.id);
@@ -265,6 +265,29 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                       title="Limpiar respuestas"
                                     >
                                       <RotateCcw size={16} />
+                                    </button>                                    {/* Edit button - always visible, disabled if sent */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!message.sentTimestamp && onEditMessage) {
+                                          onEditMessage(message);
+                                        }
+                                      }}
+                                      disabled={!!message.sentTimestamp || !onEditMessage}
+                                      className={`p-1 rounded transition-colors ${
+                                        message.sentTimestamp || !onEditMessage
+                                          ? 'text-gray-400 cursor-not-allowed' 
+                                          : 'text-blue-600 hover:bg-blue-100 cursor-pointer'
+                                      }`}
+                                      title={
+                                        !onEditMessage 
+                                          ? "Edición no disponible"
+                                          : message.sentTimestamp 
+                                            ? "No se puede editar mensaje enviado" 
+                                            : "Editar mensaje"
+                                      }
+                                    >
+                                      <Edit size={16} />
                                     </button>
                                     <button
                                       onClick={(e) => {
