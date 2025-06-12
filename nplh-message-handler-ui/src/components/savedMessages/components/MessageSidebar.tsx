@@ -168,7 +168,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
           {savedMessages.length > 0 && (
             <button
               onClick={onClearAllResponses}
-              className="p-1 text-orange-600 hover:bg-orange-100 rounded"
+              className="p-1 text-600 hover:bg-gray-100 rounded"
               title="Limpiar respuestas"
             >
               <RotateCcw size={18} />
@@ -260,7 +260,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                         e.stopPropagation();
                                         onClearMessageResponses(message.id);
                                       }}
-                                      className="p-1 text-orange-600 hover:bg-orange-100 rounded"
+                                      className="p-1 text-gray-400 hover:bg-gray-200 rounded"
                                       title="Limpiar respuestas"
                                     >
                                       <RotateCcw size={16} />
