@@ -5,6 +5,7 @@
 
 import { MessageType, Patient, Physician, Pathologist, Technician, Message } from '../types/MessageType';
 import { Specimen, Block, Slide } from '../types/Message';
+import { ClientMessageResponse } from '../components/savedMessages/services/SavedMessagesService';
 import { 
   MessageConfigHelper, 
   BASE_STATUS_OPTIONS, 
@@ -22,7 +23,7 @@ type FormStateType = {
   message: Message | null;
   generatedMessage: string;
   currentMessageControlId: string | undefined;
-  sendResponse: string[];
+  sendResponse: ClientMessageResponse[];
   
   // Entity information
   patientInfo: Patient | null;
@@ -178,8 +179,7 @@ class FormStateService {
   public setCurrentMessageControlId(controlId: string | undefined): void {
     this.updateState({ currentMessageControlId: controlId });
   }
-
-  public setSendResponse(sendResponse: string[]): void {
+  public setSendResponse(sendResponse: ClientMessageResponse[]): void {
     this.updateState({ sendResponse });
   }
 

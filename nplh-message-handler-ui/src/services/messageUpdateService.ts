@@ -1,7 +1,9 @@
 // Service to handle message response updates via SSE
+import { ClientMessageResponse } from '../components/savedMessages/services/SavedMessagesService';
+
 export class MessageUpdateService {
   private static instance: MessageUpdateService;
-  private updateCallbacks: ((controlId: string, responses: string[]) => void)[] = [];
+  private updateCallbacks: ((controlId: string, responses: ClientMessageResponse[]) => void)[] = [];
   private eventSource: EventSource | null = null;
 
   private constructor() {
@@ -14,18 +16,17 @@ export class MessageUpdateService {
     }
     return MessageUpdateService.instance;
   }
-
-  registerUpdateCallback(callback: (controlId: string, responses: string[]) => void) {
+  registerUpdateCallback(callback: (controlId: string, responses: ClientMessageResponse[]) => void) {
     this.updateCallbacks.push(callback);
     console.log('Registered update callback. Total callbacks:', this.updateCallbacks.length);
   }
 
-  unregisterUpdateCallback(callback: (controlId: string, responses: string[]) => void) {
+  unregisterUpdateCallback(callback: (controlId: string, responses: ClientMessageResponse[]) => void) {
     this.updateCallbacks = this.updateCallbacks.filter(cb => cb !== callback);
     console.log('Unregistered update callback. Total callbacks:', this.updateCallbacks.length);
   }
 
-  private notifyCallbacks(controlId: string, responses: string[]) {
+  private notifyCallbacks(controlId: string, responses: ClientMessageResponse[]) {
     console.log(`Notifying ${this.updateCallbacks.length} callbacks for controlId: ${controlId}`, responses);
     this.updateCallbacks.forEach(callback => {
       try {
@@ -48,9 +49,17 @@ export class MessageUpdateService {
         try {
           const data = JSON.parse(event.data);
           console.log('Received SSE message:', data);
-          
-          if (data.type === 'messageUpdate' && data.controlId && data.responses) {
-            this.notifyCallbacks(data.controlId, data.responses);
+            if (data.type === 'messageUpdate' && data.controlId && data.responses) {
+            // Convert string responses to ClientMessageResponse format if needed
+            const responses: ClientMessageResponse[] = Array.isArray(data.responses) 
+              ? data.responses.map((resp: any) => {
+                  if (typeof resp === 'string') {
+                    return { message: resp, receiveTime: new Date().toISOString() };
+                  }
+                  return resp;
+                })
+              : [];
+            this.notifyCallbacks(data.controlId, responses);
           }
         } catch (error) {
           console.error('Error parsing SSE message:', error);
@@ -80,10 +89,16 @@ export class MessageUpdateService {
       console.log('SSE connection closed');
     }
   }
-
   // Method to manually update message responses (can be called from console or other services)
-  updateResponses(controlId: string, responses: string[]) {
-    this.notifyCallbacks(controlId, responses);
+  updateResponses(controlId: string, responses: string[] | ClientMessageResponse[]) {
+    // Convert string responses to ClientMessageResponse format if needed
+    const clientResponses: ClientMessageResponse[] = responses.map((resp: any) => {
+      if (typeof resp === 'string') {
+        return { message: resp, receiveTime: new Date().toISOString() };
+      }
+      return resp;
+    });
+    this.notifyCallbacks(controlId, clientResponses);
   }
 }
 

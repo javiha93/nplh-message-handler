@@ -66,26 +66,41 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''} del Servidor:
                 </h3>
-                <div className="space-y-3">
-                  {message.responses?.map((response, index) => {
-                    const isError = response.includes('ERR|');
+                <div className="space-y-3">                {message.responses?.map((response, index) => {
+                    const isError = response.message.includes('ERR|');
+                    const receiveTime = new Date(response.receiveTime).toLocaleString('es-ES', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    });
+                    
                     return (
                       <div key={index} className={`p-4 rounded-lg border ${
                         isError 
                           ? 'bg-red-50 border-red-200' 
                           : 'bg-green-50 border-green-200'
                       }`}>
-                        {(message.responses?.length || 0) > 1 && (
-                          <div className={`text-xs font-semibold mb-2 ${
-                            isError ? 'text-red-600' : 'text-green-600'
+                        <div className="flex justify-between items-start mb-2">
+                          {(message.responses?.length || 0) > 1 && (
+                            <div className={`text-xs font-semibold ${
+                              isError ? 'text-red-600' : 'text-green-600'
+                            }`}>
+                              Respuesta #{index + 1}
+                            </div>
+                          )}
+                          <div className={`text-xs ${
+                            isError ? 'text-red-500' : 'text-green-500'
                           }`}>
-                            Respuesta #{index + 1}:
+                            Recibido: {receiveTime}
                           </div>
-                        )}
+                        </div>
                         <pre className={`text-xs font-mono whitespace-pre-wrap ${
                           isError ? 'text-red-800' : 'text-green-800'
                         }`}>
-                          {response}
+                          {response.message}
                         </pre>
                       </div>
                     );

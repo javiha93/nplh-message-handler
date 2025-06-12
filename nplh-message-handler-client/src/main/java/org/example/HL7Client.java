@@ -1,8 +1,12 @@
 package org.example;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Getter;
+import org.example.domain.HL7LLPCharacters;
 import org.example.domain.host.ClientMessage;
+import org.example.domain.host.ClientMessageResponse;
 import org.example.domain.host.HL7Host;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static org.example.utils.MessageHandler.*;
 
 public class HL7Client extends Client {
 
@@ -45,7 +51,7 @@ public class HL7Client extends Client {
     }
 
     @Override
-    public List<String> send(String message, String controlId) {
+    public List<ClientMessageResponse> send(String message, String controlId) {
         String llpMessage = textToLlp(message);
         ClientMessage clientMessage = new ClientMessage(message, controlId);
         clientMessageList.add(clientMessage);
@@ -58,21 +64,21 @@ public class HL7Client extends Client {
         return receive(controlId);
     }
 
-    private List<String> receive(String controlId) {
-        List<String> responses = new ArrayList<>();
+    private List<ClientMessageResponse> receive(String controlId) {
+        List<ClientMessageResponse> responses = new ArrayList<>();
         final int initialTimeout = 4000;
         final int extendedTimeout = 300;
         try {
             socket.setSoTimeout(initialTimeout);
 
-            String firstResponse = receiveSingle(controlId);
-            if (firstResponse != null && !firstResponse.trim().isEmpty()) {
+            ClientMessageResponse firstResponse = receiveSingle(controlId);
+            if (firstResponse != null && !firstResponse.getMessage().trim().isEmpty()) {
                 responses.add(firstResponse);
                 logger.info("Received first response");
 
                 socket.setSoTimeout(extendedTimeout);
-                String extraResponse = receiveSingle(controlId);
-                if (extraResponse != null && !extraResponse.trim().isEmpty()) {
+                ClientMessageResponse extraResponse = receiveSingle(controlId);
+                if (extraResponse != null && !extraResponse.getMessage().trim().isEmpty()) {
                     responses.add(extraResponse);
                     logger.info("Received second response");
                 }
@@ -84,7 +90,7 @@ public class HL7Client extends Client {
         return responses;
     }
 
-    private String receiveSingle(String controlId) {
+    private ClientMessageResponse receiveSingle(String controlId) {
         try {
             StringBuilder response = new StringBuilder();
             int c;
@@ -116,7 +122,7 @@ public class HL7Client extends Client {
                 message.addResponse(responseText);
             }
             logger.info("\nReceived response: \n{}\nfrom Host {}", responseText, clientName);
-            return responseText;
+            return new ClientMessageResponse(responseText);
         } catch (SocketTimeoutException e) {
             logger.info("Not found any response");
             return null;
@@ -126,64 +132,8 @@ public class HL7Client extends Client {
         }
     }
 
-    private String textToLlp(String textMessage) {
-        return HL7LLPCharacters.VT.getCharacter()
-                + textMessage.trim().replaceAll("\\n", HL7LLPCharacters.CR.getCharacterAsString())
-                + HL7LLPCharacters.CR.getCharacter()
-                + HL7LLPCharacters.FS.getCharacter()
-                + HL7LLPCharacters.CR.getCharacter();
-    }
-
-    private String llpToText(String llpMessage) {
-        if (llpMessage == null || llpMessage.isEmpty()) {
-            return llpMessage;
-        }
-
-        String trimmedMessage = llpMessage.startsWith(HL7LLPCharacters.VT.getCharacterAsString())
-                ? llpMessage.substring(1)
-                : llpMessage;
-
-        int fsIndex = trimmedMessage.indexOf(HL7LLPCharacters.FS.getCharacter());
-        if (fsIndex >= 0) {
-            trimmedMessage = trimmedMessage.substring(0, fsIndex);
-        }
-
-        return trimmedMessage.replaceAll(HL7LLPCharacters.CR.getCharacterAsString(), "\n").trim();
-    }
-
-    @Getter
-    public enum HL7LLPCharacters {
-
-        VT(0x0b), FS(0x1c), CR(0x0d);
-
-        final char character;
-
-        HL7LLPCharacters(int character) {
-            this.character = (char) character;
-        }
-
-        public String getCharacterAsString() {
-            return String.valueOf(character);
-        }
-
-    }
-
-    public List<String> extractUUIDs(String message) {
-        List<String> uuids = new ArrayList<>();
-        Pattern uuidPattern = Pattern.compile(
-                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
-                Pattern.CASE_INSENSITIVE);
-
-        Matcher matcher = uuidPattern.matcher(message);
-        while (matcher.find()) {
-            uuids.add(matcher.group());
-        }
-
-        return uuids;
-    }
-
     //ONLY UI CODE NOT FOR AT SOLUTION
-    public void notifyUIMessageUpdate(String controlId, List<String> responses) {
+    public void notifyUIMessageUpdate(String controlId, List<ClientMessageResponse> responses) {
         // Execute notification asynchronously with delay to avoid blocking the main request
         CompletableFuture.runAsync(() -> {
             try {
@@ -197,13 +147,15 @@ public class HL7Client extends Client {
         });
     }
 
-    public void notifyUIMessageUpdateSync(String controlId, List<String> responses) {
+    public void notifyUIMessageUpdateSync(String controlId, List<ClientMessageResponse> responses) {
         try {
             Map<String, Object> payload = new HashMap<>();
             payload.put("controlId", controlId);
             payload.put("responses", responses);
 
             ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             String jsonPayload = mapper.writeValueAsString(payload);
 
             // Opción 1: Usar Base64 para evitar problemas de escape

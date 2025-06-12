@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.*;
+import org.example.domain.host.ClientMessageResponse;
 import org.example.domain.host.HL7Host;
 import org.example.domain.host.Host;
 import org.example.domain.host.HostDeserializer;
@@ -41,14 +42,14 @@ public class MessageController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<List<String>> sendMessage(@RequestBody SendMessageRequest request) {
-        List<String> response;
+    public ResponseEntity<List<ClientMessageResponse>> sendMessage(@RequestBody SendMessageRequest request) {
+        List<ClientMessageResponse> response;
         Client client = clients.getClient(request.hostName);
 
         if (client instanceof HL7Client) {
             response = client.send(request.message, request.controlId);
         } else if (client instanceof WSClient) {
-            response = Collections.singletonList(client.send(request.messageType, request.message, request.controlId));
+            response = Collections.singletonList(new ClientMessageResponse(client.send(request.messageType, request.message, request.controlId)));
         } else {
             throw new RuntimeException();
         }

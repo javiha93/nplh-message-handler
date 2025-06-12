@@ -197,10 +197,9 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                   className="p-3 space-y-3"
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                >
-                  {savedMessages.map((message, index) => {
+                >                {savedMessages.map((message, index) => {
                     const hasResponses = message.responses && message.responses.length > 0;
-                    const hasErrors = hasResponses && message.responses?.some(response => response.includes('ERR|'));
+                    const hasErrors = hasResponses && message.responses?.some(response => response.message.includes('ERR|'));
                     
                     return (
                       <Draggable key={message.id} draggableId={message.id} index={index}>
@@ -330,23 +329,38 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                     <div className="text-xs font-medium text-gray-700 mb-1">
                                       Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''}:
                                     </div>
-                                    <div className="space-y-2">
-                                      {message.responses?.map((response, index) => {
-                                        const isError = response.includes('ERR|');
-                                        const formattedResponse = formatXML(response);
+                                    <div className="space-y-2">                                      {message.responses?.map((response, index) => {
+                                        const isError = response.message.includes('ERR|');
+                                        const formattedResponse = formatXML(response.message);
+                                        const receiveTime = new Date(response.receiveTime).toLocaleString('es-ES', {
+                                          day: '2-digit',
+                                          month: '2-digit',
+                                          year: '2-digit',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          second: '2-digit'
+                                        });
+                                        
                                         return (
                                           <div key={index} className={`p-2 rounded text-xs font-mono max-h-40 overflow-y-auto border cursor-text ${
                                             isError 
                                               ? 'bg-red-50 border-red-200' 
                                               : 'bg-green-50 border-green-200'
                                           }`}>
-                                            {(message.responses?.length || 0) > 1 && (
-                                              <div className={`text-xs font-semibold mb-1 ${
-                                                isError ? 'text-red-600' : 'text-green-600'
+                                            <div className="flex justify-between items-start mb-1">
+                                              {(message.responses?.length || 0) > 1 && (
+                                                <div className={`text-xs font-semibold ${
+                                                  isError ? 'text-red-600' : 'text-green-600'
+                                                }`}>
+                                                  #{index + 1}
+                                                </div>
+                                              )}
+                                              <div className={`text-xs ${
+                                                isError ? 'text-red-500' : 'text-green-500'
                                               }`}>
-                                                #{index + 1}:
+                                                {receiveTime}
                                               </div>
-                                            )}
+                                            </div>
                                             <div 
                                               className={`text-xs leading-relaxed font-mono ${isError ? 'text-red-800' : 'text-green-800'}`}
                                               dangerouslySetInnerHTML={{ 

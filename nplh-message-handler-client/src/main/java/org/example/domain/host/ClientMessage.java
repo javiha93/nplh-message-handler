@@ -1,7 +1,6 @@
 package org.example.domain.host;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -12,7 +11,7 @@ import java.util.List;
 public class ClientMessage {
     public String message;
     public String controlId;
-    public List<String> responses;
+    public List<ClientMessageResponse> responses;
 
     public ClientMessage(String message, String controlId) {
         this.message = message;
@@ -25,7 +24,7 @@ public class ClientMessage {
             responses = new ArrayList<>();
         }
         if (message != null) {
-            responses.add(message);
+            responses.add(new ClientMessageResponse(message));
         }
     }
 }

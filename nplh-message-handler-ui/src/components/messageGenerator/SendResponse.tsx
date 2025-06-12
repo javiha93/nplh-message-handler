@@ -1,15 +1,27 @@
 
 import React from 'react';
+import { ClientMessageResponse } from '../../components/savedMessages/services/SavedMessagesService';
 
 interface SendResponseProps {
-  sendResponse: string[];
+  sendResponse: ClientMessageResponse[];
 }
 
 const SendResponse: React.FC<SendResponseProps> = ({ sendResponse }) => {
   if (!sendResponse || sendResponse.length === 0) return null;
 
-  const isErrorResponse = (response: string) => {
-    return response.includes('ERR|');
+  const isErrorResponse = (response: ClientMessageResponse) => {
+    return response.message.includes('ERR|');
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   };
 
   return (
@@ -29,17 +41,24 @@ const SendResponse: React.FC<SendResponseProps> = ({ sendResponse }) => {
                   : 'bg-green-50 border-green-200'
               }`}
             >
-              {sendResponse.length > 1 && (
-                <div className={`text-xs font-semibold mb-2 ${
-                  isError ? 'text-red-600' : 'text-green-600'
+              <div className="flex justify-between items-start mb-2">
+                {sendResponse.length > 1 && (
+                  <div className={`text-xs font-semibold ${
+                    isError ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    Respuesta #{index + 1}
+                  </div>
+                )}
+                <div className={`text-xs ${
+                  isError ? 'text-red-500' : 'text-green-500'
                 }`}>
-                  Respuesta #{index + 1}:
+                  Recibido: {formatTimestamp(response.receiveTime)}
                 </div>
-              )}
+              </div>
               <pre className={`text-sm whitespace-pre-wrap font-mono ${
                 isError ? 'text-red-800' : 'text-green-800'
               }`}>
-                {response}
+                {response.message}
               </pre>
             </div>
           );

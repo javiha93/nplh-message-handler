@@ -22,11 +22,36 @@ const messageUpdatePlugin = () => {
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({ error: 'Invalid request body. Expected controlId and responses array.' }));
                 return;
+              }              // Validate that responses are in ClientMessageResponse format
+              const validResponses = responses.every(response => 
+                response && 
+                typeof response === 'object' && 
+                typeof response.message === 'string' && 
+                typeof response.receiveTime === 'string'
+              );
+
+              let finalResponses = responses;
+              if (!validResponses) {
+                console.warn('Received responses in unexpected format, attempting to convert...', responses);
+                // Convert legacy string responses to ClientMessageResponse format if needed
+                finalResponses = responses.map(response => {
+                  if (typeof response === 'string') {
+                    return {
+                      message: response,
+                      receiveTime: new Date().toISOString()
+                    };
+                  }
+                  return response;
+                });
               }
 
-              // Broadcast the update to the client via the global function
-              // This will be handled by the messageUpdateService
-              console.log(`Received message update for controlId: ${controlId}`, responses);
+              // Broadcast the update to the client via SSE-like mechanism
+              // In a real application, this would typically be handled by a proper message broker
+              console.log(`Received message update for controlId: ${controlId}`, finalResponses);
+              
+              // For now, we'll just store this and let the UI poll for updates
+              // In a production environment, you'd want to use WebSockets or Server-Sent Events
+              // to push these updates to connected clients immediately
               
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
@@ -34,9 +59,12 @@ const messageUpdatePlugin = () => {
                 success: true, 
                 message: 'Message responses updated successfully',
                 controlId,
-                responsesCount: responses.length
+                responsesCount: responses.length,
+                format: validResponses ? 'ClientMessageResponse' : 'converted',
+                receivedResponses: finalResponses
               }));
             } catch (error) {
+              console.error('Error processing message update:', error);
               res.statusCode = 400;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: 'Invalid JSON body' }));

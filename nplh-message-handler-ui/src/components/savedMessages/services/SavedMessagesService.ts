@@ -1,5 +1,11 @@
 import { messageService, SendMessageRequest } from '../../../services/MessageService';
 
+// Interface matching the backend ClientMessageResponse
+export interface ClientMessageResponse {
+  message: string;
+  receiveTime: string; // LocalDateTime comes as ISO string from backend
+}
+
 export interface SavedMessage {
   id: string;
   content: string;
@@ -8,7 +14,7 @@ export interface SavedMessage {
   messageControlId?: string;
   timestamp: Date;
   sentTimestamp?: Date;
-  responses?: string[];
+  responses?: ClientMessageResponse[]; // Changed from string[] to ClientMessageResponse[]
 }
 
 export class SavedMessagesService {
@@ -65,7 +71,7 @@ export class SavedMessagesService {
     this.notifyListeners();
   }
 
-  updateMessageResponses(controlId: string, responses: string[]): void {
+  updateMessageResponses(controlId: string, responses: ClientMessageResponse[]): void {
     this.messages = this.messages.map(msg => 
       msg.messageControlId === controlId 
         ? { ...msg, responses: responses }
@@ -97,8 +103,7 @@ export class SavedMessagesService {
     result.splice(endIndex, 0, removed);
     this.messages = result;
     this.notifyListeners();
-  }
-  async sendMessage(savedMessage: SavedMessage): Promise<string[]> {
+  }  async sendMessage(savedMessage: SavedMessage): Promise<ClientMessageResponse[]> {
     const request: SendMessageRequest = {
       message: savedMessage.content,
       hostName: savedMessage.host,

@@ -1,6 +1,12 @@
 import { Message } from '../types/MessageType';
 import { Specimen, Block, Slide } from '../types/Message';
 
+// Interface matching the backend ClientMessageResponse
+export interface ClientMessageResponse {
+  message: string;
+  receiveTime: string; // LocalDateTime comes as ISO string from backend
+}
+
 export interface MessageResponse {
   message: string;
   controlId: string;
@@ -92,8 +98,7 @@ export class MessageService {
 
     return await response.json();
   }
-
-  async sendMessage(request: SendMessageRequest): Promise<string[]> {
+  async sendMessage(request: SendMessageRequest): Promise<ClientMessageResponse[]> {
     const response = await fetch('http://localhost:8085/api/messages/send', {
       method: 'POST',
       headers: {
@@ -111,8 +116,12 @@ export class MessageService {
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     } else {
+      // Handle legacy text responses by converting to ClientMessageResponse format
       const textResponse = await response.text();
-      return [textResponse];
+      return [{
+        message: textResponse,
+        receiveTime: new Date().toISOString()
+      }];
     }
   }
 

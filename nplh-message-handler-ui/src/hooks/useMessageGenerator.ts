@@ -4,7 +4,7 @@ import { Specimen, Block, Slide } from '../types/Message';
 
 // Import services
 import { messageService } from '../services/MessageService';
-import { savedMessagesService, SavedMessage } from '../components/savedMessages';
+import { savedMessagesService, SavedMessage, ClientMessageResponse } from '../components/savedMessages';
 import { uiStateService } from '../services/UIStateService';
 import { formStateService } from '../services/FormStateService';
 import { snackbarService } from '../services/SnackbarService';
@@ -22,10 +22,8 @@ export const useMessageGenerator = () => {
     const unsubscribeUI = uiStateService.subscribe(setUIState);
     const unsubscribeForm = formStateService.subscribe(setFormState);
     const unsubscribeSaved = savedMessagesService.subscribe(setSavedMessages);
-    const unsubscribeSnackbar = snackbarService.subscribe(setSnackbarState);
-
-    // Register for real-time message updates
-    const handleMessageUpdate = (controlId: string, responses: string[]) => {
+    const unsubscribeSnackbar = snackbarService.subscribe(setSnackbarState);    // Register for real-time message updates
+    const handleMessageUpdate = (controlId: string, responses: ClientMessageResponse[]) => {
       console.log(`handleMessageUpdate called with controlId: ${controlId}`, responses);
       savedMessagesService.updateMessageResponses(controlId, responses);
     };
@@ -302,10 +300,14 @@ export const useMessageGenerator = () => {
       uiStateService.setSendingAll(false);
     }
   };
-
   // Helper method for backward compatibility
   const updateMessageResponses = (controlId: string, responses: string[]) => {
-    savedMessagesService.updateMessageResponses(controlId, responses);
+    // Convert string responses to ClientMessageResponse format
+    const clientResponses: ClientMessageResponse[] = responses.map(resp => ({
+      message: resp,
+      receiveTime: new Date().toISOString()
+    }));
+    savedMessagesService.updateMessageResponses(controlId, clientResponses);
   };
 
   // Computed properties

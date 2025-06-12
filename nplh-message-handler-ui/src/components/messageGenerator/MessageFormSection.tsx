@@ -6,6 +6,7 @@ import GeneratedMessage from './GeneratedMessage';
 import SendResponse from './SendResponse';
 import { MessageType } from '../../types/MessageType';
 import { Specimen, Block, Slide } from '../../types/Message';
+import { ClientMessageResponse } from '../../components/savedMessages/services/SavedMessagesService';
 
 interface MessageFormSectionProps {
   // Form data
@@ -39,7 +40,7 @@ interface MessageFormSectionProps {
   
   // Message and response data
   message: any;
-  sendResponse: string[];
+  sendResponse: ClientMessageResponse[];
   error: string | null;
   
   // Handlers

@@ -56,9 +56,26 @@ const MessageEditModal: React.FC<MessageEditModalProps> = ({
   };
 
   if (!isOpen || !message) return null;
-
   // Solo permitir edición si el mensaje no ha sido enviado
   const canEdit = !message.sentTimestamp;
+
+  // Helper function to format timestamps
+  const formatTimestamp = (timestamp: Date | string) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  // Get latest receive time from responses
+  const latestReceiveTime = message.responses && message.responses.length > 0 
+    ? message.responses[message.responses.length - 1].receiveTime 
+    : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -68,16 +85,40 @@ const MessageEditModal: React.FC<MessageEditModalProps> = ({
             <h2 className="text-lg font-semibold text-gray-800">
               {canEdit ? 'Editar Mensaje' : 'Ver Mensaje (Solo Lectura)'}
             </h2>
-            <div className="text-sm text-gray-600">
-              <span className="font-medium text-blue-600">{message.host}</span>
-              <span className="text-gray-500 mx-1">•</span>
-              <span className="text-gray-700">{message.messageType}</span>
-              {message.sentTimestamp && (
-                <>
-                  <span className="text-gray-500 mx-1">•</span>
-                  <span className="text-green-600 font-medium">Enviado</span>
-                </>
-              )}
+            <div className="text-sm text-gray-600 space-y-1">
+              <div>
+                <span className="font-medium text-blue-600">{message.host}</span>
+                <span className="text-gray-500 mx-1">•</span>
+                <span className="text-gray-700">{message.messageType}</span>
+                {message.sentTimestamp && (
+                  <>
+                    <span className="text-gray-500 mx-1">•</span>
+                    <span className="text-green-600 font-medium">Enviado</span>
+                  </>
+                )}
+              </div>
+              
+              {/* Timestamps section */}
+              <div className="flex flex-wrap gap-4 text-xs">
+                <div>
+                  <span className="text-gray-500">Creado:</span>
+                  <span className="ml-1 text-gray-700">{formatTimestamp(message.timestamp)}</span>
+                </div>
+                
+                {message.sentTimestamp && (
+                  <div>
+                    <span className="text-gray-500">Enviado:</span>
+                    <span className="ml-1 text-green-600 font-medium">{formatTimestamp(message.sentTimestamp)}</span>
+                  </div>
+                )}
+                
+                {latestReceiveTime && (
+                  <div>
+                    <span className="text-gray-500">Última respuesta:</span>
+                    <span className="ml-1 text-purple-600 font-medium">{formatTimestamp(latestReceiveTime)}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -158,27 +199,42 @@ const MessageEditModal: React.FC<MessageEditModalProps> = ({
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''} del Servidor:
-                </h3>
-                <div className="space-y-3">
+                </h3>                <div className="space-y-3">
                   {message.responses?.map((response, index) => {
-                    const isError = response.includes('ERR|');
+                    const isError = response.message.includes('ERR|');
+                    const receiveTime = new Date(response.receiveTime).toLocaleString('es-ES', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    });
+                    
                     return (
                       <div key={index} className={`p-4 rounded-lg border ${
                         isError 
                           ? 'bg-red-50 border-red-200' 
                           : 'bg-green-50 border-green-200'
                       }`}>
-                        {(message.responses?.length || 0) > 1 && (
-                          <div className={`text-xs font-semibold mb-2 ${
-                            isError ? 'text-red-600' : 'text-green-600'
+                        <div className="flex justify-between items-start mb-2">
+                          {(message.responses?.length || 0) > 1 && (
+                            <div className={`text-xs font-semibold ${
+                              isError ? 'text-red-600' : 'text-green-600'
+                            }`}>
+                              Respuesta #{index + 1}
+                            </div>
+                          )}
+                          <div className={`text-xs ${
+                            isError ? 'text-red-500' : 'text-green-500'
                           }`}>
-                            Respuesta #{index + 1}:
+                            Recibido: {receiveTime}
                           </div>
-                        )}
+                        </div>
                         <pre className={`text-xs font-mono whitespace-pre-wrap ${
                           isError ? 'text-red-800' : 'text-green-800'
                         }`}>
-                          {response}
+                          {response.message}
                         </pre>
                       </div>
                     );
