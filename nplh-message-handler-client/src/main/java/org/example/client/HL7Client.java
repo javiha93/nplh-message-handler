@@ -1,12 +1,12 @@
-package org.example;
+package org.example.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.Getter;
-import org.example.domain.HL7LLPCharacters;
-import org.example.domain.host.ClientMessage;
-import org.example.domain.host.ClientMessageResponse;
+import org.example.utils.HL7LLPCharacters;
+import org.example.client.message.ClientMessage;
+import org.example.client.message.ClientMessageList;
+import org.example.client.message.ClientMessageResponse;
 import org.example.domain.host.HL7Host;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +21,6 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.example.utils.MessageHandler.*;
@@ -38,15 +36,15 @@ public class HL7Client extends Client {
     public HL7Client(HL7Host host) {
         this.clientName = host.name();
         try {
-            socket = new Socket(host.getIp(), host.getPort());
+            socket = new Socket(host.getIp(), host.getClientPort());
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             clientMessageList = new ClientMessageList();
 
         } catch (UnknownHostException e) {
-            logger.error("Unknown host {} , {}:{}", host.name(), host.getIp(), host.getPort(), e);
+            logger.error("Unknown host {} , {}:{}", host.name(), host.getIp(), host.getClientPort(), e);
         } catch (IOException e) {
-            logger.error("Error connecting to {}:{}", host.getIp(), host.getPort(), e);
+            logger.error("Error connecting to {}:{}", host.getIp(), host.getClientPort(), e);
         }
     }
 

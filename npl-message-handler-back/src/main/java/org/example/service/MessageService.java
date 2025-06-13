@@ -19,8 +19,6 @@ import org.example.domain.hl7.VTG.VTGToNPLH.BLOCKUPDATE.BlockUpdate;
 import org.example.domain.hl7.VTG.VTGToNPLH.OEWF.OEWF;
 import org.example.domain.hl7.VTG.VTGToNPLH.SLIDEUPDATE.SlideUpdate;
 import org.example.domain.hl7.VTG.VTGToNPLH.SPECIMENUPDATE.SpecimenUpdate;
-import org.example.domain.host.Host;
-import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Slide;

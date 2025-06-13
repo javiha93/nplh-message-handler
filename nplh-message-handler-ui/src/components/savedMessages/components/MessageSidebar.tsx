@@ -1,7 +1,53 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit } from 'lucide-react';
+import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit, MessageCircle } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { SavedMessage } from '../services/SavedMessagesService';
+
+// Simple Tooltip Component
+interface TooltipProps {
+  children: React.ReactNode;
+  content: string;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+}
+
+const Tooltip: React.FC<TooltipProps> = ({ children, content, position = 'bottom' }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  if (!content.trim()) {
+    return <>{children}</>;
+  }  const positionClasses = {
+    top: 'bottom-full left-1/2 transform -translate-x-1/2 mb-2',
+    bottom: 'top-full left-1/2 transform -translate-x-1/2 mt-2',
+    left: 'right-full top-1/2 transform -translate-y-1/2 mr-2',
+    right: 'left-full top-1/2 transform -translate-y-1/2 ml-2'
+  };
+  const arrowClasses = {
+    top: 'top-full left-1/2 transform -translate-x-1/2 -mt-1',
+    bottom: 'bottom-full left-1/2 transform -translate-x-1/2 -mb-1',
+    left: 'left-full top-1/2 transform -translate-y-1/2 -ml-1',
+    right: 'right-full top-1/2 transform -translate-y-1/2 -mr-1'
+  };
+
+  return (
+    <div 
+      className="relative inline-block"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}      {isVisible && (
+        <div 
+          className={`absolute z-50 px-3 py-2 text-sm text-white bg-gray-800 rounded-lg shadow-lg whitespace-normal max-w-xs ${positionClasses[position]}`}
+          style={{ wordBreak: 'break-word', minWidth: '200px', maxWidth: '300px' }}
+        >
+          {content}
+          <div 
+            className={`absolute w-2 h-2 bg-gray-800 transform rotate-45 ${arrowClasses[position]}`}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface MessageSidebarProps {
   isOpen: boolean;
@@ -222,19 +268,24 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                 className="flex items-center justify-center p-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
                               >
                                 <GripVertical size={16} />
-                              </div>
-                              <div className="flex-1 p-2">
-                                <div className="text-sm flex items-center">
-                                  <span className="font-medium text-blue-600">{message.host}</span>
-                                  <span className="text-gray-500 mx-1">•</span>
-                                  <span className={`${
-                                    hasErrors ? 'text-red-700' : 
-                                    hasResponses ? 'text-green-700' : 
-                                    'text-gray-700'
-                                  }`}>
-                                    {message.messageType}
-                                  </span>
-                                </div>
+                              </div>                              <div className="flex-1 p-2">
+                                <Tooltip content={message.comment || ''} position="bottom">
+                                  <div className="text-sm flex items-center">
+                                    <span className="font-medium text-blue-600">{message.host}</span>
+                                    <span className="text-gray-500 mx-1">•</span>
+                                    <span className={`${
+                                      hasErrors ? 'text-red-700' : 
+                                      hasResponses ? 'text-green-700' : 
+                                      'text-gray-700'                                    }`}>
+                                      {message.messageType}
+                                    </span>
+                                    {message.comment && (
+                                      <span className="ml-2 text-orange-500" title="Tiene comentarios">
+                                        <MessageCircle size={14} />
+                                      </span>
+                                    )}
+                                  </div>
+                                </Tooltip>
                               </div>
                             </div>
 

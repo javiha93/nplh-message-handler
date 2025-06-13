@@ -1,7 +1,5 @@
 package org.example.utils;
 
-import org.example.domain.HL7LLPCharacters;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;

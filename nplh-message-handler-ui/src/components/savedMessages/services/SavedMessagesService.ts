@@ -14,6 +14,7 @@ export interface SavedMessage {
   messageControlId?: string;
   timestamp: Date;
   sentTimestamp?: Date;
+  comment?: string; // New field for user comments
   responses?: ClientMessageResponse[]; // Changed from string[] to ClientMessageResponse[]
 }
 
@@ -133,11 +134,28 @@ export class SavedMessagesService {
       await this.sendMessage(savedMessage);
     }
   }
-
   updateMessageContent(messageId: string, newContent: string): void {
     this.messages = this.messages.map(msg => 
       msg.id === messageId 
         ? { ...msg, content: newContent }
+        : msg
+    );
+    this.notifyListeners();
+  }
+
+  updateMessageComment(messageId: string, comment: string): void {
+    this.messages = this.messages.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, comment: comment.trim() || undefined }
+        : msg
+    );
+    this.notifyListeners();
+  }
+
+  updateMessageControlId(messageId: string, controlId: string): void {
+    this.messages = this.messages.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, messageControlId: controlId.trim() || undefined }
         : msg
     );
     this.notifyListeners();

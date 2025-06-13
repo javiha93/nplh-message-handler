@@ -1,4 +1,4 @@
-package org.example;
+package org.example.client;
 
 import org.example.domain.host.WSHost;
 import org.slf4j.Logger;

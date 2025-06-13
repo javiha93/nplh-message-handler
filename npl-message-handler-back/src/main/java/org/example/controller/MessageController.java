@@ -3,12 +3,15 @@ package org.example.controller;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.*;
-import org.example.domain.host.ClientMessageResponse;
-import org.example.domain.host.HL7Host;
+import org.example.client.Client;
+import org.example.client.Clients;
+import org.example.client.HL7Client;
+import org.example.client.WSClient;
+import org.example.client.message.ClientMessageResponse;
 import org.example.domain.host.Host;
 import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;
+import org.example.server.Servers;
 import org.example.service.IrisService;
 import org.example.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +30,14 @@ public class MessageController {
     private final IrisService irisService;
     private final Clients clients;
 
+    private final Servers servers;
+
     @Autowired
     public MessageController(MessageService messageService, IrisService irisService) {
         this.messageService = messageService;
         this.irisService = irisService;
         this.clients = new Clients();
+        this.servers = new Servers();
     }
 
     @PostMapping("/generate")

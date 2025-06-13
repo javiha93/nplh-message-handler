@@ -250,7 +250,7 @@ export const useMessageGenerator = () => {
       uiStateService.setClearingAll(true);
       await messageService.deleteAllMessages();
       savedMessagesService.clearAllResponses();
-      snackbarService.showSuccess('All acks deleted successfully');
+      snackbarService.showSuccess('Deleted all messages from monitoring. All acks deleted successfully');
     } catch (error) {
       console.error('Error calling deleteAll endpoint:', error);
       savedMessagesService.clearAllResponses();
@@ -308,6 +308,21 @@ export const useMessageGenerator = () => {
       receiveTime: new Date().toISOString()
     }));
     savedMessagesService.updateMessageResponses(controlId, clientResponses);
+  };
+
+  const updateMessageContent = (messageId: string, newContent: string) => {
+    savedMessagesService.updateMessageContent(messageId, newContent);
+    snackbarService.showSuccess('Mensaje actualizado exitosamente');
+  };
+
+  const updateMessageComment = (messageId: string, comment: string) => {
+    savedMessagesService.updateMessageComment(messageId, comment);
+    snackbarService.showSuccess('Comentario actualizado exitosamente');
+  };
+
+  const updateMessageControlId = (messageId: string, controlId: string) => {
+    savedMessagesService.updateMessageControlId(messageId, controlId);
+    snackbarService.showSuccess('Control ID actualizado exitosamente');
   };
 
   // Computed properties
@@ -416,7 +431,9 @@ export const useMessageGenerator = () => {
     clearMessageResponses,
     reorderSavedMessages,
     sendSavedMessage,
-    sendAllSavedMessages,
-    updateMessageResponses
+    sendAllSavedMessages,    updateMessageResponses,
+    updateMessageContent,
+    updateMessageComment,
+    updateMessageControlId
   };
 };

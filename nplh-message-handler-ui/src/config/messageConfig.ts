@@ -116,11 +116,10 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
   {
     id: 'VANTAGE_WS',
     name: 'VANTAGE WS',
-    messageTypes: [
-      { 
+    messageTypes: [      { 
         id: 'ProcessVANTAGEEvent', 
         name: 'ProcessVANTAGEEvent',
-        requiresSpecimenSelector: true,
+        requiresEntitySelector: true,
         requiresStatusSelector: true,
         statusOptions: VANTAGE_WS_STATUS_OPTIONS
       },

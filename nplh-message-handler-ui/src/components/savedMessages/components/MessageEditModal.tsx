@@ -7,40 +7,77 @@ interface MessageEditModalProps {
   onClose: () => void;
   message: SavedMessage | null;
   onSave: (messageId: string, newContent: string) => void;
+  onSaveComment: (messageId: string, comment: string) => void;
+  onSaveControlId: (messageId: string, controlId: string) => void;
 }
 
 const MessageEditModal: React.FC<MessageEditModalProps> = ({
   isOpen,
   onClose,
   message,
-  onSave
+  onSave,
+  onSaveComment,
+  onSaveControlId
 }) => {
   const [editedContent, setEditedContent] = useState('');
+  const [editedComment, setEditedComment] = useState('');
+  const [editedControlId, setEditedControlId] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
-
   useEffect(() => {
     if (message) {
       setEditedContent(message.content);
+      setEditedComment(message.comment || '');
+      setEditedControlId(message.messageControlId || '');
       setHasChanges(false);
     }
-  }, [message]);
-
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  }, [message]);  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setEditedContent(newContent);
-    setHasChanges(newContent !== message?.content);
+    setHasChanges(
+      newContent !== message?.content || 
+      editedComment !== (message?.comment || '') ||
+      editedControlId !== (message?.messageControlId || '')
+    );
   };
 
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newComment = e.target.value;
+    setEditedComment(newComment);
+    setHasChanges(
+      editedContent !== message?.content || 
+      newComment !== (message?.comment || '') ||
+      editedControlId !== (message?.messageControlId || '')
+    );
+  };
+
+  const handleControlIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newControlId = e.target.value;
+    setEditedControlId(newControlId);
+    setHasChanges(
+      editedContent !== message?.content || 
+      editedComment !== (message?.comment || '') ||
+      newControlId !== (message?.messageControlId || '')
+    );
+  };
   const handleSave = () => {
     if (message && hasChanges) {
-      onSave(message.id, editedContent);
+      if (editedContent !== message.content) {
+        onSave(message.id, editedContent);
+      }
+      if (editedComment !== (message.comment || '')) {
+        onSaveComment(message.id, editedComment);
+      }
+      if (editedControlId !== (message.messageControlId || '')) {
+        onSaveControlId(message.id, editedControlId);
+      }
       onClose();
     }
   };
-
   const handleReset = () => {
     if (message) {
       setEditedContent(message.content);
+      setEditedComment(message.comment || '');
+      setEditedControlId(message.messageControlId || '');
       setHasChanges(false);
     }
   };
@@ -76,11 +113,10 @@ const MessageEditModal: React.FC<MessageEditModalProps> = ({
   const latestReceiveTime = message.responses && message.responses.length > 0 
     ? message.responses[message.responses.length - 1].receiveTime 
     : null;
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-gray-800">
               {canEdit ? 'Editar Mensaje' : 'Ver Mensaje (Solo Lectura)'}
@@ -147,9 +183,7 @@ const MessageEditModal: React.FC<MessageEditModalProps> = ({
               <X size={20} />
             </button>
           </div>
-        </div>
-
-        <div className="p-4 overflow-y-auto max-h-[calc(90vh-120px)]">
+        </div>        <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -193,6 +227,43 @@ const MessageEditModal: React.FC<MessageEditModalProps> = ({
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Comments section */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-700">Comentarios:</h3>
+                <div className="text-xs text-gray-500">
+                  Los comentarios aparecerán como tooltips en la barra lateral
+                </div>
+              </div>
+              
+              <textarea
+                value={editedComment}
+                onChange={handleCommentChange}
+                onKeyDown={handleKeyDown}
+                className="w-full h-20 p-3 bg-gray-50 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Agrega un comentario para este mensaje (opcional)..."
+              />
+            </div>
+
+            {/* Control ID section */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-700">Control ID:</h3>
+                <div className="text-xs text-gray-500">
+                  Identificador único para el mensaje (opcional)
+                </div>
+              </div>
+              
+              <input
+                type="text"
+                value={editedControlId}
+                onChange={handleControlIdChange}
+                onKeyDown={handleKeyDown}
+                className="w-full h-10 px-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Ingresa un Control ID personalizado (opcional)..."
+              />
             </div>
 
             {message.responses && message.responses.length > 0 && (
@@ -243,10 +314,8 @@ const MessageEditModal: React.FC<MessageEditModalProps> = ({
               </div>
             )}
           </div>
-        </div>
-
-        {canEdit && (
-          <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50">
+        </div>        {canEdit && (
+          <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             <div className="text-sm text-gray-600">
               Los cambios se guardarán automáticamente al cerrar si hay modificaciones.
             </div>

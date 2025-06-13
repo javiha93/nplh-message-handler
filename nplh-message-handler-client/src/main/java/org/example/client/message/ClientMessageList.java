@@ -1,7 +1,6 @@
-package org.example;
+package org.example.client.message;
 
 import lombok.NoArgsConstructor;
-import org.example.domain.host.ClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

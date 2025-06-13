@@ -1,4 +1,4 @@
-package org.example.domain.host;
+package org.example.client.message;
 
 import lombok.Getter;
 import lombok.Setter;

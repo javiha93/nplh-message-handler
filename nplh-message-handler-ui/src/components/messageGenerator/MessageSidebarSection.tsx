@@ -64,6 +64,14 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
     setIsEditModalOpen(false);
     setEditingMessage(null);
   };
+  const handleSaveComment = (messageId: string, comment: string) => {
+    savedMessagesService.updateMessageComment(messageId, comment);
+  };
+
+  const handleSaveControlId = (messageId: string, controlId: string) => {
+    savedMessagesService.updateMessageControlId(messageId, controlId);
+  };
+
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setEditingMessage(null);
@@ -90,13 +98,13 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
         isOpen={isMessageViewModalOpen}
         onClose={onCloseMessageViewModal}
         message={selectedMessage}
-      />
-
-      <MessageEditModal
+      />      <MessageEditModal
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         message={editingMessage}
         onSave={handleSaveEdit}
+        onSaveComment={handleSaveComment}
+        onSaveControlId={handleSaveControlId}
       />
 
       <Snackbar

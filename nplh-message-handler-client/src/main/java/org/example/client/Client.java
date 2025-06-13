@@ -1,6 +1,6 @@
-package org.example;
+package org.example.client;
 
-import org.example.domain.host.ClientMessageResponse;
+import org.example.client.message.ClientMessageResponse;
 
 import java.util.List;
 
