@@ -159,8 +159,7 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       { id: 'BLOCK_UPDATE', name: 'BLOCK_UPDATE' },
       { id: 'SLIDE_UPDATE', name: 'SLIDE_UPDATE' }
     ],
-    statusOptions: BASE_STATUS_OPTIONS
-  },
+    statusOptions: BASE_STATUS_OPTIONS  },
   {
     id: 'AUTOMATION_SW',
     name: 'AUTOMATION SOFTWARE',
@@ -173,6 +172,39 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       { 
         id: 'STATUS_UPDATE', 
         name: 'STATUS UPDATE',
+        requiresEntitySelector: true
+      }
+    ],
+    statusOptions: BASE_STATUS_OPTIONS
+  },  {
+    id: 'HISTOBOT',
+    name: 'HISTOBOT',
+    messageTypes: [
+      { 
+        id: 'RETRIEVAL',
+        name: 'RETRIEVAL',
+        requiresEntitySelector: true
+      },
+      { 
+        id: 'STATUS_UPDATE', 
+        name: 'STATUS_UPDATE',
+        requiresEntitySelector: true
+      }
+    ],
+    statusOptions: BASE_STATUS_OPTIONS
+  },
+  {
+    id: 'HISTOBOT_SENSITIVE_DATA',
+    name: 'HISTOBOT_SENSITIVE_DATA',
+    messageTypes: [
+      { 
+        id: 'RETRIEVAL',
+        name: 'RETRIEVAL',
+        requiresEntitySelector: true
+      },
+      { 
+        id: 'STATUS_UPDATE', 
+        name: 'STATUS_UPDATE',
         requiresEntitySelector: true
       }
     ],

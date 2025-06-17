@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
-import { MessageSidebar, MessageViewModal, MessageEditModal, SavedMessage, savedMessagesService } from '../savedMessages';
+import { MessageViewModal, MessageEditModal, SavedMessage, savedMessagesService } from '../savedMessages';
+import MultiListMessageSidebar from '../savedMessages/components/MultiListMessageSidebar';
 import Snackbar from '../Snackbar';
 
 interface MessageSidebarSectionProps {
   // Sidebar state
   isSidebarOpen: boolean;
-  savedMessages: SavedMessage[];
-  isSendingAll: boolean;
-  
-  // Modal state
-  isMessageViewModalOpen: boolean;
-  selectedMessage: SavedMessage | null;
     // Snackbar state
   snackbar: {
     message: string;
@@ -20,41 +15,31 @@ interface MessageSidebarSectionProps {
   
   // Handlers
   onToggleSidebar: () => void;
-  onRemoveMessage: (id: string) => void;
-  onSendMessage: (message: SavedMessage) => void;
-  onSendAllMessages: () => void;
-  onClearAllResponses: () => void;
-  onClearMessageResponses: (messageId: string) => void;  onReorderMessages: (startIndex: number, endIndex: number) => void;
-  onMessageClick: (message: SavedMessage) => void;
-  onCloseMessageViewModal: () => void;
   onCloseSnackbar: () => void;
-  onExportMessages?: () => void;
-  onImportMessages?: () => void;
 }
 
 const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
   isSidebarOpen,
-  savedMessages,
-  isSendingAll,
-  isMessageViewModalOpen,
-  selectedMessage,
   snackbar,
   onToggleSidebar,
-  onRemoveMessage,
-  onSendMessage,
-  onSendAllMessages,
-  onClearAllResponses,
-  onClearMessageResponses,
-  onReorderMessages,
-  onMessageClick,
-  onCloseMessageViewModal,
-  onCloseSnackbar,
-  onExportMessages,
-  onImportMessages
+  onCloseSnackbar
 }) => {
-  // State for edit modal
+  // State for modals
+  const [isMessageViewModalOpen, setIsMessageViewModalOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<SavedMessage | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingMessage, setEditingMessage] = useState<SavedMessage | null>(null);
+
+  // Handlers for message click
+  const handleMessageClick = (message: SavedMessage) => {
+    setSelectedMessage(message);
+    setIsMessageViewModalOpen(true);
+  };
+
+  const handleCloseMessageViewModal = () => {
+    setIsMessageViewModalOpen(false);
+    setSelectedMessage(null);
+  };
 
   // Handlers for edit functionality
   const handleEditMessage = (message: SavedMessage) => {
@@ -67,6 +52,7 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
     setIsEditModalOpen(false);
     setEditingMessage(null);
   };
+  
   const handleSaveComment = (messageId: string, comment: string) => {
     savedMessagesService.updateMessageComment(messageId, comment);
   };
@@ -81,28 +67,21 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
   };
 
   return (
-    <>      <MessageSidebar
+    <>
+      <MultiListMessageSidebar
         isOpen={isSidebarOpen}
         onClose={onToggleSidebar}
-        savedMessages={savedMessages}
-        onRemoveMessage={onRemoveMessage}
-        onSendMessage={onSendMessage}
-        onSendAllMessages={onSendAllMessages}
-        onClearAllResponses={onClearAllResponses}
-        onClearMessageResponses={onClearMessageResponses}
-        onReorderMessages={onReorderMessages}
-        isSendingAll={isSendingAll}
-        onMessageClick={onMessageClick}
+        onMessageClick={handleMessageClick}
         onEditMessage={handleEditMessage}
-        onExportMessages={onExportMessages}
-        onImportMessages={onImportMessages}
       />
 
       <MessageViewModal
         isOpen={isMessageViewModalOpen}
-        onClose={onCloseMessageViewModal}
+        onClose={handleCloseMessageViewModal}
         message={selectedMessage}
-      />      <MessageEditModal
+      />
+      
+      <MessageEditModal
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         message={editingMessage}

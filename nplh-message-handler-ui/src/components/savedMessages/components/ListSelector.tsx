@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Edit2, Trash2, Copy, Download, Upload, ChevronDown } from 'lucide-react';
 import { MessageList } from '../services/MessageListsService';
 
@@ -41,11 +41,39 @@ const ListSelector: React.FC<ListSelectorProps> = ({
     color: '#3B82F6'
   });
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const activeList = lists.find(list => list.id === activeListId);
   const colors = [
     '#3B82F6', '#EF4444', '#10B981', '#F59E0B', 
     '#8B5CF6', '#EC4899', '#6B7280', '#F97316'
   ];
+
+  // Handle clicks outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+        setIsCreateModalOpen(false);
+        setIsEditModalOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isDropdownOpen]);
 
   const openCreateModal = () => {
     setFormData({ name: '', description: '', color: '#3B82F6' });
@@ -63,17 +91,19 @@ const ListSelector: React.FC<ListSelectorProps> = ({
     setIsEditModalOpen(true);
     setIsDropdownOpen(false);
   };
-
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (formData.name.trim()) {
       onCreateList(formData.name.trim(), formData.description.trim() || undefined, formData.color);
       setIsCreateModalOpen(false);
+      setFormData({ name: '', description: '', color: '#3B82F6' });
     }
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (editingListId && formData.name.trim()) {
       onUpdateList(editingListId, {
         name: formData.name.trim(),
@@ -82,6 +112,7 @@ const ListSelector: React.FC<ListSelectorProps> = ({
       });
       setIsEditModalOpen(false);
       setEditingListId(null);
+      setFormData({ name: '', description: '', color: '#3B82F6' });
     }
   };
 
@@ -104,15 +135,25 @@ const ListSelector: React.FC<ListSelectorProps> = ({
     }
     setIsDropdownOpen(false);
   };
-
   const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({
     isOpen, onClose, title, children
   }) => {
     if (!isOpen) return null;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        onClick={(e) => {
+          // Only close if clicking the backdrop, not the modal content
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
+        }}
+      >
+        <div 
+          className="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
             <button
@@ -127,9 +168,8 @@ const ListSelector: React.FC<ListSelectorProps> = ({
       </div>
     );
   };
-
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       {/* List Selector Button */}
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -143,11 +183,12 @@ const ListSelector: React.FC<ListSelectorProps> = ({
           {activeList?.name || 'Sin lista'}
         </span>
         <ChevronDown size={16} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {/* Dropdown Menu */}
+      </button>      {/* Dropdown Menu */}
       {isDropdownOpen && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
+        <div 
+          className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="p-2 border-b border-gray-200">
             <button
               onClick={openCreateModal}
@@ -254,8 +295,7 @@ const ListSelector: React.FC<ListSelectorProps> = ({
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Nueva Lista"
-      >
-        <form onSubmit={handleCreateSubmit} className="space-y-4">
+      >        <form onSubmit={handleCreateSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nombre *
@@ -264,8 +304,10 @@ const ListSelector: React.FC<ListSelectorProps> = ({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onFocus={(e) => e.target.select()}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Nombre de la lista"
+              autoFocus
               required
             />
           </div>
@@ -327,16 +369,16 @@ const ListSelector: React.FC<ListSelectorProps> = ({
         title="Editar Lista"
       >
         <form onSubmit={handleEditSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div>            <label className="block text-sm font-medium text-gray-700 mb-1">
               Nombre *
-            </label>
-            <input
+            </label>            <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onFocus={(e) => e.target.select()}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Nombre de la lista"
+              autoFocus
               required
             />
           </div>
@@ -389,13 +431,16 @@ const ListSelector: React.FC<ListSelectorProps> = ({
             </button>
           </div>
         </form>
-      </Modal>
-
-      {/* Backdrop */}
-      {isDropdownOpen && (
+      </Modal>      {/* Backdrop */}
+      {(isDropdownOpen || isCreateModalOpen || isEditModalOpen) && (
         <div 
           className="fixed inset-0 z-40" 
-          onClick={() => setIsDropdownOpen(false)}
+          onClick={() => {
+            setIsDropdownOpen(false);
+            if (!isCreateModalOpen && !isEditModalOpen) {
+              // Only close modals if not interacting with modal content
+            }
+          }}
         />
       )}
     </div>

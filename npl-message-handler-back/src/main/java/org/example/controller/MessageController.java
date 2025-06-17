@@ -9,7 +9,6 @@ import org.example.client.HL7Client;
 import org.example.client.WSClient;
 import org.example.client.message.ClientMessageResponse;
 import org.example.domain.host.Host;
-import org.example.domain.host.HostInfo;
 import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;
 import org.example.server.Servers;
@@ -38,7 +37,7 @@ public class MessageController {
     public MessageController(MessageService messageService, IrisService irisService) {
         this.messageService = messageService;
         this.irisService = irisService;
-        this.clients = new Clients();
+        this.clients = new Clients(irisService.getInstallationPath());
         this.servers = new Servers();
     }
 

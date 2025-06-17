@@ -5,7 +5,11 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum RESTHost implements Host{
-
-    AUTOMATION_SW,
+public class RESTHost implements Host {
+    private String hostName;
+    private String apiKey;
+    @Override
+    public String name() {
+        return getHostName();
+    }
 }

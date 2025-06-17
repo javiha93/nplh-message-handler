@@ -42,8 +42,12 @@ public class IrisService {
     public void deleteAllMessages() {
         iris.classMethodVoid("hca.utl.chcaUTL", "CleanOrdersAP");
         iris.classMethodVoid("hca.utl.chcaUTL", "CleanQueues", "1");
-        getHostInfo();
+        var x = getInstallationPath();
         logger.info("Executed commands for delete all messages");
+    }
+
+    public String getInstallationPath() {
+        return iris.classMethodString("%SYSTEM.Util", "InstallDirectory");
     }
 
     public List<HostInfo> getHostInfo() {

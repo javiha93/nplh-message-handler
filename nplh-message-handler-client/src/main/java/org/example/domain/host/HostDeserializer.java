@@ -21,11 +21,11 @@ public class HostDeserializer extends JsonDeserializer<Host> {
                 return host;
             }
         }
-
-        for (RESTHost host : RESTHost.values()) {
-            if (host.name().equals(text)) {
-                return host;
-            }
+        if ("HISTOBOT".equals(text)) {
+            return new RESTHost("histobot", "histobotApiKeyValue");
+        }
+        if ("HISTOBOT_SENSITIVE_DATA".equals(text)) {
+            return new RESTHost("histobotSensitiveData", "histobotSensitiveDataApiKeyValue");
         }
 
         throw new RuntimeException("Host no reconocido: " + text);

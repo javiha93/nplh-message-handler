@@ -12,8 +12,10 @@ import java.util.Objects;
 
 public class RestClient extends Client {
 
+    private String apikey;
     public RestClient(RESTHost host) {
         this.clientName = host.name();
+        this.apikey = host.getApiKey();
     }
 
     @Override
@@ -29,7 +31,7 @@ public class RestClient extends Client {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             connection.setRequestMethod("GET");
-            connection.setRequestProperty("X-NPLH-APIKEY", "histobotApiKeyValue");
+            connection.setRequestProperty("X-NPLH-APIKEY", apikey);
             connection.setRequestProperty("Accept", "application/json");
             connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
 

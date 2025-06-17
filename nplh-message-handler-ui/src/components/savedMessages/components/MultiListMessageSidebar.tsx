@@ -4,6 +4,8 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { SavedMessage, MessageList, messageListsService } from '../services/MessageListsService';
 import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../../utils/responseFormatUtils';
 import ListSelector from './ListSelector';
+import { messageService } from '../../../services/MessageService';
+import { snackbarService } from '../../../services/SnackbarService';
 
 // Simple Tooltip Component
 interface TooltipProps {
@@ -87,26 +89,46 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     });
 
     return unsubscribe;
-  }, []);
+  }, []);  const maxCombinedLength = useMemo(() => {
+    // Base minimum width
+    let requiredWidth = 300;
 
-  const maxCombinedLength = useMemo(() => {
-    if (savedMessages.length === 0) return 384;
-
-    const longest = savedMessages.reduce((max, msg) => {
+    // Calculate the longest message content (host + messageType)
+    const longestMessageContent = savedMessages.reduce((max, msg) => {
       const len = (msg.host + msg.messageType).length + 5;
       return len > max ? len : max;
-    }, 0);
-    return Math.min(Math.max(longest * 8 + 100, 300), 600);
-  }, [savedMessages]);
+    }, 0);    // Calculate the length needed for the active list name and description
+    // Consider the dropdown selector, which needs extra space for the arrow and padding
+    const listNameLength = activeList?.name ? activeList.name.length + 15 : 0; // +15 for dropdown arrow, padding, and margins
+    const listDescLength = activeList?.description ? activeList.description.length + 10 : 0; // Description if shown
+
+    // Calculate width needed for the header title "Mensajes Guardados"
+    const headerTitleLength = "Mensajes Guardados".length + 5; // +5 for close button space    // Take the maximum of all calculations
+    const maxContentLength = Math.max(
+      longestMessageContent,
+      listNameLength,
+      listDescLength,
+      headerTitleLength
+    );
+    
+    // Convert to pixels with constraints
+    // Each character ≈ 8px, plus base padding and margins
+    const calculatedWidth = maxContentLength * 8 + 120; // +120 for padding, borders, buttons
+    
+    // Apply minimum and maximum constraints
+    requiredWidth = Math.min(Math.max(calculatedWidth, 320), 650);
+    
+    return requiredWidth;
+  }, [savedMessages, activeList]);
 
   useEffect(() => {
     setWidth(maxCombinedLength);
   }, [maxCombinedLength]);
-
   const resize = (e: MouseEvent) => {
     if (isResizingRef.current) {
       const newWidth = window.innerWidth - e.clientX;
-      setWidth(Math.min(Math.max(newWidth, 250), 450));
+      // Use the same constraints as our automatic width calculation
+      setWidth(Math.min(Math.max(newWidth, 320), 650));
     }
   };
 
@@ -191,17 +213,29 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     } finally {
       setIsSendingAll(false);
     }
-  };
-
-  const handleClearAllResponses = () => {
-    messageListsService.clearAllResponses();
-  };
-  const handleClearMessageResponses = (messageId: string) => {
+  };  const handleClearAllResponses = async () => {
+    try {
+      // Call backend to delete all messages
+      await messageService.deleteAllMessages();
+      // Clear local responses
+      messageListsService.clearAllResponses();
+      // Show success notification
+      snackbarService.showSuccess('Deleted all messages from monitoring. All acks deleted successfully');
+    } catch (error) {
+      console.error('Failed to clear all responses:', error);
+      // Even if backend call fails, still clear local responses for consistency
+      messageListsService.clearAllResponses();
+      // Show warning notification
+      snackbarService.showWarning('Ack deleted (Server error)');
+    }
+  };  const handleClearMessageResponses = (messageId: string) => {
     // Find the message and clear its responses
     const message = savedMessages.find(msg => msg.id === messageId);
     if (message && activeListId) {
       // Clear responses for this specific message through the service
       messageListsService.clearMessageResponses(messageId);
+      // Show success notification
+      snackbarService.showInfo('Message responses cleared successfully');
     }
   };
 
@@ -288,30 +322,26 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
           >
             <X size={20} />
           </button>
-        </div>
-
-        {/* List Selector */}
-        <div className="mb-3">
-          <ListSelector
-            lists={lists}
-            activeListId={activeListId}
-            onSelectList={(listId) => messageListsService.setActiveList(listId)}
-            onCreateList={(name, description, color) => messageListsService.createList(name, description, color)}
-            onUpdateList={(listId, updates) => messageListsService.updateList(listId, updates)}
-            onDeleteList={(listId) => messageListsService.deleteList(listId)}
-            onDuplicateList={(listId, newName) => messageListsService.duplicateList(listId, newName)}
-            onExportList={handleExportList}
-            onImportList={handleImportList}
-          />
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-1">
+        </div>        {/* List Selector with Clear Button */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex-1">
+            <ListSelector
+              lists={lists}
+              activeListId={activeListId}
+              onSelectList={(listId) => messageListsService.setActiveList(listId)}
+              onCreateList={(name, description, color) => messageListsService.createList(name, description, color)}
+              onUpdateList={(listId, updates) => messageListsService.updateList(listId, updates)}
+              onDeleteList={(listId) => messageListsService.deleteList(listId)}
+              onDuplicateList={(listId, newName) => messageListsService.duplicateList(listId, newName)}
+              onExportList={handleExportList}
+              onImportList={handleImportList}
+            />
+          </div>
           {savedMessages.length > 0 && (
             <button
               onClick={handleClearAllResponses}
-              className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-              title="Limpiar respuestas"
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Limpiar todas las respuestas de esta lista"
             >
               <RotateCcw size={18} />
             </button>

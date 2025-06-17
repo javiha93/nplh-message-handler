@@ -5,6 +5,7 @@ import { Specimen, Block, Slide, Order } from '../types/Message';
 // Import services
 import { messageService } from '../services/MessageService';
 import { savedMessagesService, SavedMessage, ClientMessageResponse } from '../components/savedMessages';
+import { messageListsService } from '../components/savedMessages/services/MessageListsService';
 import { uiStateService } from '../services/UIStateService';
 import { formStateService } from '../services/FormStateService';
 import { snackbarService } from '../services/SnackbarService';
@@ -222,13 +223,12 @@ export const useMessageGenerator = () => {
   // Sidebar functionality
   const saveMessageToSidebar = () => {
     const state = formStateService.getState();
-    
-    if (!state.generatedMessage || !state.selectedHost || !state.selectedType) {
+      if (!state.generatedMessage || !state.selectedHost || !state.selectedType) {
       uiStateService.setError('No hay mensaje para guardar o faltan datos.');
       return;
     }
 
-    savedMessagesService.addMessage(
+    messageListsService.addMessage(
       state.generatedMessage,
       state.selectedHost,
       state.selectedType,
