@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Patient, Physician, Pathologist, Technician } from '../types/MessageType';
-import { Specimen, Block, Slide } from '../types/Message';
+import { Specimen, Block, Slide, Order } from '../types/Message';
 
 // Import services
 import { messageService } from '../services/MessageService';
@@ -100,9 +100,7 @@ export const useMessageGenerator = () => {
 
   const handleSlideSelect = (slide: Slide) => {
     formStateService.setSelectedSlide(slide);
-  };
-
-  const handleEntitySelect = (entityType: string, entity: Specimen | Block | Slide) => {
+  };  const handleEntitySelect = (entityType: string, entity: Specimen | Block | Slide | Order) => {
     formStateService.setSelectedEntity(entityType, entity);
   };
 
@@ -325,6 +323,53 @@ export const useMessageGenerator = () => {
     snackbarService.showSuccess('Control ID actualizado exitosamente');
   };
 
+  // Import/Export functionality
+  const exportMessages = () => {
+    try {
+      const exportData = savedMessagesService.exportMessages();
+      const blob = new Blob([exportData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `saved-messages-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      snackbarService.showSuccess('Mensajes exportados exitosamente');
+    } catch (error) {
+      console.error('Error exporting messages:', error);
+      snackbarService.showError('Error al exportar mensajes');
+    }
+  };
+
+  const importMessages = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const content = e.target?.result as string;
+            const result = savedMessagesService.importMessages(content);
+            if (result.success) {
+              snackbarService.showSuccess(result.message);
+            } else {
+              snackbarService.showError(result.message);
+            }
+          } catch (error) {
+            console.error('Error importing messages:', error);
+            snackbarService.showError('Error al importar mensajes');
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
   // Computed properties
   const showSpecimenSelector = formStateService.getShowSpecimenSelector();
   const showBlockSelector = formStateService.getShowBlockSelector();
@@ -434,6 +479,8 @@ export const useMessageGenerator = () => {
     sendAllSavedMessages,    updateMessageResponses,
     updateMessageContent,
     updateMessageComment,
-    updateMessageControlId
+    updateMessageControlId,
+    exportMessages,
+    importMessages
   };
 };

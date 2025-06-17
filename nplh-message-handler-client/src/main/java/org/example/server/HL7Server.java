@@ -1,24 +1,26 @@
 package org.example.server;
 
-import org.example.client.HL7Client;
 import org.example.domain.host.HL7Host;
+import org.example.utils.HL7LLPCharacters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class HL7Server extends Server implements Runnable{
+import static org.example.utils.MessageHandler.llpToText;
+
+public class HL7Server extends Server implements Runnable {
     static final Logger logger = LoggerFactory.getLogger(HL7Server.class);
     ServerSocket serverSocket;
-    Socket socket;
-    BufferedReader in;
+    boolean isRunning;
+
     public HL7Server(HL7Host host) {
         try {
             serverSocket = new ServerSocket(host.getServerPort());
+            this.isRunning = true;
 
             Thread thread = new Thread(this);
             thread.setDaemon(true);
@@ -30,23 +32,44 @@ public class HL7Server extends Server implements Runnable{
 
     @Override
     public void run() {
-        try {
-            socket = serverSocket.accept();
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        logger.info("[{}] Servidor HL7 escuchando en puerto {}", serverName, serverSocket.getLocalPort());
 
-            StringBuilder message = new StringBuilder();
-            String line;
+        while (isRunning) {
+            readMessage();
+        }
+    }
 
-            while ((line = in.readLine()) != null && !line.isEmpty()) {
-                message.append(line).append("\n");
+    private String readMessage() {
+        try (Socket socket = serverSocket.accept();
+             InputStream inputStream = socket.getInputStream()) {
+
+            StringBuilder rawMessage = new StringBuilder();
+            int current;
+
+            while ((current = inputStream.read()) != -1) {
+                char c = (char) current;
+
+                if (c == HL7LLPCharacters.FS.getCharacter()) {
+                    int next = inputStream.read();
+                    if (next == HL7LLPCharacters.CR.getCharacter()) {
+                        break;
+                    }
+                }
+
+                rawMessage.append(c);
             }
 
-            logger.info("[{}] Mensaje recibido:\n{}", serverName, message);
+            String fullLlpMessage = rawMessage.toString();
+            String cleanTextMessage = llpToText(fullLlpMessage);
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.info("[{}] Mensaje interceptado:\n{}", serverName, cleanTextMessage);
+
+            return cleanTextMessage;
+
+        } catch (Exception e) {
+            logger.error("[{}] Error procesando conexión HL7", serverName, e);
         }
-
-
+        return null;
     }
+
 }

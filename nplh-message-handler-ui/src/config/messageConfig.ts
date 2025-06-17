@@ -160,6 +160,23 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       { id: 'SLIDE_UPDATE', name: 'SLIDE_UPDATE' }
     ],
     statusOptions: BASE_STATUS_OPTIONS
+  },
+  {
+    id: 'AUTOMATION_SW',
+    name: 'AUTOMATION SOFTWARE',
+    messageTypes: [
+      { 
+        id: 'RETRIEVAL',
+        name: 'RETRIEVAL',
+        requiresEntitySelector: true
+      },
+      { 
+        id: 'STATUS_UPDATE', 
+        name: 'STATUS UPDATE',
+        requiresEntitySelector: true
+      }
+    ],
+    statusOptions: BASE_STATUS_OPTIONS
   }
 ];
 

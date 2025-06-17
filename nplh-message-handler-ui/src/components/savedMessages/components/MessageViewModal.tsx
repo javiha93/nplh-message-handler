@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { SavedMessage } from '../services/SavedMessagesService';
+import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../../utils/responseFormatUtils';
 
 interface MessageViewModalProps {
   isOpen: boolean;
@@ -65,9 +66,9 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''} del Servidor:
-                </h3>
-                <div className="space-y-3">                {message.responses?.map((response, index) => {
-                    const isError = response.message.includes('ERR|');
+                </h3>                <div className="space-y-3">                {message.responses?.map((response, index) => {
+                    const isError = utilIsErrorResponse(response.message);
+                    const parsedResponse = parseResponse(response.message);
                     const receiveTime = new Date(response.receiveTime).toLocaleString('es-ES', {
                       day: '2-digit',
                       month: '2-digit',
@@ -84,13 +85,22 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
                           : 'bg-green-50 border-green-200'
                       }`}>
                         <div className="flex justify-between items-start mb-2">
-                          {(message.responses?.length || 0) > 1 && (
-                            <div className={`text-xs font-semibold ${
-                              isError ? 'text-red-600' : 'text-green-600'
+                          <div className="flex gap-2">
+                            {(message.responses?.length || 0) > 1 && (
+                              <div className={`text-xs font-semibold ${
+                                isError ? 'text-red-600' : 'text-green-600'
+                              }`}>
+                                Respuesta #{index + 1}
+                              </div>
+                            )}
+                            <div className={`text-xs px-2 py-1 rounded ${
+                              parsedResponse.format === 'json' ? 'bg-blue-100 text-blue-700' :
+                              parsedResponse.format === 'xml' ? 'bg-purple-100 text-purple-700' :
+                              'bg-gray-100 text-gray-700'
                             }`}>
-                              Respuesta #{index + 1}
+                              {parsedResponse.format.toUpperCase()}
                             </div>
-                          )}
+                          </div>
                           <div className={`text-xs ${
                             isError ? 'text-red-500' : 'text-green-500'
                           }`}>
@@ -100,7 +110,7 @@ const MessageViewModal: React.FC<MessageViewModalProps> = ({
                         <pre className={`text-xs font-mono whitespace-pre-wrap ${
                           isError ? 'text-red-800' : 'text-green-800'
                         }`}>
-                          {response.message}
+                          {parsedResponse.content}
                         </pre>
                       </div>
                     );

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit, MessageCircle } from 'lucide-react';
+import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit, MessageCircle, Download, Upload } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { SavedMessage } from '../services/SavedMessagesService';
+import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../../utils/responseFormatUtils';
 
 // Simple Tooltip Component
 interface TooltipProps {
@@ -62,6 +63,8 @@ interface MessageSidebarProps {
   isSendingAll: boolean;
   onMessageClick: (message: SavedMessage) => void;
   onEditMessage?: (message: SavedMessage) => void;
+  onExportMessages?: () => void;
+  onImportMessages?: () => void;
 }
 
 const MessageSidebar: React.FC<MessageSidebarProps> = ({
@@ -76,45 +79,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onReorderMessages,
   isSendingAll,
   onMessageClick,
-  onEditMessage
+  onEditMessage,
+  onExportMessages,
+  onImportMessages
 }) => {
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
-  
-  // Función para formatear XML de manera simple y directa
-  const formatXML = (xmlString: string): string => {
-    if (!xmlString.trim().startsWith('<')) {
-      return xmlString;
-    }
-    
-    try {
-      let result = xmlString
-        .replace(/></g, '>\n<')
-        .replace(/^\s+|\s+$/g, '')
-        .split('\n');
-      
-      let formatted = '';
-      let indent = 0;
-      
-      for (let line of result) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-
-        if (trimmed.startsWith('</')) {
-          indent = Math.max(0, indent - 1);
-        }
-
-        formatted += '  '.repeat(indent) + trimmed + '\n';
-
-        if (trimmed.startsWith('<') && !trimmed.startsWith('</') && !trimmed.endsWith('/>') && !trimmed.includes('</', 1)) {
-          indent++;
-        }
-      }
-      
-      return formatted.trim();
-    } catch (error) {
-      return xmlString;
-    }
-  };
 
   const [width, setWidth] = useState<number>(384);
   const [isResizing, setIsResizing] = useState(false);
@@ -206,11 +175,29 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
         className="absolute left-0 top-0 bottom-0 w-2 -ml-1 cursor-col-resize hover:bg-blue-200 active:bg-blue-300 z-10"
         onMouseDown={startResizing}
       />
-      
-      {/* Header */}
+        {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-800">Saved Messages</h2>
         <div className="flex items-center gap-1">
+          {/* Import/Export buttons */}
+          {onImportMessages && (
+            <button
+              onClick={onImportMessages}
+              className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+              title="Importar mensajes"
+            >
+              <Upload size={18} />
+            </button>
+          )}
+          {onExportMessages && savedMessages.length > 0 && (
+            <button
+              onClick={onExportMessages}
+              className="p-1 text-green-600 hover:bg-green-100 rounded"
+              title="Exportar mensajes"
+            >
+              <Download size={18} />
+            </button>
+          )}
           {savedMessages.length > 0 && (
             <button
               onClick={onClearAllResponses}
@@ -245,7 +232,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                   ref={provided.innerRef}
                 >                {savedMessages.map((message, index) => {
                     const hasResponses = message.responses && message.responses.length > 0;
-                    const hasErrors = hasResponses && message.responses?.some(response => response.message.includes('ERR|'));
+                    const hasErrors = hasResponses && message.responses?.some(response => utilIsErrorResponse(response.message));
                     
                     return (
                       <Draggable key={message.id} draggableId={message.id} index={index}>
@@ -381,8 +368,8 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                       Respuesta{(message.responses?.length || 0) > 1 ? 's' : ''}:
                                     </div>
                                     <div className="space-y-2">                                      {message.responses?.map((response, index) => {
-                                        const isError = response.message.includes('ERR|');
-                                        const formattedResponse = formatXML(response.message);
+                                        const isError = utilIsErrorResponse(response.message);
+                                        const parsedResponse = parseResponse(response.message);
                                         const receiveTime = new Date(response.receiveTime).toLocaleString('es-ES', {
                                           day: '2-digit',
                                           month: '2-digit',
@@ -399,13 +386,22 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                               : 'bg-green-50 border-green-200'
                                           }`}>
                                             <div className="flex justify-between items-start mb-1">
-                                              {(message.responses?.length || 0) > 1 && (
-                                                <div className={`text-xs font-semibold ${
-                                                  isError ? 'text-red-600' : 'text-green-600'
+                                              <div className="flex gap-2">
+                                                {(message.responses?.length || 0) > 1 && (
+                                                  <div className={`text-xs font-semibold ${
+                                                    isError ? 'text-red-600' : 'text-green-600'
+                                                  }`}>
+                                                    #{index + 1}
+                                                  </div>
+                                                )}
+                                                <div className={`text-xs px-1 py-0.5 rounded ${
+                                                  parsedResponse.format === 'json' ? 'bg-blue-100 text-blue-700' :
+                                                  parsedResponse.format === 'xml' ? 'bg-purple-100 text-purple-700' :
+                                                  'bg-gray-100 text-gray-700'
                                                 }`}>
-                                                  #{index + 1}
+                                                  {parsedResponse.format.toUpperCase()}
                                                 </div>
-                                              )}
+                                              </div>
                                               <div className={`text-xs ${
                                                 isError ? 'text-red-500' : 'text-green-500'
                                               }`}>
@@ -415,7 +411,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                                             <div 
                                               className={`text-xs leading-relaxed font-mono ${isError ? 'text-red-800' : 'text-green-800'}`}
                                               dangerouslySetInnerHTML={{ 
-                                                __html: formattedResponse
+                                                __html: parsedResponse.content
                                                   .replace(/&/g, '&amp;')
                                                   .replace(/</g, '&lt;')
                                                   .replace(/>/g, '&gt;')

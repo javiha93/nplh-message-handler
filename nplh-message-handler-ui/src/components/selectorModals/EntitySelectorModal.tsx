@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Specimen, Block, Slide } from '../../types/Message';
+import { Specimen, Block, Slide, Order } from '../../types/Message';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface EntitySelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   message: any;
-  onSelectEntity: (entityType: string, entity: Specimen | Block | Slide) => void;
+  onSelectEntity: (entityType: string, entity: Order | Specimen | Block | Slide) => void;
 }
 
 const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
@@ -15,22 +15,20 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
   onClose,
   message,
   onSelectEntity
-}) => {
-  const [expandedSpecimens, setExpandedSpecimens] = useState<Record<string, boolean>>({});
+}) => {  const [expandedSpecimens, setExpandedSpecimens] = useState<Record<string, boolean>>({});
   const [expandedBlocks, setExpandedBlocks] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<'specimens' | 'blocks' | 'slides'>('specimens');
+  const [activeTab, setActiveTab] = useState<'orders' | 'specimens' | 'blocks' | 'slides'>('orders');
 
   useEffect(() => {
     if (message) {
-      const order = message.patient?.orders?.orderList?.[0];
-      if (order?.specimens?.specimenList) {
-        const initialExpandedSpecimens = order.specimens.specimenList.reduce((acc, _, index) => {
+      const order = message.patient?.orders?.orderList?.[0];      if (order?.specimens?.specimenList) {
+        const initialExpandedSpecimens = order.specimens.specimenList.reduce((acc: Record<string, boolean>, _: any, index: number) => {
           acc[index] = true;
           return acc;
         }, {} as Record<string, boolean>);
 
-        const initialExpandedBlocks = order.specimens.specimenList.reduce((acc, specimen) => {
-          specimen.blocks?.blockList?.forEach((block) => {
+        const initialExpandedBlocks = order.specimens.specimenList.reduce((acc: Record<string, boolean>, specimen: any) => {
+          specimen.blocks?.blockList?.forEach((block: any) => {
             acc[block.id] = true;
           });
           return acc;
@@ -64,7 +62,6 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
       [blockId]: !expandedBlocks[blockId]
     });
   };
-
   const handleSelectSpecimen = (specimen: Specimen) => {
     onSelectEntity('Specimen', specimen);
     onClose();
@@ -80,6 +77,11 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
     onClose();
   };
 
+  const handleSelectOrder = (order: Order) => {
+    onSelectEntity('Order', order);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-11/12 max-w-3xl max-h-[90vh] overflow-auto">
@@ -90,9 +92,13 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
-
-        <div className="flex border-b border-gray-200 mb-4">
+        </div>        <div className="flex border-b border-gray-200 mb-4">
+          <button
+            className={`py-2 px-4 border-b-2 ${activeTab === 'orders' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            Orders
+          </button>
           <button
             className={`py-2 px-4 border-b-2 ${activeTab === 'specimens' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('specimens')}
@@ -113,12 +119,40 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
           </button>
         </div>
 
-        <div className="border rounded-lg p-4 mb-4">
-          <div className="font-semibold text-lg flex items-center">
+        <div className="border rounded-lg p-4 mb-4">          <div className="font-semibold text-lg flex items-center">
             Order: {order.sampleId || 'No ID'}
           </div>
 
-          {activeTab === 'specimens' && order.specimens?.specimenList?.map((specimen, specimenIndex) => (
+          {activeTab === 'orders' && (
+            <div className="ml-6 mt-3 border-l-2 pl-4 border-purple-300">
+              <div className="flex items-center justify-between">
+                <div className="font-medium flex items-center cursor-pointer flex-grow">
+                  <span>Order: {order.sampleId || 'No ID'}</span>
+                </div>
+                <button
+                  onClick={() => handleSelectOrder(order)}
+                  className="ml-2 px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors text-sm"
+                >
+                  Select
+                </button>
+              </div>
+              <div className="ml-2 mt-1 text-xs text-gray-600">
+                <p><span className="font-medium">Sample ID:</span> {order.sampleId}</p>
+                <p><span className="font-medium">Entity Name:</span> {order.entityName}</p>
+                {order.extSampleId && (
+                  <p><span className="font-medium">External Sample ID:</span> {order.extSampleId}</p>
+                )}
+                {order.status && (
+                  <p><span className="font-medium">Status:</span> {order.status}</p>
+                )}
+                {order.workFlow && (
+                  <p><span className="font-medium">Workflow:</span> {order.workFlow}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'specimens' && order.specimens?.specimenList?.map((specimen: any, specimenIndex: number) => (
             <div key={`specimen-${specimenIndex}`} className="ml-6 mt-3 border-l-2 pl-4 border-gray-300">
               <div className="flex items-center justify-between">
                 <div className="font-medium flex items-center cursor-pointer flex-grow">
@@ -134,10 +168,9 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
             </div>
           ))}
 
-          {activeTab === 'blocks' && order.specimens?.specimenList?.map((specimen, specimenIndex) => (
-            <div key={`specimen-blocks-${specimenIndex}`} className="ml-6 mt-3 border-l-2 pl-4 border-gray-300">
+          {activeTab === 'blocks' && order.specimens?.specimenList?.map((specimen: any, specimenIndex: number) => (            <div key={`specimen-blocks-${specimenIndex}`} className="ml-6 mt-3 border-l-2 pl-4 border-gray-300">
               <div className="font-medium">Specimen: {specimen.id || 'No ID'}</div>
-              {specimen.blocks?.blockList?.map((block, blockIndex) => (
+              {specimen.blocks?.blockList?.map((block: any, blockIndex: number) => (
                 <div key={`block-${blockIndex}`} className="ml-6 mt-2 border-l-2 pl-4 border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="font-medium text-sm">
@@ -155,13 +188,12 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
             </div>
           ))}
 
-          {activeTab === 'slides' && order.specimens?.specimenList?.map((specimen, specimenIndex) => (
-            <div key={`specimen-slides-${specimenIndex}`} className="ml-6 mt-3 border-l-2 pl-4 border-gray-300">
-              <div className="font-medium">Specimen: {specimen.id || 'No ID'}</div>
-              {specimen.blocks?.blockList?.map((block, blockIndex) => (
+          {activeTab === 'slides' && order.specimens?.specimenList?.map((specimen: any, specimenIndex: number) => (
+            <div key={`specimen-slides-${specimenIndex}`} className="ml-6 mt-3 border-l-2 pl-4 border-gray-300">              <div className="font-medium">Specimen: {specimen.id || 'No ID'}</div>
+              {specimen.blocks?.blockList?.map((block: any, blockIndex: number) => (
                 <div key={`block-slides-${blockIndex}`} className="ml-6 mt-2 border-l-2 pl-4 border-gray-200">
                   <div className="font-medium text-sm">Block: {block.id || 'No ID'}</div>
-                  {block.slides?.slideList?.map((slide, slideIndex) => (
+                  {block.slides?.slideList?.map((slide: any, slideIndex: number) => (
                     <div key={`slide-${slideIndex}`} className="ml-6 mt-2 border-l-2 pl-4 border-blue-100">
                       <div className="flex items-center justify-between">
                         <div className="font-medium text-sm">

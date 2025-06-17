@@ -24,11 +24,12 @@ interface MessageSidebarSectionProps {
   onSendMessage: (message: SavedMessage) => void;
   onSendAllMessages: () => void;
   onClearAllResponses: () => void;
-  onClearMessageResponses: (messageId: string) => void;
-  onReorderMessages: (startIndex: number, endIndex: number) => void;
+  onClearMessageResponses: (messageId: string) => void;  onReorderMessages: (startIndex: number, endIndex: number) => void;
   onMessageClick: (message: SavedMessage) => void;
   onCloseMessageViewModal: () => void;
   onCloseSnackbar: () => void;
+  onExportMessages?: () => void;
+  onImportMessages?: () => void;
 }
 
 const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
@@ -47,7 +48,9 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
   onReorderMessages,
   onMessageClick,
   onCloseMessageViewModal,
-  onCloseSnackbar
+  onCloseSnackbar,
+  onExportMessages,
+  onImportMessages
 }) => {
   // State for edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -78,8 +81,7 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
   };
 
   return (
-    <>
-      <MessageSidebar
+    <>      <MessageSidebar
         isOpen={isSidebarOpen}
         onClose={onToggleSidebar}
         savedMessages={savedMessages}
@@ -92,6 +94,8 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
         isSendingAll={isSendingAll}
         onMessageClick={onMessageClick}
         onEditMessage={handleEditMessage}
+        onExportMessages={onExportMessages}
+        onImportMessages={onImportMessages}
       />
 
       <MessageViewModal

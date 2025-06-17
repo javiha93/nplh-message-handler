@@ -160,6 +160,55 @@ export class SavedMessagesService {
     );
     this.notifyListeners();
   }
+
+  // Export/Import functionality
+  exportMessages(): string {
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      messages: this.messages.map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp.toISOString(),
+        sentTimestamp: msg.sentTimestamp?.toISOString()
+      }))
+    };
+    return JSON.stringify(exportData, null, 2);
+  }
+
+  importMessages(jsonData: string): { success: boolean; message: string; importedCount?: number } {
+    try {
+      const importData = JSON.parse(jsonData);
+      
+      // Validate the import data structure
+      if (!importData.messages || !Array.isArray(importData.messages)) {
+        return { success: false, message: 'Formato de archivo inválido: no se encontraron mensajes' };
+      }      // Convert imported messages to proper format
+      const importedMessages: SavedMessage[] = importData.messages.map((msg: any) => ({
+        ...msg,
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // Generate new unique ID
+        timestamp: new Date(msg.timestamp),
+        sentTimestamp: msg.sentTimestamp ? new Date(msg.sentTimestamp) : undefined,
+        responses: undefined // Clear responses for imported messages
+      }));
+
+      // Add imported messages to existing ones
+      this.messages = [...this.messages, ...importedMessages];
+      this.notifyListeners();
+
+      return { 
+        success: true, 
+        message: `${importedMessages.length} mensajes importados exitosamente`,
+        importedCount: importedMessages.length
+      };
+    } catch (error) {
+      return { success: false, message: 'Error al procesar el archivo: formato JSON inválido' };
+    }
+  }
+
+  clearAllMessages(): void {
+    this.messages = [];
+    this.notifyListeners();
+  }
 }
 
 export const savedMessagesService = SavedMessagesService.getInstance();

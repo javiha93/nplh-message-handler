@@ -101,9 +101,7 @@ const MessageGenerator: React.FC = () => {
         handleBlockSelect={hookData.handleBlockSelect}
         handleSlideSelect={hookData.handleSlideSelect}
         handleEntitySelect={hookData.handleEntitySelect}
-      />
-
-      <MessageSidebarSection
+      />      <MessageSidebarSection
         isSidebarOpen={hookData.isSidebarOpen}
         savedMessages={hookData.savedMessages}
         isSendingAll={hookData.isSendingAll}
@@ -120,6 +118,8 @@ const MessageGenerator: React.FC = () => {
         onMessageClick={handleMessageClick}
         onCloseMessageViewModal={closeMessageViewModal}
         onCloseSnackbar={hookData.closeSnackbar}
+        onExportMessages={hookData.exportMessages}
+        onImportMessages={hookData.importMessages}
       />
     </MessageGeneratorLayout>
   );

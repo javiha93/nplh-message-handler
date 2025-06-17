@@ -1,12 +1,18 @@
 package org.example.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intersystems.jdbc.IRIS;
 import com.intersystems.jdbc.IRISConnection;
+import org.example.domain.host.Host;
+import org.example.domain.host.HostInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
+import java.util.List;
 
 @Service
 public class IrisService {
@@ -36,6 +42,24 @@ public class IrisService {
     public void deleteAllMessages() {
         iris.classMethodVoid("hca.utl.chcaUTL", "CleanOrdersAP");
         iris.classMethodVoid("hca.utl.chcaUTL", "CleanQueues", "1");
+        getHostInfo();
         logger.info("Executed commands for delete all messages");
     }
+
+    public List<HostInfo> getHostInfo() {
+        return parseList(iris.classMethodString("termutils.Canelita", "GetHostsStatus"), HostInfo.class);
+    }
+
+    public static <T> List<T> parseList(String json, Class<T> clazz) {
+        try {
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            JavaType type = mapper.getTypeFactory().constructCollectionType(List.class, clazz);
+            return mapper.readValue(json, type);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error parsing JSON to List<" + clazz.getSimpleName() + ">", e);
+        }
+    }
+
 }

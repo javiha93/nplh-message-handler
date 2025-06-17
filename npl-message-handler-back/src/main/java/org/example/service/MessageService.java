@@ -99,6 +99,8 @@ public class MessageService {
             case "ProcessPhysicianUpdate":
                 ProcessPhysicianUpdate processPhysicianUpdate = ProcessPhysicianUpdate.FromMessage(message);
                 return new MessageResponse(processPhysicianUpdate.toString(), processPhysicianUpdate.getTransactionId());
+            case "RETRIEVAL":
+                return new MessageResponse(message.getOrder().getSampleId(), null);
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
@@ -112,6 +114,8 @@ public class MessageService {
             case "sendReleasedSpecimen":
                 SendReleasedSpecimen sendReleasedSpecimen = SendReleasedSpecimen.FromSpecimen(message, specimen);
                 return new MessageResponse(sendReleasedSpecimen.toString(), "");
+            case "RETRIEVAL":
+                return new MessageResponse(specimen.getId(), null);
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }

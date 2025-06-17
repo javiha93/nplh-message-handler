@@ -9,6 +9,7 @@ import org.example.client.HL7Client;
 import org.example.client.WSClient;
 import org.example.client.message.ClientMessageResponse;
 import org.example.domain.host.Host;
+import org.example.domain.host.HostInfo;
 import org.example.domain.host.HostDeserializer;
 import org.example.domain.message.Message;
 import org.example.server.Servers;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/messages")
@@ -50,6 +52,7 @@ public class MessageController {
     @PostMapping("/send")
     public ResponseEntity<List<ClientMessageResponse>> sendMessage(@RequestBody SendMessageRequest request) {
         List<ClientMessageResponse> response;
+
         Client client = clients.getClient(request.hostName);
 
         if (client instanceof HL7Client) {
@@ -57,7 +60,7 @@ public class MessageController {
         } else if (client instanceof WSClient) {
             response = Collections.singletonList(new ClientMessageResponse(client.send(request.messageType, request.message, request.controlId)));
         } else {
-            throw new RuntimeException();
+            response = Collections.singletonList(new ClientMessageResponse(client.send(request.messageType, request.message, request.controlId)));
         }
 
         return ResponseEntity.ok(response);

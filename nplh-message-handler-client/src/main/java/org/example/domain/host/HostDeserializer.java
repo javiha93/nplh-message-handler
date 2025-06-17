@@ -22,6 +22,12 @@ public class HostDeserializer extends JsonDeserializer<Host> {
             }
         }
 
+        for (RESTHost host : RESTHost.values()) {
+            if (host.name().equals(text)) {
+                return host;
+            }
+        }
+
         throw new RuntimeException("Host no reconocido: " + text);
     }
 }

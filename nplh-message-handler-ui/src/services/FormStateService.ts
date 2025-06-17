@@ -4,7 +4,7 @@
  */
 
 import { MessageType, Patient, Physician, Pathologist, Technician, Message } from '../types/MessageType';
-import { Specimen, Block, Slide } from '../types/Message';
+import { Specimen, Block, Slide, Order } from '../types/Message';
 import { ClientMessageResponse } from '../components/savedMessages/services/SavedMessagesService';
 import { 
   MessageConfigHelper, 
@@ -248,8 +248,7 @@ class FormStateService {
   public setSelectedSlide(slide: Slide | null): void {
     this.updateState({ selectedSlide: slide });
   }
-
-  public setSelectedEntity(entityType: string, entity: Specimen | Block | Slide): void {
+  public setSelectedEntity(entityType: string, entity: Specimen | Block | Slide | Order): void {
     if (entityType === 'Specimen') {
       this.updateState({
         selectedSpecimen: entity as Specimen,
@@ -270,6 +269,13 @@ class FormStateService {
         selectedBlock: null,
         selectedSlide: entity as Slide,
         selectedEntity: { type: entityType, id: (entity as any).id }
+      });
+    } else if (entityType === 'Order') {
+      this.updateState({
+        selectedSpecimen: null,
+        selectedBlock: null,
+        selectedSlide: null,
+        selectedEntity: { type: entityType, id: (entity as any).sampleId }
       });
     }
   }

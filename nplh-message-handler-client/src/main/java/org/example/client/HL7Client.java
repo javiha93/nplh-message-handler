@@ -40,6 +40,7 @@ public class HL7Client extends Client {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             clientMessageList = new ClientMessageList();
+            logger.info("Connect Client {} on port {}", host.name(), host.getClientPort());
 
         } catch (UnknownHostException e) {
             logger.error("Unknown host {} , {}:{}", host.name(), host.getIp(), host.getClientPort(), e);
