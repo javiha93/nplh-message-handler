@@ -295,8 +295,7 @@ const ListSelector: React.FC<ListSelectorProps> = ({
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Nueva Lista"
-      >        <form onSubmit={handleCreateSubmit} className="space-y-4">
-          <div>
+      >        <form onSubmit={handleCreateSubmit} className="space-y-4">          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nombre *
             </label>
@@ -304,7 +303,6 @@ const ListSelector: React.FC<ListSelectorProps> = ({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              onFocus={(e) => e.target.select()}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Nombre de la lista"
               autoFocus
@@ -367,15 +365,13 @@ const ListSelector: React.FC<ListSelectorProps> = ({
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         title="Editar Lista"
-      >
-        <form onSubmit={handleEditSubmit} className="space-y-4">
+      >        <form onSubmit={handleEditSubmit} className="space-y-4">
           <div>            <label className="block text-sm font-medium text-gray-700 mb-1">
               Nombre *
             </label>            <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              onFocus={(e) => e.target.select()}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Nombre de la lista"
               autoFocus

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { MessageViewModal, MessageEditModal, SavedMessage, savedMessagesService } from '../savedMessages';
+import { MessageViewModal, MessageEditModal } from '../savedMessages';
+import { SavedMessage, messageListsService } from '../savedMessages/services/MessageListsService';
 import MultiListMessageSidebar from '../savedMessages/components/MultiListMessageSidebar';
 import Snackbar from '../Snackbar';
 
@@ -46,19 +47,18 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
     setEditingMessage(message);
     setIsEditModalOpen(true);
   };
-
   const handleSaveEdit = (messageId: string, newContent: string) => {
-    savedMessagesService.updateMessageContent(messageId, newContent);
+    messageListsService.updateMessageContent(messageId, newContent);
     setIsEditModalOpen(false);
     setEditingMessage(null);
   };
   
   const handleSaveComment = (messageId: string, comment: string) => {
-    savedMessagesService.updateMessageComment(messageId, comment);
+    messageListsService.updateMessageComment(messageId, comment);
   };
 
   const handleSaveControlId = (messageId: string, controlId: string) => {
-    savedMessagesService.updateMessageControlId(messageId, controlId);
+    messageListsService.updateMessageControlId(messageId, controlId);
   };
 
   const handleCloseEditModal = () => {

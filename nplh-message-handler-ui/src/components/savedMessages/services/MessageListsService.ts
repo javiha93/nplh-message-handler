@@ -397,8 +397,68 @@ export class MessageListsService {
       );
       this.notifyListeners();
     }
-    
-    return responses;
+      return responses;
+  }
+
+  // Message editing operations
+  updateMessageContent(messageId: string, newContent: string, listId?: string): void {
+    const targetListId = listId || this.activeListId;
+    if (!targetListId) return;
+
+    this.lists = this.lists.map(list => 
+      list.id === targetListId 
+        ? {
+            ...list,
+            messages: list.messages.map(msg => 
+              msg.id === messageId 
+                ? { ...msg, content: newContent }
+                : msg
+            ),
+            updatedAt: new Date()
+          }
+        : list
+    );
+    this.notifyListeners();
+  }
+
+  updateMessageComment(messageId: string, comment: string, listId?: string): void {
+    const targetListId = listId || this.activeListId;
+    if (!targetListId) return;
+
+    this.lists = this.lists.map(list => 
+      list.id === targetListId 
+        ? {
+            ...list,
+            messages: list.messages.map(msg => 
+              msg.id === messageId 
+                ? { ...msg, comment: comment.trim() || undefined }
+                : msg
+            ),
+            updatedAt: new Date()
+          }
+        : list
+    );
+    this.notifyListeners();
+  }
+
+  updateMessageControlId(messageId: string, controlId: string, listId?: string): void {
+    const targetListId = listId || this.activeListId;
+    if (!targetListId) return;
+
+    this.lists = this.lists.map(list => 
+      list.id === targetListId 
+        ? {
+            ...list,
+            messages: list.messages.map(msg => 
+              msg.id === messageId 
+                ? { ...msg, messageControlId: controlId.trim() || undefined }
+                : msg
+            ),
+            updatedAt: new Date()
+          }
+        : list
+    );
+    this.notifyListeners();
   }
 
   // Export/Import
