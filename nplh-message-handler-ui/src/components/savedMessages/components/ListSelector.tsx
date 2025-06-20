@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, Copy, Download, Upload, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, Copy, Download, Upload, ChevronDown, GripVertical } from 'lucide-react';
+import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 import { MessageList } from '../services/MessageListsService';
+import StrictModeDroppable from '../../common/StrictModeDroppable';
 
 interface ListSelectorProps {
   lists: MessageList[];
@@ -12,6 +14,7 @@ interface ListSelectorProps {
   onDuplicateList: (listId: string, newName?: string) => void;
   onExportList: (listId: string) => void;
   onImportList: () => void;
+  onReorderLists: (startIndex: number, endIndex: number) => void;
 }
 
 interface ListFormData {
@@ -29,7 +32,8 @@ const ListSelector: React.FC<ListSelectorProps> = ({
   onDeleteList,
   onDuplicateList,
   onExportList,
-  onImportList
+  onImportList,
+  onReorderLists
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -116,6 +120,17 @@ const ListSelector: React.FC<ListSelectorProps> = ({
     }
   };
 
+  const handleOnDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    
+    if (startIndex !== endIndex) {
+      onReorderLists(startIndex, endIndex);
+    }
+  };
+
   const handleDuplicate = (list: MessageList) => {
     const newName = prompt(`Nombre para la copia de "${list.name}":`, `${list.name} (Copia)`);
     if (newName?.trim()) {
@@ -197,82 +212,136 @@ const ListSelector: React.FC<ListSelectorProps> = ({
               <Plus size={16} />
               Nueva Lista
             </button>
-          </div>
+          </div>          <div className="max-h-60 overflow-y-auto">
+            <DragDropContext onDragEnd={handleOnDragEnd}>              <StrictModeDroppable droppableId="lists">
+                {(provided: any, snapshot: any) => (                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className={`${
+                      snapshot.isDraggingOver ? 'bg-blue-50 border-blue-200' : ''
+                    } transition-all duration-200 rounded-md`}
+                  >
+                    {lists.map((list, index) => (
+                      <Draggable key={list.id} draggableId={list.id} index={index}>
+                        {(provided: any, snapshot: any) => (                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`group relative border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                              snapshot.isDragging ? 'shadow-lg rounded-lg bg-white border border-blue-200 z-50 opacity-90' : 'hover:bg-gray-50 opacity-100'
+                            }`}
+                            style={{
+                              ...provided.draggableProps.style,
+                              ...(snapshot.isDragging && {
+                                transform: `${provided.draggableProps.style?.transform} rotate(1deg)`,
+                              }),
+                            }}                          >
+                            {/* Main content area */}
+                            <div className="flex items-start">
+                              {/* Drag Handle */}
+                              <div
+                                {...provided.dragHandleProps}
+                                className="flex items-center justify-center p-3 cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-700 opacity-70 group-hover:opacity-100 transition-opacity"
+                              >
+                                <GripVertical size={14} />
+                              </div>
 
-          <div className="max-h-60 overflow-y-auto">
-            {lists.map(list => (
-              <div key={list.id} className="group relative">
-                <button
-                  onClick={() => {
-                    onSelectList(list.id);
-                    setIsDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                    list.id === activeListId ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                  }`}
-                >
-                  <div 
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: list.color || '#3B82F6' }}
-                  />
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">{list.name}</div>
-                    {list.description && (
-                      <div className="text-xs text-gray-500 truncate">{list.description}</div>
-                    )}
-                    <div className="text-xs text-gray-400">
-                      {list.messages.length} mensaje{list.messages.length !== 1 ? 's' : ''}
-                    </div>
+                              {/* List Content */}
+                              <div className="flex-1">
+                                {/* List Button */}
+                                <button
+                                  onClick={() => {
+                                    onSelectList(list.id);
+                                    setIsDropdownOpen(false);
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-3 py-3 text-sm transition-colors ${
+                                    list.id === activeListId 
+                                      ? 'bg-blue-50 text-blue-800 font-medium' 
+                                      : 'text-gray-800 hover:bg-gray-100 hover:text-gray-900'
+                                  }`}
+                                >
+                                  <div 
+                                    className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm"
+                                    style={{ backgroundColor: list.color || '#3B82F6' }}
+                                  />
+                                  <div className="flex-1 text-left">
+                                    <div className={`font-semibold ${
+                                      list.id === activeListId ? 'text-blue-900' : 'text-gray-900'
+                                    }`}>
+                                      {list.name}
+                                    </div>
+                                    {list.description && (
+                                      <div className={`text-xs truncate ${
+                                        list.id === activeListId ? 'text-blue-600' : 'text-gray-600'
+                                      }`}>
+                                        {list.description}
+                                      </div>
+                                    )}
+                                    <div className={`text-xs ${
+                                      list.id === activeListId ? 'text-blue-500' : 'text-gray-500'
+                                    }`}>
+                                      {list.messages.length} mensaje{list.messages.length !== 1 ? 's' : ''}
+                                    </div>
+                                  </div>
+                                </button>
+
+                                {/* Action buttons - Now below the text */}
+                                <div className="px-3 pb-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                                  <div className="flex gap-1 justify-end">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openEditModal(list);
+                                      }}
+                                      className="p-1.5 text-gray-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                      title="Editar lista"
+                                    >
+                                      <Edit2 size={14} />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDuplicate(list);
+                                      }}
+                                      className="p-1.5 text-gray-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                                      title="Duplicar lista"
+                                    >
+                                      <Copy size={14} />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onExportList(list.id);
+                                      }}
+                                      className="p-1.5 text-gray-600 hover:text-orange-700 hover:bg-orange-50 rounded transition-colors"
+                                      title="Exportar lista"
+                                    >
+                                      <Download size={14} />
+                                    </button>
+                                    {lists.length > 1 && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDelete(list);
+                                        }}
+                                        className="p-1.5 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                        title="Eliminar lista"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
                   </div>
-                </button>
-
-                {/* Action buttons */}
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditModal(list);
-                    }}
-                    className="p-1 text-gray-400 hover:text-blue-600 rounded"
-                    title="Editar lista"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDuplicate(list);
-                    }}
-                    className="p-1 text-gray-400 hover:text-green-600 rounded"
-                    title="Duplicar lista"
-                  >
-                    <Copy size={12} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onExportList(list.id);
-                    }}
-                    className="p-1 text-gray-400 hover:text-orange-600 rounded"
-                    title="Exportar lista"
-                  >
-                    <Download size={12} />
-                  </button>
-                  {lists.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(list);
-                      }}
-                      className="p-1 text-gray-400 hover:text-red-600 rounded"
-                      title="Eliminar lista"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                )}
+              </StrictModeDroppable>
+            </DragDropContext>
           </div>
 
           <div className="p-2 border-t border-gray-200">

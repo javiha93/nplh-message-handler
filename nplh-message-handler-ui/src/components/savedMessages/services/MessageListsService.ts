@@ -369,6 +369,15 @@ export class MessageListsService {
     this.notifyListeners();
   }
 
+  reorderLists(startIndex: number, endIndex: number): void {
+    const result = Array.from(this.lists);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    
+    this.lists = result;
+    this.notifyListeners();
+  }
+
   // Send operations
   async sendMessage(savedMessage: SavedMessage, listId?: string): Promise<ClientMessageResponse[]> {
     const request: SendMessageRequest = {

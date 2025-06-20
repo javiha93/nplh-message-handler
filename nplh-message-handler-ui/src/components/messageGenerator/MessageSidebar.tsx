@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../utils/responseFormatUtils';
+import StrictModeDroppable from '../common/StrictModeDroppable';
 
 interface SavedMessage {
   id: string;
@@ -155,9 +156,8 @@ useEffect(() => {
               <p className="text-gray-500">No messages saved</p>
             </div>
           ) : (
-            <DragDropContext onDragEnd={handleOnDragEnd}>
-              <Droppable droppableId="messages">
-                {(provided) => (                  <div 
+            <DragDropContext onDragEnd={handleOnDragEnd}>              <StrictModeDroppable droppableId="messages">
+                {(provided: any) => (<div 
                     className="p-3 space-y-3"
                     {...provided.droppableProps}
                     ref={provided.innerRef}
@@ -313,12 +313,11 @@ useEffect(() => {
                             </div>
                           )}
                         </Draggable>
-                      );                    })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                      );                    })}                  {provided.placeholder}
+                </div>
+              )}
+            </StrictModeDroppable>
+          </DragDropContext>
           )}
         </div>        {/* Footer con botón de enviar todos */}
         {savedMessages.length > 0 && (

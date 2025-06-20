@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intersystems.jdbc.IRIS;
 import com.intersystems.jdbc.IRISConnection;
-import org.example.domain.host.Host;
-import org.example.domain.host.HostInfo;
+import org.example.domain.host.host.HostInfo;
+import org.example.domain.host.host.HostInfoList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,6 @@ public class IrisService {
     public void deleteAllMessages() {
         iris.classMethodVoid("hca.utl.chcaUTL", "CleanOrdersAP");
         iris.classMethodVoid("hca.utl.chcaUTL", "CleanQueues", "1");
-        var x = getInstallationPath();
         logger.info("Executed commands for delete all messages");
     }
 
@@ -50,8 +49,8 @@ public class IrisService {
         return iris.classMethodString("%SYSTEM.Util", "InstallDirectory");
     }
 
-    public List<HostInfo> getHostInfo() {
-        return parseList(iris.classMethodString("termutils.Canelita", "GetHostsStatus"), HostInfo.class);
+    public HostInfoList getHostInfo() {
+        return new HostInfoList(parseList(iris.classMethodString("Automation.HostController", "GetHostsStatus"), HostInfo.class));
     }
 
     public static <T> List<T> parseList(String json, Class<T> clazz) {

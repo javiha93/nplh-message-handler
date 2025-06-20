@@ -1,6 +1,7 @@
 package org.example.client;
 
 import org.example.domain.host.RESTHost;
+import org.example.domain.host.host.Connection;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,6 +17,11 @@ public class RestClient extends Client {
     public RestClient(RESTHost host) {
         this.clientName = host.name();
         this.apikey = host.getApiKey();
+    }
+
+    public RestClient(String hostName, Connection connection) {
+        this.clientName = hostName;
+        this.apikey = connection.getApiKeyValue();
     }
 
     @Override

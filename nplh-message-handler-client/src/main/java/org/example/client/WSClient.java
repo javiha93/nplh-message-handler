@@ -1,6 +1,7 @@
 package org.example.client;
 
 import org.example.domain.host.WSHost;
+import org.example.domain.host.host.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +20,20 @@ public class WSClient extends Client {
 
     static final Logger logger = LoggerFactory.getLogger(HL7Client.class);
     private final String baseUrl;
-    private final Map<String, String> headers;
+    private Map<String, String> headers = new HashMap<>();
 
     public WSClient(WSHost host) {
         this.clientName = host.name();
         this.baseUrl = "http://127.0.0.1:" + 80 + host.getPath();
         this.headers = host.getHeader() != null ? host.getHeader() : new HashMap<>();
+    }
+
+    public WSClient(String hostName, Connection connection) {
+        this.clientName = hostName;
+        this.baseUrl = "http://127.0.0.1:" + 80 + connection.getWsName();
+        if (!connection.getApiKeyValue().isEmpty()) {
+            this.headers = Map.of(connection.getApiKeyFile(), connection.getApiKeyValue());
+        }
     }
 
     @Override

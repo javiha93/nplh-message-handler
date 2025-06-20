@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit, MessageCircle } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 import { SavedMessage, MessageList, messageListsService } from '../services/MessageListsService';
 import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../../utils/responseFormatUtils';
 import ListSelector from './ListSelector';
 import { messageService } from '../../../services/MessageService';
 import { snackbarService } from '../../../services/SnackbarService';
+import StrictModeDroppable from '../../common/StrictModeDroppable';
 
 // Simple Tooltip Component
 interface TooltipProps {
@@ -324,8 +325,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
           </button>
         </div>        {/* List Selector with Clear Button */}
         <div className="flex items-center gap-2 mb-3">
-          <div className="flex-1">
-            <ListSelector
+          <div className="flex-1">            <ListSelector
               lists={lists}
               activeListId={activeListId}
               onSelectList={(listId) => messageListsService.setActiveList(listId)}
@@ -335,6 +335,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
               onDuplicateList={(listId, newName) => messageListsService.duplicateList(listId, newName)}
               onExportList={handleExportList}
               onImportList={handleImportList}
+              onReorderLists={(startIndex, endIndex) => messageListsService.reorderLists(startIndex, endIndex)}
             />
           </div>
           {savedMessages.length > 0 && (
@@ -355,10 +356,8 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">No hay mensajes en esta lista</p>
           </div>
-        ) : (
-          <DragDropContext onDragEnd={handleOnDragEnd}>
-            <Droppable droppableId="messages">
-              {(provided) => (
+        ) : (          <DragDropContext onDragEnd={handleOnDragEnd}>            <StrictModeDroppable droppableId="messages">
+              {(provided: any) => (
                 <div 
                   className="p-3 space-y-3"
                   {...provided.droppableProps}
@@ -571,10 +570,9 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                       </Draggable>
                     );
                   })}
-                  {provided.placeholder}
-                </div>
+                  {provided.placeholder}                </div>
               )}
-            </Droppable>
+            </StrictModeDroppable>
           </DragDropContext>
         )}
       </div>

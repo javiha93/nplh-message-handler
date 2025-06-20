@@ -37,7 +37,7 @@ public class MessageController {
     public MessageController(MessageService messageService, IrisService irisService) {
         this.messageService = messageService;
         this.irisService = irisService;
-        this.clients = new Clients(irisService.getInstallationPath());
+        this.clients = new Clients(irisService.getHostInfo());
         this.servers = new Servers();
     }
 

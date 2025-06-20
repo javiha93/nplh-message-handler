@@ -3,6 +3,8 @@ package org.example.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.example.domain.host.host.Connection;
+import org.example.domain.host.host.HostInfo;
 import org.example.utils.HL7LLPCharacters;
 import org.example.client.message.ClientMessage;
 import org.example.client.message.ClientMessageList;
@@ -36,16 +38,32 @@ public class HL7Client extends Client {
     public HL7Client(HL7Host host) {
         this.clientName = host.name();
         try {
-            socket = new Socket(host.getIp(), host.getClientPort());
+            socket = new Socket(host.getIp().isEmpty() ? "127.0.0.1" : host.getIp(), host.getClientPort());
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             clientMessageList = new ClientMessageList();
             logger.info("Connect Client {} on port {}", host.name(), host.getClientPort());
 
         } catch (UnknownHostException e) {
-            logger.error("Unknown host {} , {}:{}", host.name(), host.getIp(), host.getClientPort(), e);
+            logger.error("Unknown host {} , {}:{}", host.name(),host.getIp().isEmpty() ? "127.0.0.1" : host.getIp(), host.getClientPort(), e);
         } catch (IOException e) {
-            logger.error("Error connecting to {}:{}", host.getIp(), host.getClientPort(), e);
+            logger.error("Error connecting to {}:{}",host.getIp().isEmpty() ? "127.0.0.1" : host.getIp(), host.getClientPort(), e);
+        }
+    }
+
+    public HL7Client(String hostName, Connection connection) {
+        this.clientName = hostName;
+        try {
+            socket = new Socket(connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort());
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            clientMessageList = new ClientMessageList();
+            logger.info("Connect Client {} on port {}", hostName, connection.getPort());
+
+        } catch (UnknownHostException e) {
+            logger.error("Unknown host {} , {}:{}", hostName, connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort(), e);
+        } catch (IOException e) {
+            logger.error("Error connecting to {}:{}", connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(),connection.getPort(), e);
         }
     }
 
