@@ -22,10 +22,10 @@ interface MessageFormSectionProps {
   isGeneratingMessage: boolean;
   isSendingMessage: boolean;
   generateButtonDisabled: boolean;
-  
-  // Options and selections
+    // Options and selections
   messageTypes: MessageType[];
   hosts: { id: string; name: string }[];
+  isLoadingHosts: boolean;
   selectedSpecimen: Specimen | null;
   selectedBlock: Block | null;
   selectedSlide: Slide | null;
@@ -79,8 +79,8 @@ const MessageFormSection: React.FC<MessageFormSectionProps> = ({
   isGeneratingMessage,
   isSendingMessage,
   generateButtonDisabled,
-  messageTypes,
-  hosts,
+  messageTypes,  hosts,
+  isLoadingHosts,
   selectedSpecimen,
   selectedBlock,
   selectedSlide,
@@ -128,9 +128,9 @@ const MessageFormSection: React.FC<MessageFormSectionProps> = ({
       <MessageOptions
         selectedHost={selectedHost}
         selectedType={selectedType}
-        selectedStatus={selectedStatus}
-        messageTypes={messageTypes}
+        selectedStatus={selectedStatus}        messageTypes={messageTypes}
         hosts={hosts}
+        isLoadingHosts={isLoadingHosts}
         handleHostChange={handleHostChange}
         handleTypeChange={handleTypeChange}
         handleStatusChange={handleStatusChange}

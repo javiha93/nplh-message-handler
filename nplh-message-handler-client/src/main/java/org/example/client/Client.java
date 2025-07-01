@@ -1,9 +1,11 @@
 package org.example.client;
 
+import lombok.Getter;
 import org.example.client.message.ClientMessageResponse;
 
 import java.util.List;
 
+@Getter
 public class Client {
     String clientName;
 

@@ -6,10 +6,10 @@ import { MessageConfigHelper } from '../../config/messageConfig';
 
 interface MessageOptionsProps {
   selectedHost: string;
-  selectedType: string;
-  selectedStatus: string;
+  selectedType: string;  selectedStatus: string;
   messageTypes: MessageType[];
   hosts: { id: string; name: string }[];
+  isLoadingHosts: boolean;
   handleHostChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleTypeChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleStatusChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -35,6 +35,7 @@ const MessageOptions: React.FC<MessageOptionsProps> = ({
   selectedStatus,
   messageTypes,
   hosts,
+  isLoadingHosts,
   handleHostChange,
   handleTypeChange,
   handleStatusChange,
@@ -60,14 +61,18 @@ const MessageOptions: React.FC<MessageOptionsProps> = ({
       <div className="mb-6">
         <label htmlFor="hostType" className="block text-sm font-medium text-gray-700 mb-2">
           Host
-        </label>
-        <select
+        </label>        <select
           id="hostType"
           value={selectedHost}
           onChange={handleHostChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white transition-all"
+          disabled={isLoadingHosts}
+          className={`w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white transition-all ${
+            isLoadingHosts ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          <option value="">Select a host</option>
+          <option value="">
+            {isLoadingHosts ? 'Loading hosts...' : 'Select a host'}
+          </option>
           {hosts.map((host) => (
             <option key={host.id} value={host.id}>
               {host.name}

@@ -10,6 +10,7 @@ import org.example.client.WSClient;
 import org.example.client.message.ClientMessageResponse;
 import org.example.domain.host.Host;
 import org.example.domain.host.HostDeserializer;
+import org.example.domain.host.host.HostInfoList;
 import org.example.domain.message.Message;
 import org.example.server.Servers;
 import org.example.service.IrisService;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +49,11 @@ public class MessageController {
         String sampleId = (request != null && request.getSampleId() != null) ? request.getSampleId() : "";
         Message message = messageService.generateMessage(sampleId);
         return ResponseEntity.ok(message);
+    }
+
+    @GetMapping("/hostClients")
+    public ResponseEntity<List<Client>> getHosts() {
+        return ResponseEntity.ok(clients.getClientList());
     }
 
     @PostMapping("/send")
@@ -146,8 +154,7 @@ public class MessageController {
     @Getter
     public static class SendMessageRequest {
         private String message;
-        @JsonDeserialize(using = HostDeserializer.class)
-        private Host hostName;
+        private String hostName;
         private String messageType;
         private String controlId;
     }

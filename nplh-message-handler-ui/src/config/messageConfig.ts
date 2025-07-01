@@ -114,7 +114,7 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
     statusOptions: BASE_STATUS_OPTIONS
   },
   {
-    id: 'VANTAGE_WS',
+    id: 'VANTAGE WS',
     name: 'VANTAGE WS',
     messageTypes: [      { 
         id: 'ProcessVANTAGEEvent', 
@@ -209,16 +209,94 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       }
     ],
     statusOptions: BASE_STATUS_OPTIONS
+  },
+  {
+    id: 'LIS_HL7',
+    name: 'LIS_HL7',
+    messageTypes: [
+      { id: 'OML21', name: 'OML21' },
+      { id: 'ADTA28', name: 'ADTA28' },
+      { id: 'ADTA08', name: 'ADTA08' },
+      { 
+        id: 'CASE_UPDATE', 
+        name: 'CASE_UPDATE',
+        requiresStatusSelector: true,
+        statusOptions: BASE_STATUS_OPTIONS
+      },
+      { id: 'DELETE_CASE', name: 'DELETE_CASE' },
+      { 
+        id: 'DELETE_SPECIMEN', 
+        name: 'DELETE_SPECIMEN',
+        requiresSpecimenSelector: true
+      },
+      { 
+        id: 'DELETE_SLIDE', 
+        name: 'DELETE_SLIDE',
+        requiresSlideSelector: true
+      }
+    ],
+    statusOptions: BASE_STATUS_OPTIONS
   }
 ];
 
 // Helper functions to work with the configuration
-export class MessageConfigHelper {
-  /**
-   * Get host configuration by ID
+export class MessageConfigHelper {  /**
+   * Get host configuration by ID with fallback for dynamic hosts
    */
   static getHostConfig(hostId: string): HostConfig | undefined {
-    return HOST_CONFIGURATIONS.find(host => host.id === hostId);
+    // Primero buscar configuración exacta
+    let config = HOST_CONFIGURATIONS.find(host => host.id === hostId);
+    
+    if (config) {
+      return config;
+    }
+    
+    // Fallback para hosts dinámicos no configurados
+    if (hostId.startsWith('histobot') || hostId.includes('HISTOBOT')) {
+      // Usar configuración de HISTOBOT como base
+      const histobotConfig = HOST_CONFIGURATIONS.find(host => host.id === 'HISTOBOT');
+      if (histobotConfig) {
+        return {
+          ...histobotConfig,
+          id: hostId,
+          name: hostId
+        };
+      }
+    }
+    
+    // Fallback para hosts tipo LIS
+    if (hostId.includes('LIS')) {
+      const lisConfig = HOST_CONFIGURATIONS.find(host => host.id === 'LIS_HL7');
+      if (lisConfig) {
+        return {
+          ...lisConfig,
+          id: hostId,
+          name: hostId
+        };
+      }
+    }
+    
+    // Fallback para hosts tipo VTG
+    if (hostId.includes('VTG')) {
+      const vtgConfig = HOST_CONFIGURATIONS.find(host => host.id === 'VTG');
+      if (vtgConfig) {
+        return {
+          ...vtgConfig,
+          id: hostId,
+          name: hostId
+        };
+      }
+    }
+    
+    // Fallback genérico para hosts desconocidos
+    return {
+      id: hostId,
+      name: hostId,
+      messageTypes: [
+        { id: 'GENERIC_MESSAGE', name: 'Generic Message' }
+      ],
+      statusOptions: BASE_STATUS_OPTIONS
+    };
   }
 
   /**

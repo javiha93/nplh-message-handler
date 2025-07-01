@@ -11,6 +11,7 @@ import {
   BASE_STATUS_OPTIONS, 
   VANTAGE_WS_STATUS_OPTIONS 
 } from '../config/messageConfig';
+import { hostService } from './HostService';
 
 type FormStateType = {
   // Core form data
@@ -39,6 +40,10 @@ type FormStateType = {
   
   // Available options
   messageTypes: MessageType[];
+  
+  // Dynamic hosts
+  dynamicHosts: { id: string; name: string }[];
+  isLoadingHosts: boolean;
 };
 
 type FormStateUpdateCallback = (state: FormStateType) => void;
@@ -46,9 +51,12 @@ type FormStateUpdateCallback = (state: FormStateType) => void;
 class FormStateService {
   private static instance: FormStateService;
   private state: FormStateType;
-  private callbacks: Set<FormStateUpdateCallback> = new Set();
-  // Static data - now retrieved from config
+  private callbacks: Set<FormStateUpdateCallback> = new Set();  // Static data - now retrieved from config and dynamic hosts
   public get hosts() {
+    // Si tenemos hosts dinámicos, usarlos. Si no, usar fallback a los estáticos
+    if (this.state.dynamicHosts.length > 0) {
+      return this.state.dynamicHosts;
+    }
     return MessageConfigHelper.getHostOptions();
   }
 
@@ -56,13 +64,45 @@ class FormStateService {
     return BASE_STATUS_OPTIONS;
   }
   public get statusVTGWSOptions() {
-    return VANTAGE_WS_STATUS_OPTIONS;
-  }
+    return VANTAGE_WS_STATUS_OPTIONS;  }
 
   // Get status options for current host and type
   public getCurrentStatusOptions(): { id: string; name: string }[] {
     const { selectedHost, selectedType } = this.state;
     return MessageConfigHelper.getStatusOptions(selectedHost, selectedType);
+  }
+
+  // Initialize dynamic hosts from backend
+  private async initializeDynamicHosts(): Promise<void> {
+    this.updateState({ isLoadingHosts: true });
+    
+    try {
+      await hostService.initialize();
+      const dynamicHostNames = hostService.getCachedHosts();
+      
+      // Convertir nombres de host a formato compatible con el sistema
+      const dynamicHosts = dynamicHostNames.map(hostName => ({
+        id: hostName,
+        name: hostName
+      }));
+      
+      this.updateState({ 
+        dynamicHosts,
+        isLoadingHosts: false 
+      });
+
+      // Si hay un host seleccionado actualmente, migrar si es necesario
+      if (this.state.selectedHost && !hostService.hostExists(this.state.selectedHost)) {
+        const migratedHost = hostService.migrateHost(this.state.selectedHost);
+        if (migratedHost !== this.state.selectedHost) {
+          console.log(`Migrando host ${this.state.selectedHost} → ${migratedHost}`);
+          this.setSelectedHost(migratedHost);
+        }
+      }
+    } catch (error) {
+      console.error('Error inicializando hosts dinámicos:', error);
+      this.updateState({ isLoadingHosts: false });
+    }
   }
 
   private constructor() {
@@ -93,7 +133,14 @@ class FormStateService {
       
       // Available options
       messageTypes: [],
+      
+      // Dynamic hosts
+      dynamicHosts: [],
+      isLoadingHosts: false,
     };
+    
+    // Inicializar hosts dinámicos
+    this.initializeDynamicHosts();
   }
 
   public static getInstance(): FormStateService {
@@ -336,7 +383,6 @@ class FormStateService {
       technicianInfo: null
     });
   }
-
   public resetFormState(): void {
     this.state = {
       // Core form data
@@ -365,8 +411,27 @@ class FormStateService {
       
       // Available options
       messageTypes: [],
+      
+      // Keep dynamic hosts and loading state
+      dynamicHosts: this.state.dynamicHosts,
+      isLoadingHosts: this.state.isLoadingHosts,
     };
     this.notifySubscribers();
+  }
+
+  // Public method to refresh hosts
+  public async refreshHosts(): Promise<void> {
+    await this.initializeDynamicHosts();
+  }
+
+  // Get current loading state
+  public get isLoadingHosts(): boolean {
+    return this.state.isLoadingHosts;
+  }
+
+  // Migrate host name if needed (for saved messages)
+  public migrateHostIfNeeded(hostName: string): string {
+    return hostService.migrateHost(hostName);
   }
 }
 

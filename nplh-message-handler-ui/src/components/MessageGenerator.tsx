@@ -26,9 +26,9 @@ const MessageGenerator: React.FC = () => {
         isFetchingData={hookData.isFetchingData}
         isGeneratingMessage={hookData.isGeneratingMessage}
         isSendingMessage={hookData.isSendingMessage}
-        generateButtonDisabled={hookData.generateButtonDisabled}
-        messageTypes={hookData.messageTypes}
+        generateButtonDisabled={hookData.generateButtonDisabled}        messageTypes={hookData.messageTypes}
         hosts={hookData.hosts}
+        isLoadingHosts={hookData.isLoadingHosts}
         selectedSpecimen={hookData.selectedSpecimen}
         selectedBlock={hookData.selectedBlock}
         selectedSlide={hookData.selectedSlide}

@@ -416,10 +416,10 @@ export const useMessageGenerator = () => {
     isEntitySelectorModalOpen: uiState.isEntitySelectorModalOpen,
     isSidebarOpen: uiState.isSidebarOpen,
     isSendingAll: uiState.isSendingAll,
-    isClearingAll: uiState.isClearingAll,
-    isMessageSaved: uiState.isMessageSaved,
+    isClearingAll: uiState.isClearingAll,    isMessageSaved: uiState.isMessageSaved,
       // Static data
     hosts: formStateService.hosts,
+    isLoadingHosts: formStateService.isLoadingHosts,
     messageTypes: formState.messageTypes,
     
     // Computed properties

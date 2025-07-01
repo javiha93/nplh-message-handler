@@ -1,4 +1,5 @@
 import { messageService, SendMessageRequest } from '../../../services/MessageService';
+import { hostService } from '../../../services/HostService';
 
 // Interface matching the backend ClientMessageResponse
 export interface ClientMessageResponse {
@@ -22,10 +23,10 @@ export class SavedMessagesService {
   private static instance: SavedMessagesService;
   private messages: SavedMessage[] = [];
   private listeners: ((messages: SavedMessage[]) => void)[] = [];
-
   static getInstance(): SavedMessagesService {
     if (!SavedMessagesService.instance) {
       SavedMessagesService.instance = new SavedMessagesService();
+      SavedMessagesService.instance.initializeMigrations();
     }
     return SavedMessagesService.instance;
   }
@@ -105,9 +106,12 @@ export class SavedMessagesService {
     this.messages = result;
     this.notifyListeners();
   }  async sendMessage(savedMessage: SavedMessage): Promise<ClientMessageResponse[]> {
+    // Migrar el host si es necesario para mantener la compatibilidad
+    const migratedHost = hostService.migrateHost(savedMessage.host);
+    
     const request: SendMessageRequest = {
       message: savedMessage.content,
-      hostName: savedMessage.host,
+      hostName: migratedHost, // Usar el host migrado
       messageType: savedMessage.messageType,
       controlId: savedMessage.messageControlId
     };
@@ -115,9 +119,15 @@ export class SavedMessagesService {
     const responses = await messageService.sendMessage(request);
     
     // Update the message with responses and sent timestamp
+    // También actualizar el host si fue migrado
     this.messages = this.messages.map(msg => 
       msg.id === savedMessage.id 
-        ? { ...msg, responses, sentTimestamp: new Date() }
+        ? { 
+            ...msg, 
+            host: migratedHost, // Actualizar al host migrado
+            responses, 
+            sentTimestamp: new Date() 
+          }
         : msg
     );
     this.notifyListeners();
@@ -208,6 +218,34 @@ export class SavedMessagesService {
   clearAllMessages(): void {
     this.messages = [];
     this.notifyListeners();
+  }
+
+  // Migrate all saved messages to use current host names
+  migrateHostsInSavedMessages(): void {
+    let hasChanges = false;
+    
+    this.messages = this.messages.map(msg => {
+      const migratedHost = hostService.migrateHost(msg.host);
+      if (migratedHost !== msg.host) {
+        console.log(`Migrando mensaje ${msg.id}: ${msg.host} → ${migratedHost}`);
+        hasChanges = true;
+        return { ...msg, host: migratedHost };
+      }
+      return msg;
+    });
+    
+    if (hasChanges) {
+      this.notifyListeners();
+      console.log('Migración de hosts en mensajes guardados completada');
+    }
+  }
+
+  // Initialize migrations on service start
+  initializeMigrations(): void {
+    // Wait a bit for hostService to be initialized
+    setTimeout(() => {
+      this.migrateHostsInSavedMessages();
+    }, 1000);
   }
 }
 

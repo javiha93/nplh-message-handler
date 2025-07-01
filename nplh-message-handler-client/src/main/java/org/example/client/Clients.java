@@ -1,22 +1,16 @@
 package org.example.client;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.example.domain.host.HL7Host;
+import lombok.Getter;
 import org.example.domain.host.Host;
-import org.example.domain.host.RESTHost;
-import org.example.domain.host.WSHost;
 import org.example.domain.host.host.Connection;
 import org.example.domain.host.host.HostInfo;
 import org.example.domain.host.host.HostInfoList;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Getter
 public class Clients {
 
     List<Client> clientList = new ArrayList<>();
@@ -98,12 +92,12 @@ public class Clients {
 //        return restHosts;
 //    }
 
-    public Client getClient(Host host) {
+    public Client getClient(String host) {
         for (Client client: clientList) {
-            if (client.clientName.equals("LIS_HL7") && (host.name().equals("LIS"))) {
+            if (client.clientName.equals("LIS_HL7") && (host.equals("LIS"))) {
                 return client;
             }
-            if (Objects.equals(client.clientName, host.name())) {
+            if (Objects.equals(client.clientName, host)) {
                 return client;
             }
         }
