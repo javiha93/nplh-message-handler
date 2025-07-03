@@ -21,11 +21,13 @@ import org.example.domain.hl7.VTG.VTGToNPLH.SLIDEUPDATE.SlideUpdate;
 import org.example.domain.hl7.VTG.VTGToNPLH.SPECIMENUPDATE.SpecimenUpdate;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
+import org.example.domain.message.entity.Reagent;
 import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Specimen;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendReleasedSpecimen.SendReleasedSpecimen;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendScannedSlide.SendScannedSlide;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendSlideWSAData.SendSlideWSAData;
+import org.example.domain.ws.VSS.VSSToNPLH.UpdateSlideStatus.UpdateSlideStatus;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessAssignedPathologistUpdate.ProcessAssignedPathologistUpdate;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrder.ProcessCancelOrder;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrderRequest.ProcessCancelOrderRequest;
@@ -145,6 +147,9 @@ public class MessageService {
             case "sendSlideWSAData":
                 SendSlideWSAData sendSlideWSAData = SendSlideWSAData.FromMessage(message, slide, status);
                 return new MessageResponse(sendSlideWSAData.toString(), "");
+            case "UpdateSlideStatus":
+                UpdateSlideStatus updateSlideStatus = UpdateSlideStatus.FromSlide(message, slide, status);
+                return new MessageResponse(updateSlideStatus.toString(), "");
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }

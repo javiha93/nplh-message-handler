@@ -12,6 +12,7 @@ import org.example.domain.message.entity.record.EntityInfo;
 import org.example.domain.message.entity.supplementalInfo.SpecialInstruction;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -25,6 +26,7 @@ public class Slide extends EntityInfo implements Cloneable {
     private Boolean isRescanned;
     private String rescanReason;
     private String rescanComment;
+    private List<Reagent> reagents = new ArrayList<>();
     private SupplementalInfoList supplementalInfos;
 
 
@@ -131,6 +133,10 @@ public class Slide extends EntityInfo implements Cloneable {
     public void addSupplementalInfo(SupplementalInfo supplementalInfo) {
         supplementalInfo.setArtifact("SLIDE");
         supplementalInfos.getSupplementalInfoList().add(supplementalInfo);
+    }
+
+    public void addReagent(Reagent reagent) {
+        reagents.add(reagent);
     }
 
     @Override

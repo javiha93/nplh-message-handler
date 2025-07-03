@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -41,7 +42,7 @@ public class WSClient extends Client {
         String requestBody = buildSoapEnvelope(messageBody);
 
         try {
-            URL oURL = new URL(baseUrl);
+            URL oURL = new URL(baseUrl + ".CLS");
             HttpURLConnection con = (HttpURLConnection) oURL.openConnection();
             con.setDoOutput(true);
             con.setRequestMethod("POST");
@@ -53,33 +54,56 @@ public class WSClient extends Client {
                     con.setRequestProperty(header.getKey(), header.getValue());
                 }
             }
+            try {
+                OutputStream reqStream = con.getOutputStream();
+                reqStream.write(requestBody.getBytes());
+                logger.info("\nSent message: \n{}\nto Host {}", messageBody, clientName);
 
-            OutputStream reqStream = con.getOutputStream();
-            reqStream.write(requestBody.getBytes());
-            logger.info("\nSent message: \n{}\nto Host {}", messageBody, clientName);
+                StringBuilder r = new StringBuilder();
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    r.append(line);
+                }
+                br.close();
 
-            StringBuilder r = new StringBuilder();
-            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-            String line;
-            while ((line = br.readLine()) != null) {
-                r.append(line);
+                logger.info("\nReceived response: \n{}\nfrom Host {}",
+                        extractSoapResponse(r.toString()),
+                        clientName);
+
+                return extractSoapResponse(r.toString());
+            } catch (Exception e) {
+                String errorResponse = "";
+
+                if (e instanceof IOException && con != null) {
+                    try (BufferedReader errorReader = new BufferedReader(
+                            new InputStreamReader(con.getErrorStream(), StandardCharsets.UTF_8))) {
+                        String line;
+                        StringBuilder errorBuilder = new StringBuilder();
+                        while ((line = errorReader.readLine()) != null) {
+                            errorBuilder.append(line);
+                        }
+                        errorResponse = errorBuilder.toString();
+                        logger.error("Host {} responded with error:\n{}", clientName, errorResponse);
+                    } catch (Exception innerEx) {
+                        logger.error("Failed to read error response from host {}", clientName, innerEx);
+                    }
+                }
+
+                logger.error("Error sending message: {} to {}, Error:", messageBody, clientName, e);
+                return errorResponse;
             }
-            br.close();
-
-            logger.info("\nReceived response: \n{}\nfrom Host {}",
-                    extractSoapResponse(r.toString()),
-                    clientName);
-
-            return extractSoapResponse(r.toString());
         } catch (Exception e) {
+
             logger.error("Error sending message: {} to {}, Error:", messageBody, clientName, e);
             return e.getMessage();
         }
     }
 
     private String buildSoapEnvelope(String messageBody) {
+        String hostWeb = Boolean.parseBoolean(String.valueOf((this.clientName.equals("VSS")))) ? "vss" : "vituoso";
         return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
-                "xmlns:web=\"http://webservice.virtuoso.ventana.com/\">\n" +
+                "xmlns:web=\"http://webservice." + hostWeb + ".ventana.com/\">\n" +
                 "   <soapenv:Header/>\n" +
                 "   <soapenv:Body>\n" +
                 messageBody + "\n" +

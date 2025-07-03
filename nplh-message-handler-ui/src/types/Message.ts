@@ -12,6 +12,23 @@ export interface SupplementalInfoList {
   supplementalInfoList: SupplementalInfo[];
 }
 
+export interface Reagent {
+  expirationDateTime?: string;
+  intendedUseFlag?: string;
+  lotNumber?: string;
+  lotSerialNumber?: string;
+  catalogNumber?: string;
+  manufacturer?: string;
+  receivedDateTime?: string;
+  substanceName: string;
+  substanceOtherName?: string;
+  substanceType?: string;
+}
+
+export interface ReagentsList {
+  reagentList: Reagent[];
+}
+
 export interface Control {
   name?: string;
   description?: string;
@@ -41,6 +58,7 @@ export interface Slide {
   rescanReason?: string;
   rescanComment?: string;
   supplementalInfos?: SupplementalInfoList;
+  reagents?: Reagent[]; // Changed to direct array to match backend
 }
 
 export interface SlidesList {

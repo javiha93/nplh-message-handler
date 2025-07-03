@@ -49,6 +49,12 @@ export const VANTAGE_WS_STATUS_OPTIONS: StatusOption[] = [
   { id: 'CANCELED', name: 'CANCELED', description: 'Canceled' }
 ];
 
+// VSS specific status options
+export const VSS_STATUS_OPTIONS: StatusOption[] = [
+  { id: 'SlideStaining', name: 'SlideStaining', description: 'Slide is being stained' },
+  { id: 'SlideStained', name: 'SlideStained', description: 'Slide has been stained' }
+];
+
 // Host configurations with their message types and requirements
 export const HOST_CONFIGURATIONS: HostConfig[] = [
   {
@@ -236,6 +242,20 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       }
     ],
     statusOptions: BASE_STATUS_OPTIONS
+  },
+  {
+    id: 'VSS',
+    name: 'VSS',
+    messageTypes: [
+      { 
+        id: 'UpdateSlideStatus', 
+        name: 'UpdateSlideStatus',
+        requiresSlideSelector: true,
+        requiresStatusSelector: true,
+        statusOptions: VSS_STATUS_OPTIONS
+      }
+    ],
+    statusOptions: VSS_STATUS_OPTIONS
   }
 ];
 
@@ -282,6 +302,18 @@ export class MessageConfigHelper {  /**
       if (vtgConfig) {
         return {
           ...vtgConfig,
+          id: hostId,
+          name: hostId
+        };
+      }
+    }
+    
+    // Fallback para hosts tipo VSS
+    if (hostId.includes('VSS')) {
+      const vssConfig = HOST_CONFIGURATIONS.find(host => host.id === 'VSS');
+      if (vssConfig) {
+        return {
+          ...vssConfig,
           id: hostId,
           name: hostId
         };

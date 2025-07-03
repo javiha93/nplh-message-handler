@@ -4,7 +4,7 @@
  */
 
 import { MessageType, Patient, Physician, Pathologist, Technician, Message } from '../types/MessageType';
-import { Specimen, Block, Slide, Order } from '../types/Message';
+import { Specimen, Block, Slide, Order, Reagent } from '../types/Message';
 import { ClientMessageResponse } from '../components/savedMessages/services/SavedMessagesService';
 import { 
   MessageConfigHelper, 
@@ -37,6 +37,10 @@ type FormStateType = {
   selectedBlock: Block | null;
   selectedSlide: Slide | null;
   selectedEntity: { type: string; id: string } | null;
+  
+  // Reagents management
+  availableReagents: Reagent[];
+  selectedSlideReagents: Reagent[];
   
   // Available options
   messageTypes: MessageType[];
@@ -131,6 +135,10 @@ class FormStateService {
       selectedSlide: null,
       selectedEntity: null,
       
+      // Reagents management
+      availableReagents: [],
+      selectedSlideReagents: [],
+      
       // Available options
       messageTypes: [],
       
@@ -139,8 +147,30 @@ class FormStateService {
       isLoadingHosts: false,
     };
     
+    // Initialize with some default reagents
+    this.initializeDefaultReagents();
+    
     // Inicializar hosts dinámicos
     this.initializeDynamicHosts();
+  }
+
+  private initializeDefaultReagents(): void {
+    const defaultReagents: Reagent[] = [
+      {
+        substanceName: 'Hematoxylin & Eosin',
+        substanceOtherName: 'H&E Stain',
+        substanceType: 'Stain',
+        manufacturer: 'Sigma-Aldrich',
+        lotNumber: 'HE2024001',
+        lotSerialNumber: 'SN-HE-001',
+        catalogNumber: 'CAT-HE-2024',
+        intendedUseFlag: 'Routine Staining',
+        expirationDateTime: '2025-12-31T23:59:59',
+        receivedDateTime: '2024-01-15T08:00:00'
+      }
+    ];
+    
+    this.updateState({ availableReagents: defaultReagents });
   }
 
   public static getInstance(): FormStateService {
@@ -177,9 +207,13 @@ class FormStateService {
   // Host selection methods
   public setSelectedHost(host: string): void {
     const messageTypes = MessageConfigHelper.getMessageTypesForHost(host);
+    // Reset status to default when changing host
+    const defaultStatus = 'IN_PROGRESS';
+    
     this.updateState({ 
       selectedHost: host,
       selectedType: '',
+      selectedStatus: defaultStatus,
       messageTypes,
       selectedSpecimen: null,
       selectedBlock: null,
@@ -190,8 +224,13 @@ class FormStateService {
 
   // Type selection methods
   public setSelectedType(type: string): void {
+    // Get the status options for the new type
+    const statusOptions = MessageConfigHelper.getStatusOptions(this.state.selectedHost, type);
+    const defaultStatus = statusOptions.length > 0 ? statusOptions[0].id : 'IN_PROGRESS';
+    
     this.updateState({ 
       selectedType: type,
+      selectedStatus: defaultStatus,
       selectedSpecimen: null,
       selectedBlock: null,
       selectedSlide: null,
@@ -293,7 +332,11 @@ class FormStateService {
   }
 
   public setSelectedSlide(slide: Slide | null): void {
-    this.updateState({ selectedSlide: slide });
+    const selectedSlideReagents = slide?.reagents || [];
+    this.updateState({ 
+      selectedSlide: slide,
+      selectedSlideReagents
+    });
   }
   public setSelectedEntity(entityType: string, entity: Specimen | Block | Slide | Order): void {
     if (entityType === 'Specimen') {
@@ -326,6 +369,56 @@ class FormStateService {
       });
     }
   }
+  
+  // Reagents management methods
+  public setAvailableReagents(reagents: Reagent[]): void {
+    this.updateState({ availableReagents: reagents });
+  }
+
+  public addReagentToSlide(reagent: Reagent): void {
+    const currentReagents = this.state.selectedSlideReagents;
+    // Check if reagent is already added (using substanceName + lotNumber as unique identifier)
+    if (!currentReagents.find(r => r.substanceName === reagent.substanceName && r.lotNumber === reagent.lotNumber)) {
+      this.updateState({
+        selectedSlideReagents: [...currentReagents, reagent]
+      });
+    }
+  }
+
+  public removeReagentFromSlide(reagentId: string): void {
+    const currentReagents = this.state.selectedSlideReagents;
+    // reagentId format: "substanceName-lotNumber-index"
+    const parts = reagentId.split('-');
+    const index = parseInt(parts[parts.length - 1]); // Get the last part as index
+    
+    this.updateState({
+      selectedSlideReagents: currentReagents.filter((_, i) => i !== index)
+    });
+  }
+
+  public clearSlideReagents(): void {
+    this.updateState({ selectedSlideReagents: [] });
+  }
+
+  public getAvailableReagents(): Reagent[] {
+    return this.state.availableReagents;
+  }
+
+  public getSelectedSlideReagents(): Reagent[] {
+    return this.state.selectedSlideReagents;
+  }
+
+  // Update selected slide with reagents when generating message
+  public updateSelectedSlideWithReagents(): void {
+    if (this.state.selectedSlide && this.state.selectedSlideReagents.length > 0) {
+      const updatedSlide: Slide = {
+        ...this.state.selectedSlide,
+        reagents: this.state.selectedSlideReagents
+      };
+      this.updateState({ selectedSlide: updatedSlide });
+    }
+  }
+
   // Computed properties - now using configuration helper
   public getShowSpecimenSelector(): boolean {
     const { selectedHost, selectedType } = this.state;
@@ -371,7 +464,8 @@ class FormStateService {
       selectedSpecimen: null,
       selectedBlock: null,
       selectedSlide: null,
-      selectedEntity: null
+      selectedEntity: null,
+      selectedSlideReagents: []
     });
   }
 
@@ -408,6 +502,10 @@ class FormStateService {
       selectedBlock: null,
       selectedSlide: null,
       selectedEntity: null,
+      
+      // Reagents management
+      availableReagents: this.state.availableReagents, // Keep available reagents
+      selectedSlideReagents: [],
       
       // Available options
       messageTypes: [],

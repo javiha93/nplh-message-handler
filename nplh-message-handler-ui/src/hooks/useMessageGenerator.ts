@@ -153,6 +153,9 @@ export const useMessageGenerator = () => {
       uiStateService.clearError();
       formStateService.clearSendResponse();
 
+      // Update selected slide with reagents before generating message
+      formStateService.updateSelectedSlideWithReagents();
+
       const result = await messageService.generateMessage(
         state.message!,
         state.selectedType,
