@@ -19,6 +19,7 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
     value: ''
   });
   const [showReagentModal, setShowReagentModal] = useState(false);
+  const [editingReagentIndex, setEditingReagentIndex] = useState<number | null>(null);
   const [newReagent, setNewReagent] = useState<Partial<Reagent>>({
     substanceName: 'UV INHIBITOR',
     substanceOtherName: 'Other substance Name',
@@ -151,11 +152,62 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
       receivedDateTime: newReagent.receivedDateTime || ''
     };
     
-    // Replace existing reagent (only one reagent allowed by default)
-    editedSlide.reagents = [reagent];
+    // Add reagent to existing list or create new list
+    if (!editedSlide.reagents) {
+      editedSlide.reagents = [];
+    }
+    editedSlide.reagents.push(reagent);
     
     // Reset form
     setNewReagent(getDefaultReagentValues());
+    
+    setEditedSlide({...editedSlide});
+    setShowReagentModal(false);
+  };
+
+  const editReagent = (index: number) => {
+    const reagentToEdit = editedSlide.reagents?.[index];
+    if (reagentToEdit) {
+      setNewReagent({
+        substanceName: reagentToEdit.substanceName || '',
+        substanceOtherName: reagentToEdit.substanceOtherName || '',
+        substanceType: reagentToEdit.substanceType || '',
+        manufacturer: reagentToEdit.manufacturer || '',
+        lotNumber: reagentToEdit.lotNumber || '',
+        lotSerialNumber: reagentToEdit.lotSerialNumber || '',
+        catalogNumber: reagentToEdit.catalogNumber || '',
+        intendedUseFlag: reagentToEdit.intendedUseFlag || '',
+        expirationDateTime: reagentToEdit.expirationDateTime || '',
+        receivedDateTime: reagentToEdit.receivedDateTime || ''
+      });
+      setEditingReagentIndex(index);
+      setShowReagentModal(true);
+    }
+  };
+
+  const updateReagent = () => {
+    if (!newReagent.substanceName?.trim() || editingReagentIndex === null) return;
+    
+    const reagent: Reagent = {
+      substanceName: newReagent.substanceName,
+      substanceOtherName: newReagent.substanceOtherName || '',
+      substanceType: newReagent.substanceType || '',
+      manufacturer: newReagent.manufacturer || '',
+      lotNumber: newReagent.lotNumber || '',
+      lotSerialNumber: newReagent.lotSerialNumber || '',
+      catalogNumber: newReagent.catalogNumber || '',
+      intendedUseFlag: newReagent.intendedUseFlag || '',
+      expirationDateTime: newReagent.expirationDateTime || '',
+      receivedDateTime: newReagent.receivedDateTime || ''
+    };
+    
+    if (editedSlide.reagents && editingReagentIndex < editedSlide.reagents.length) {
+      editedSlide.reagents[editingReagentIndex] = reagent;
+    }
+    
+    // Reset form
+    setNewReagent(getDefaultReagentValues());
+    setEditingReagentIndex(null);
     
     setEditedSlide({...editedSlide});
     setShowReagentModal(false);
@@ -351,7 +403,7 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
             
             {editedSlide.reagents && editedSlide.reagents.length > 0 && (
               <div className="mb-4 border rounded-md p-3">
-                <h4 className="font-medium mb-2">Current Reagent</h4>
+                <h4 className="font-medium mb-2">Current Reagents</h4>
                 {editedSlide.reagents.map((reagent, index) => (
                   <div key={`reagent-${index}`} className="flex items-center mb-2 p-2 bg-gray-50 rounded">
                     <div className="flex-grow">
@@ -359,13 +411,22 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
                       {reagent.manufacturer && <span className="text-sm text-gray-600">({reagent.manufacturer})</span>}
                       {reagent.lotNumber && <span className="text-sm text-gray-500 ml-2">Lot: {reagent.lotNumber}</span>}
                     </div>
-                    <button 
-                      type="button"
-                      onClick={() => removeReagent(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        type="button"
+                        onClick={() => editReagent(index)}
+                        className="text-blue-500 hover:text-blue-700 px-2 py-1 text-sm border border-blue-500 rounded hover:bg-blue-50"
+                      >
+                        Change
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => removeReagent(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -375,31 +436,15 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
               <button
                 type="button"
                 onClick={() => {
-                  // Pre-populate form if reagent exists, otherwise use defaults
-                  if (editedSlide.reagents && editedSlide.reagents.length > 0) {
-                    const existingReagent = editedSlide.reagents[0];
-                    setNewReagent({
-                      substanceName: existingReagent.substanceName || '',
-                      substanceOtherName: existingReagent.substanceOtherName || '',
-                      substanceType: existingReagent.substanceType || '',
-                      manufacturer: existingReagent.manufacturer || '',
-                      lotNumber: existingReagent.lotNumber || '',
-                      lotSerialNumber: existingReagent.lotSerialNumber || '',
-                      catalogNumber: existingReagent.catalogNumber || '',
-                      intendedUseFlag: existingReagent.intendedUseFlag || '',
-                      expirationDateTime: existingReagent.expirationDateTime || '',
-                      receivedDateTime: existingReagent.receivedDateTime || ''
-                    });
-                  } else {
-                    // Use default values for new reagent
-                    setNewReagent(getDefaultReagentValues());
-                  }
+                  // Reset to default values for new reagent
+                  setNewReagent(getDefaultReagentValues());
+                  setEditingReagentIndex(null);
                   setShowReagentModal(true);
                 }}
                 className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors flex items-center"
               >
                 <Plus size={16} className="mr-1" />
-                {editedSlide.reagents && editedSlide.reagents.length > 0 ? 'Change Reagent' : 'Add Reagent'}
+                Add Reagent
               </button>
             </div>
 
@@ -506,13 +551,14 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
           <div className="bg-white rounded-lg p-6 w-11/12 max-w-lg max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold">
-                {editedSlide.reagents && editedSlide.reagents.length > 0 ? 'Change Reagent' : 'Add Reagent'}
+                {editingReagentIndex !== null ? 'Edit Reagent' : 'Add Reagent'}
               </h3>
               <button 
                 onClick={() => {
                   setShowReagentModal(false);
                   // Reset form when closing
                   setNewReagent(getDefaultReagentValues());
+                  setEditingReagentIndex(null);
                 }} 
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -634,6 +680,7 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
                   setShowReagentModal(false);
                   // Reset form when canceling
                   setNewReagent(getDefaultReagentValues());
+                  setEditingReagentIndex(null);
                 }}
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
               >
@@ -641,11 +688,11 @@ const SlideEditModal: React.FC<SlideEditModalProps> = ({ slide, onClose, onSave 
               </button>
               <button
                 type="button"
-                onClick={addNewReagent}
+                onClick={editingReagentIndex !== null ? updateReagent : addNewReagent}
                 disabled={!newReagent.substanceName?.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                {editedSlide.reagents && editedSlide.reagents.length > 0 ? 'Update Reagent' : 'Add Reagent'}
+                {editingReagentIndex !== null ? 'Update Reagent' : 'Add Reagent'}
               </button>
             </div>
           </div>

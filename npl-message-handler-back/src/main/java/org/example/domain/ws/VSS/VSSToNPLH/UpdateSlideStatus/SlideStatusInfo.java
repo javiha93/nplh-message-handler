@@ -38,12 +38,11 @@ public class SlideStatusInfo extends WSSegment {
                 + addIndentation(indentationLevel) + "<OrderStatus>" + nullSafe(orderStatus) + "</OrderStatus>\n"
                 + nullSafe(slide, Slide::new).toString(indentationLevel) + "\n";
 
-
+        slideStatusInfo += addIndentation(indentationLevel) + "<ReagentInfo>\n";
         for (Reagent reagent : reagents) {
-            slideStatusInfo += addIndentation(indentationLevel) + "<ReagentInfo>\n"
-                    + nullSafe(reagent, Reagent::new).toString(indentationLevel + 1) + "\n"
-                    + addIndentation(indentationLevel) + "</ReagentInfo>\n";
+            slideStatusInfo += nullSafe(reagent, Reagent::new).toString(indentationLevel + 1) + "\n";
         }
+        slideStatusInfo += addIndentation(indentationLevel) + "</ReagentInfo>\n";
 
         slideStatusInfo += addIndentation(indentationLevel - 1) + "</SlideStatusInfo>";
         return slideStatusInfo;
