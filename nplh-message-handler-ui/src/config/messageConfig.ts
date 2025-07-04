@@ -156,7 +156,7 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
     statusOptions: VANTAGE_WS_STATUS_OPTIONS
   },
   {
-    id: 'UPATH_CLOUD',
+    id: 'UPATH CLOUD',
     name: 'UPATH CLOUD',    messageTypes: [
       { 
         id: 'sendScannedSlideImageLabelId', 

@@ -51,8 +51,9 @@ public class HL7Client extends Client {
         }
     }
 
-    public HL7Client(String hostName, Connection connection) {
+    public HL7Client(String hostName, String hostType, Connection connection) {
         this.clientName = hostName;
+        this.clientType = hostType;
         try {
             socket = new Socket(connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort());
             out = new PrintWriter(socket.getOutputStream(), true);

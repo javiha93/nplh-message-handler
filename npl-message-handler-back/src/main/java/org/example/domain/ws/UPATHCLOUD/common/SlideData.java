@@ -23,7 +23,7 @@ public class SlideData extends WSSegment {
         slideData.slideLabelId = slide.getId();
         slideData.slideViewUrl = "http://hostname/virtuoso/slideview";
         slideData.status = "RELEASED";
-        slideData.thumbnailImage = "/9j/4AAQSkZJRgABAQEAYABgAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcg";
+        slideData.thumbnailImage = "/9j/4AAQSkZJRgABAQEAYA";
 
         return  slideData;
     }

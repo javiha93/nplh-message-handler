@@ -23,6 +23,7 @@ import org.example.domain.message.entity.Specimen;
 import org.example.domain.ws.DP600.DP600ToNPLH.SendScannedImageLabelId.SendScannedSlideImageLabelId;
 import org.example.domain.ws.DP600.DP600ToNPLH.SendUpdatedSlideStatus.SendUpdatedSlideStatus;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendReleasedSpecimen.SendReleasedSpecimen;
+import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendScannedSlide.SendScannedSlide;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendSlideWSAData.SendSlideWSAData;
 import org.example.domain.ws.VSS.VSSToNPLH.UpdateSlideStatus.UpdateSlideStatus;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessAssignedPathologistUpdate.ProcessAssignedPathologistUpdate;
@@ -36,6 +37,8 @@ import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessPatientUpdate.ProcessPatie
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessPhysicianUpdate.ProcessPhysicianUpdate;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessVTGEvent.ProcessVTGEvent;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 @Service
 public class MessageService {
@@ -129,15 +132,21 @@ public class MessageService {
         }
     }
 
-    public MessageResponse convertMessage(Message message, String messageType, Slide slide) {
+    public MessageResponse convertMessage(Message message, String messageType, String hostType, Slide slide) {
         switch (messageType) {
             case "DELETE_SLIDE":
                 DELETESLIDE deleteSlide = DELETESLIDE.FromMessage(message, slide);
                 return new MessageResponse(deleteSlide.toString(), deleteSlide.getControlId());
             case "sendScannedSlideImageLabelId":
-                SendScannedSlideImageLabelId sendScannedSlide = SendScannedSlideImageLabelId.FromMessage(slide);
-                //SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
-                return new MessageResponse(sendScannedSlide.toString(), "");
+                if (Objects.equals(hostType, "VIRTUOSO")) {
+                    SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
+                    return new MessageResponse(sendScannedSlide.toString(), "");
+                } else if(Objects.equals(hostType, "DP")) {
+                    SendScannedSlideImageLabelId sendScannedSlide = SendScannedSlideImageLabelId.FromMessage(slide);
+                    return new MessageResponse(sendScannedSlide.toString(), "");
+                } else {
+                    throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType + " para hostType " + hostType);
+                }
             case "RETRIEVAL":
                 return new MessageResponse(slide.getId(), null);
             default:

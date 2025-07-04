@@ -52,6 +52,8 @@ export class MessageService {
   async generateMessage(
     message: Message,
     messageType: string,
+    hostName: string,
+    hostType: string,
     status?: string,
     specimen?: Specimen,
     block?: Block,
@@ -65,6 +67,8 @@ export class MessageService {
     let requestBody: any = {
       message,
       messageType,
+      hostName,
+      hostType,
       status: status || null
     };
 

@@ -42,7 +42,7 @@ public class Clients {
         for (HostInfo host: hl7Hosts) {
             List<Connection> inboundConnections = host.getInboundConnections();
             for (Connection connection: inboundConnections) {
-                clientList.add(new HL7Client(host.getHostName(), connection));
+                clientList.add(new HL7Client(host.getHostName(), host.getHostType(), connection));
             }
         }
     }
@@ -51,7 +51,7 @@ public class Clients {
         for (HostInfo host: wsClients) {
             List<Connection> inboundConnections = host.getInboundConnections();
             for (Connection connection: inboundConnections) {
-                clientList.add(new WSClient(host.getHostName(), connection));
+                clientList.add(new WSClient(host.getHostName(), host.getHostType(), connection));
             }
         }
     }
@@ -60,7 +60,7 @@ public class Clients {
         for (HostInfo host: automationHosts) {
             List<Connection> inboundConnections = host.getInboundConnections();
             for (Connection connection: inboundConnections) {
-                clientList.add(new RestClient(host.getHostName(), connection));
+                clientList.add(new RestClient(host.getHostName(), host.getHostType(), connection));
             }
         }
     }

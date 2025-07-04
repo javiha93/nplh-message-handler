@@ -10,6 +10,8 @@ import { uiStateService } from '../services/UIStateService';
 import { formStateService } from '../services/FormStateService';
 import { snackbarService } from '../services/SnackbarService';
 import { messageUpdateService } from '../services/messageUpdateService';
+import { MessageConfigHelper } from '../config/messageConfig';
+import { hostService } from '../services/HostService';
 
 export const useMessageGenerator = () => {
   // State from services
@@ -164,9 +166,31 @@ export const useMessageGenerator = () => {
       // Update selected slide with reagents before generating message
       formStateService.updateSelectedSlideWithReagents();
 
+      // Get host configuration and client type
+      const hostConfig = MessageConfigHelper.getHostConfig(state.selectedHost);
+      const hostName = hostConfig?.name || state.selectedHost;
+      
+      // Get clientType with multiple fallbacks to ensure we always have a value
+      // We'll use clientType as the value for hostType (backend expects hostType field but wants clientType value)
+      let clientType = hostService.getClientType(state.selectedHost);
+      
+      if (!clientType) {
+        // First fallback: use hostConfig.id 
+        clientType = hostConfig?.id;
+      }
+      
+      if (!clientType) {
+        // Second fallback: use selectedHost directly
+        clientType = state.selectedHost;
+      }
+      
+      console.log(`Sending message with hostName: ${hostName}, hostType: ${clientType} (from clientType)`);
+
       const result = await messageService.generateMessage(
         state.message!,
         state.selectedType,
+        hostName,
+        clientType, // This goes to hostType parameter but contains clientType value
         formStateService.getShowStatusSelector() ? state.selectedStatus : undefined,
         state.selectedSpecimen || undefined,
         state.selectedBlock || undefined,

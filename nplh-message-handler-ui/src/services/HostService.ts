@@ -5,11 +5,15 @@ export interface HostMigrationMapping {
 
 interface Client {
   clientName?: string;
+  clientType?: string;
   name?: string;
   hostName?: string;
   id?: string;
   [key: string]: any; // Para otras propiedades que puedan existir
 }
+
+// Base URL for backend API calls
+const API_BASE_URL = 'http://localhost:8085/api/messages';
 
 /**
  * Servicio para manejar hosts dinámicos obtenidos del backend
@@ -17,6 +21,7 @@ interface Client {
 class HostService {
   private cachedHosts: string[] = [];
   private hostMappings: Map<string, string> = new Map();
+  private clientData: Map<string, Client> = new Map(); // Store full client data
   
   constructor() {
     // Mapeos conocidos para mantener compatibilidad
@@ -33,13 +38,15 @@ class HostService {
    * Obtiene la lista de hosts desde el backend
    */  async getHosts(): Promise<string[]> {
     try {
+      console.log('Fetching hosts from backend...');
+      
       // Intentar primero el endpoint hostClients
-      let response = await fetch('/api/messages/hostClients');
+      let response = await fetch(`${API_BASE_URL}/hostClients`);
       
       if (!response.ok) {
         console.warn('hostClients endpoint failed, trying hostsClient');
         // Intentar el endpoint alternativo hostsClient
-        response = await fetch('/api/messages/hostsClient');
+        response = await fetch(`${API_BASE_URL}/hostsClient`);
         if (!response.ok) {
           throw new Error(`Both endpoints failed: ${response.status}`);
         }
@@ -59,7 +66,14 @@ class HostService {
       const hostNames = clients
         .map(client => {
           // Intentar diferentes propiedades que podrían contener el nombre
-          return client.clientName || client.name || client.hostName || client.id;
+          const hostName = client.clientName || client.name || client.hostName || client.id;
+          
+          // Store full client data for later retrieval
+          if (hostName) {
+            this.clientData.set(hostName, client);
+          }
+          
+          return hostName;
         })
         .filter((name): name is string => name !== undefined && name !== null && name.trim() !== ''); // Type guard
       
@@ -78,11 +92,9 @@ class HostService {
     } catch (error) {
       console.error('Error obteniendo hosts desde el backend:', error);
       
-      // Fallback a hosts hardcodeados
-      const fallbackHosts = ['LIS', 'VTG', 'UPATH_CLOUD', 'VANTAGE_WS'];
-      console.log('Using fallback hosts:', fallbackHosts);
-      this.cachedHosts = fallbackHosts;
-      return fallbackHosts;
+      // No usar fallback hardcodeado, dejar que la aplicación maneje el error
+      this.cachedHosts = [];
+      throw new Error(`Failed to fetch hosts from backend: ${error}`);
     }
   }
 
@@ -91,6 +103,21 @@ class HostService {
    */
   getCachedHosts(): string[] {
     return this.cachedHosts;
+  }
+
+  /**
+   * Obtiene el clientType de un host específico
+   */
+  getClientType(hostName: string): string | undefined {
+    const clientData = this.clientData.get(hostName);
+    return clientData?.clientType;
+  }
+
+  /**
+   * Obtiene la información completa del cliente para un host
+   */
+  getClientData(hostName: string): Client | undefined {
+    return this.clientData.get(hostName);
   }
 
   /**

@@ -29,8 +29,9 @@ public class WSClient extends Client {
         this.headers = host.getHeader() != null ? host.getHeader() : new HashMap<>();
     }
 
-    public WSClient(String hostName, Connection connection) {
+    public WSClient(String hostName, String hostType, Connection connection) {
         this.clientName = hostName;
+        this.clientType = hostType;
         this.baseUrl = "http://127.0.0.1:" + 80 + connection.getWsName();
         if (!connection.getApiKeyValue().isEmpty()) {
             this.headers = Map.of(connection.getApiKeyFile(), connection.getApiKeyValue());

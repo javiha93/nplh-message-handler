@@ -92,7 +92,7 @@ public class MessageController {
             // Case for slide with status
             convertedMessage = messageService.convertMessage(
                 request.getMessage(), 
-                request.getMessageType(), 
+                request.getMessageType(),
                 request.getSlide(), 
                 request.getStatus()
             );
@@ -116,7 +116,8 @@ public class MessageController {
             // Case for slide only
             convertedMessage = messageService.convertMessage(
                 request.getMessage(), 
-                request.getMessageType(), 
+                request.getMessageType(),
+                request.getHostType(),
                 request.getSlide()
             );
         } else if (request.getSpecimen() != null) {
@@ -162,6 +163,7 @@ public class MessageController {
     public static class SendMessageRequest {
         private String message;
         private String hostName;
+        private String hostType;
         private String messageType;
         private String controlId;
     }

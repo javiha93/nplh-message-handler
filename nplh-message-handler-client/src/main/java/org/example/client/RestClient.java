@@ -19,8 +19,9 @@ public class RestClient extends Client {
         this.apikey = host.getApiKey();
     }
 
-    public RestClient(String hostName, Connection connection) {
+    public RestClient(String hostName, String hostType, Connection connection) {
         this.clientName = hostName;
+        this.clientType = hostType;
         this.apikey = connection.getApiKeyValue();
     }
 
