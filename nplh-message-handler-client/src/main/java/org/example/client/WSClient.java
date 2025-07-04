@@ -101,7 +101,12 @@ public class WSClient extends Client {
     }
 
     private String buildSoapEnvelope(String messageBody) {
-        String hostWeb = Boolean.parseBoolean(String.valueOf((this.clientName.equals("VSS")))) ? "vss" : "vituoso";
+        String hostWeb = switch (this.clientName) {
+            case "VSS" -> "vss";
+            case "DP600" -> "dp600";
+            default -> "virtuoso";
+        };
+
         return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
                 "xmlns:web=\"http://webservice." + hostWeb + ".ventana.com/\">\n" +
                 "   <soapenv:Header/>\n" +

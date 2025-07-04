@@ -1,12 +1,9 @@
 
 package org.example.service;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.example.*;
 import org.example.domain.hl7.LIS.LISToNPLH.ADTA08.ADTA08;
 import org.example.domain.hl7.LIS.LISToNPLH.ADTA28.ADTA28;
 import org.example.domain.hl7.LIS.LISToNPLH.CASEUPDATE.CASEUPDATE;
@@ -21,11 +18,11 @@ import org.example.domain.hl7.VTG.VTGToNPLH.SLIDEUPDATE.SlideUpdate;
 import org.example.domain.hl7.VTG.VTGToNPLH.SPECIMENUPDATE.SpecimenUpdate;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
-import org.example.domain.message.entity.Reagent;
 import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Specimen;
+import org.example.domain.ws.DP600.DP600ToNPLH.SendScannedImageLabelId.SendScannedSlideImageLabelId;
+import org.example.domain.ws.DP600.DP600ToNPLH.SendUpdatedSlideStatus.SendUpdatedSlideStatus;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendReleasedSpecimen.SendReleasedSpecimen;
-import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendScannedSlide.SendScannedSlide;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendSlideWSAData.SendSlideWSAData;
 import org.example.domain.ws.VSS.VSSToNPLH.UpdateSlideStatus.UpdateSlideStatus;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessAssignedPathologistUpdate.ProcessAssignedPathologistUpdate;
@@ -123,14 +120,26 @@ public class MessageService {
         }
     }
 
+    public MessageResponse convertMessage(Message message, String messageType, Block block) {
+        switch (messageType) {
+            case "RETRIEVAL":
+                return new MessageResponse(block.getId(), null);
+            default:
+                throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
+        }
+    }
+
     public MessageResponse convertMessage(Message message, String messageType, Slide slide) {
         switch (messageType) {
             case "DELETE_SLIDE":
                 DELETESLIDE deleteSlide = DELETESLIDE.FromMessage(message, slide);
                 return new MessageResponse(deleteSlide.toString(), deleteSlide.getControlId());
             case "sendScannedSlideImageLabelId":
-                SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
+                SendScannedSlideImageLabelId sendScannedSlide = SendScannedSlideImageLabelId.FromMessage(slide);
+                //SendScannedSlide sendScannedSlide = SendScannedSlide.FromMessage(slide);
                 return new MessageResponse(sendScannedSlide.toString(), "");
+            case "RETRIEVAL":
+                return new MessageResponse(slide.getId(), null);
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }
@@ -150,6 +159,9 @@ public class MessageService {
             case "UpdateSlideStatus":
                 UpdateSlideStatus updateSlideStatus = UpdateSlideStatus.FromSlide(message, slide, status);
                 return new MessageResponse(updateSlideStatus.toString(), "");
+            case "sendUpdatedSlideStatus":
+                SendUpdatedSlideStatus sendUpdatedSlideStatus = SendUpdatedSlideStatus.FromMessage(slide, status);
+                return new MessageResponse(sendUpdatedSlideStatus.toString(), "");
             default:
                 throw new IllegalArgumentException("Tipo de mensaje no soportado: " + messageType);
         }

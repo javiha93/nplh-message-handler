@@ -49,6 +49,20 @@ export const VANTAGE_WS_STATUS_OPTIONS: StatusOption[] = [
   { id: 'CANCELED', name: 'CANCELED', description: 'Canceled' }
 ];
 
+// DP600 specific status options for slide status updates
+export const DP600_SLIDE_STATUS_OPTIONS: StatusOption[] = [
+  { id: 'SCANNED', name: 'SCANNED', description: 'Slide has been scanned' },
+  { id: 'SCANNED_ERROR', name: 'SCANNED_ERROR', description: 'Error during scanning' },
+  { id: 'TRANSFER_OK', name: 'TRANSFER_OK', description: 'Transfer completed successfully' },
+  { id: 'TRANSFER_ERROR', name: 'TRANSFER_ERROR', description: 'Error during transfer' },
+  { id: 'PRESCAN_OK', name: 'PRESCAN_OK', description: 'Prescan completed successfully' },
+  { id: 'PRESCAN_ERROR', name: 'PRESCAN_ERROR', description: 'Error during prescan' },
+  { id: 'PRESCAN_QC', name: 'PRESCAN_QC', description: 'Prescan quality control' },
+  { id: 'SCAN_SCHEDULED', name: 'SCAN_SCHEDULED', description: 'Scan has been scheduled' },
+  { id: 'SCAN_ISSUE', name: 'SCAN_ISSUE', description: 'Issue with scan' },
+  { id: 'SCAN_QC', name: 'SCAN_QC', description: 'Scan quality control' }
+];
+
 // VSS specific status options
 export const VSS_STATUS_OPTIONS: StatusOption[] = [
   { id: 'SlideStaining', name: 'SlideStaining', description: 'Slide is being stained' },
@@ -166,6 +180,25 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       { id: 'SLIDE_UPDATE', name: 'SLIDE_UPDATE' }
     ],
     statusOptions: BASE_STATUS_OPTIONS  },
+  {
+    id: 'DP600',
+    name: 'DP600',
+    messageTypes: [
+      { 
+        id: 'sendScannedSlideImageLabelId', 
+        name: 'sendScannedSlideImageLabelId',
+        requiresSlideSelector: true
+      },
+      { 
+        id: 'sendUpdatedSlideStatus', 
+        name: 'sendUpdatedSlideStatus',
+        requiresSlideSelector: true,
+        requiresStatusSelector: true,
+        statusOptions: DP600_SLIDE_STATUS_OPTIONS
+      }
+    ],
+    statusOptions: BASE_STATUS_OPTIONS
+  },
   {
     id: 'AUTOMATION_SW',
     name: 'AUTOMATION SOFTWARE',
@@ -314,6 +347,18 @@ export class MessageConfigHelper {  /**
       if (vssConfig) {
         return {
           ...vssConfig,
+          id: hostId,
+          name: hostId
+        };
+      }
+    }
+    
+    // Fallback para hosts tipo DP600
+    if (hostId.includes('DP600')) {
+      const dp600Config = HOST_CONFIGURATIONS.find(host => host.id === 'DP600');
+      if (dp600Config) {
+        return {
+          ...dp600Config,
           id: hostId,
           name: hostId
         };

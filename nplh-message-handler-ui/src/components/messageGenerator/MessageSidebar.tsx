@@ -291,7 +291,26 @@ useEffect(() => {
                                                 }`}>
                                                   {parsedResponse.format.toUpperCase()}
                                                 </div>
-                                              </div>                                              <div 
+                                                {isError && (
+                                                  <div className="text-xs px-1 py-0.5 rounded bg-red-100 text-red-700">
+                                                    ERROR
+                                                  </div>
+                                                )}
+                                              </div>
+
+                                              {/* Show error details if available */}
+                                              {isError && parsedResponse.errorDetails && (
+                                                <div className="mb-2 p-2 bg-red-100 border border-red-200 rounded">
+                                                  <div className="text-xs font-semibold text-red-700 mb-1">
+                                                    Error:
+                                                  </div>
+                                                  <div className="text-xs text-red-800">
+                                                    {parsedResponse.errorDetails}
+                                                  </div>
+                                                </div>
+                                              )}
+
+                                              <div 
                                                 className={`text-xs leading-relaxed font-mono ${isError ? 'text-red-800' : 'text-green-800'}`}
                                                 dangerouslySetInnerHTML={{ 
                                                   __html: parsedResponse.content

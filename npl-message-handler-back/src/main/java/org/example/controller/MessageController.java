@@ -126,6 +126,13 @@ public class MessageController {
                 request.getMessageType(), 
                 request.getSpecimen()
             );
+        } else if (request.getBlock() != null) {
+            // Case for specimen
+            convertedMessage = messageService.convertMessage(
+                    request.getMessage(),
+                    request.getMessageType(),
+                    request.getBlock()
+            );
         } else if (request.getStatus() != null) {
             // Case for status only
             convertedMessage = messageService.convertMessage(

@@ -127,6 +127,28 @@ export const detectJsonError = (jsonString: string): { hasError: boolean; errorD
 };
 
 /**
+ * Extracts error text from SOAP fault detail
+ */
+const extractSoapFaultDetails = (xmlString: string): string => {
+  try {
+    // Extract faultstring
+    const faultStringMatch = xmlString.match(/<faultstring>(.*?)<\/faultstring>/i);
+    let errorMessage = faultStringMatch ? faultStringMatch[1] : '';
+    
+    // Extract text from detail/error/text if available
+    const detailTextMatch = xmlString.match(/<text[^>]*>(.*?)<\/text>/i);
+    if (detailTextMatch && detailTextMatch[1]) {
+      const detailText = detailTextMatch[1].replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      errorMessage = detailText;
+    }
+    
+    return errorMessage || 'SOAP Fault detected';
+  } catch (error) {
+    return 'SOAP Fault detected (unable to parse details)';
+  }
+};
+
+/**
  * Detects errors in XML responses
  */
 export const detectXmlError = (xmlString: string): { hasError: boolean; errorDetails?: string } => {
@@ -142,10 +164,12 @@ export const detectXmlError = (xmlString: string): { hasError: boolean; errorDet
     return { hasError: true, errorDetails: 'XML Error detected' };
   }
   
-  // Check for SOAP faults
-  if (xmlString.toLowerCase().includes('soap:fault') || 
+  // Check for SOAP faults with detailed error extraction
+  if (xmlString.toLowerCase().includes('soap-env:fault') || 
+      xmlString.toLowerCase().includes('soap:fault') || 
       xmlString.toLowerCase().includes('soapenv:fault')) {
-    return { hasError: true, errorDetails: 'SOAP Fault detected' };
+    const errorDetails = extractSoapFaultDetails(xmlString);
+    return { hasError: true, errorDetails };
   }
   
   return { hasError: false };

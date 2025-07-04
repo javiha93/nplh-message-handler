@@ -58,6 +58,11 @@ const SendResponse: React.FC<SendResponseProps> = ({ sendResponse }) => {
                   }`}>
                     {parsedResponse.format.toUpperCase()}
                   </div>
+                  {isError && (
+                    <div className="text-xs px-2 py-1 rounded bg-red-100 text-red-700">
+                      ERROR
+                    </div>
+                  )}
                 </div>
                 <div className={`text-xs ${
                   isError ? 'text-red-500' : 'text-green-500'
@@ -65,6 +70,19 @@ const SendResponse: React.FC<SendResponseProps> = ({ sendResponse }) => {
                   Recibido: {formatTimestamp(response.receiveTime)}
                 </div>
               </div>
+              
+              {/* Show error details if available */}
+              {isError && parsedResponse.errorDetails && (
+                <div className="mb-3 p-3 bg-red-100 border border-red-200 rounded">
+                  <div className="text-xs font-semibold text-red-700 mb-1">
+                    Detalle del Error:
+                  </div>
+                  <div className="text-sm text-red-800">
+                    {parsedResponse.errorDetails}
+                  </div>
+                </div>
+              )}
+              
               <pre className={`text-sm whitespace-pre-wrap font-mono ${
                 isError ? 'text-red-800' : 'text-green-800'
               }`}>

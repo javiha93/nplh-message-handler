@@ -143,8 +143,16 @@ export const useMessageGenerator = () => {
 
     if ((state.selectedHost === 'LIS' && state.selectedType === 'DELETE_SLIDE' && !state.selectedSlide) ||
         (state.selectedHost === 'UPATH_CLOUD' && state.selectedType === 'sendScannedSlideImageLabelId' && !state.selectedSlide) ||
+        (state.selectedHost === 'DP600' && state.selectedType === 'sendScannedSlideImageLabelId' && !state.selectedSlide) ||
+        (state.selectedHost === 'DP600' && state.selectedType === 'sendUpdatedSlideStatus' && !state.selectedSlide) ||
         (state.selectedHost === 'VANTAGE_WS' && state.selectedType === 'ProcessVANTAGEEvent' && !state.selectedEntity)) {
       formStateService.setGeneratedMessage('Por favor, selecciona una entidad para procesar.');
+      return;
+    }
+
+    // Validation for status selector when required
+    if ((state.selectedHost === 'DP600' && state.selectedType === 'sendUpdatedSlideStatus' && !state.selectedStatus)) {
+      formStateService.setGeneratedMessage('Por favor, selecciona un status para el slide.');
       return;
     }
 
