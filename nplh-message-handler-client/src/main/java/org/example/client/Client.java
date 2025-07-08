@@ -10,6 +10,6 @@ public class Client {
     String clientName;
     String clientType;
 
-    public List<ClientMessageResponse> send(String message, String controlId) { /* Always override */ return null;}
+    public void send(String message, String controlId) { /* Always override */}
     public String send(String messageType, String message, String controlId) { /* Always override */  return  null;}
 }

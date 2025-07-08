@@ -28,7 +28,17 @@ export const useMessageGenerator = () => {
     const unsubscribeSnackbar = snackbarService.subscribe(setSnackbarState);    // Register for real-time message updates
     const handleMessageUpdate = (controlId: string, responses: ClientMessageResponse[]) => {
       console.log(`handleMessageUpdate called with controlId: ${controlId}`, responses);
+      
+      // Update both services to maintain consistency
       savedMessagesService.updateMessageResponses(controlId, responses);
+      messageListsService.updateMessageResponses(controlId, responses);
+      
+      // Also update the main form state if this is the current message
+      const currentControlId = formStateService.getState().currentMessageControlId;
+      if (currentControlId === controlId) {
+        console.log('Updating main form sendResponse because controlId matches current message');
+        formStateService.setSendResponse(responses);
+      }
     };
 
     console.log('Registering message update callback');

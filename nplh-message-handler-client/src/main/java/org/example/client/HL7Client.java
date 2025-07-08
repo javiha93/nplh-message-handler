@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.example.domain.host.host.Connection;
 import org.example.domain.host.host.HostInfo;
+import org.example.logging.MessageLogger;
 import org.example.utils.HL7LLPCharacters;
 import org.example.client.message.ClientMessage;
 import org.example.client.message.ClientMessageList;
@@ -12,6 +13,7 @@ import org.example.client.message.ClientMessageResponse;
 import org.example.domain.host.HL7Host;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,36 +32,25 @@ import static org.example.utils.MessageHandler.*;
 public class HL7Client extends Client {
 
     static final Logger logger = LoggerFactory.getLogger(HL7Client.class);
+    final org.example.logging.MessageLogger messageLogger;
     Socket socket;
     PrintWriter out;
     BufferedReader in;
     ClientMessageList clientMessageList;
 
-    public HL7Client(HL7Host host) {
-        this.clientName = host.name();
-        try {
-            socket = new Socket(host.getIp().isEmpty() ? "127.0.0.1" : host.getIp(), host.getClientPort());
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            clientMessageList = new ClientMessageList();
-            logger.info("Connect Client {} on port {}", host.name(), host.getClientPort());
-
-        } catch (UnknownHostException e) {
-            logger.error("Unknown host {} , {}:{}", host.name(),host.getIp().isEmpty() ? "127.0.0.1" : host.getIp(), host.getClientPort(), e);
-        } catch (IOException e) {
-            logger.error("Error connecting to {}:{}",host.getIp().isEmpty() ? "127.0.0.1" : host.getIp(), host.getClientPort(), e);
-        }
-    }
-
     public HL7Client(String hostName, String hostType, Connection connection) {
         this.clientName = hostName;
         this.clientType = hostType;
+        this.messageLogger = new MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), this.clientName);
+        MDC.put("clientLogger", this.clientName);
         try {
             socket = new Socket(connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort());
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             clientMessageList = new ClientMessageList();
             logger.info("Connect Client {} on port {}", hostName, connection.getPort());
+
+            startAsyncReceiver();
 
         } catch (UnknownHostException e) {
             logger.error("Unknown host {} , {}:{}", hostName, connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort(), e);
@@ -69,85 +60,57 @@ public class HL7Client extends Client {
     }
 
     @Override
-    public List<ClientMessageResponse> send(String message, String controlId) {
+    public void send(String message, String controlId) {
         String llpMessage = textToLlp(message);
         ClientMessage clientMessage = new ClientMessage(message, controlId);
         clientMessageList.add(clientMessage);
+        MDC.put("clientLogger", this.clientName);
+        messageLogger.info("[SEND][{}]: \n\n{} \n\n####################################################################\n", controlId, message);
         for (char c : llpMessage.toCharArray()) {
             out.write(c);
         }
         logger.info("\nSent message: \n{}\nto Host {}", message, clientName);
         out.flush();
-
-        return receive(controlId);
     }
 
-    private List<ClientMessageResponse> receive(String controlId) {
-        List<ClientMessageResponse> responses = new ArrayList<>();
-        final int initialTimeout = 4000;
-        final int extendedTimeout = 300;
-        try {
-            socket.setSoTimeout(initialTimeout);
+    private void startAsyncReceiver() {
+        CompletableFuture.runAsync(() -> {
+            while (!socket.isClosed()) {
+                try {
+                    StringBuilder response = new StringBuilder();
+                    int c;
+                    while ((c = in.read()) != -1) {
+                        response.append((char) c);
+                        if (c == HL7LLPCharacters.FS.getCharacter()) break;
+                    }
 
-            ClientMessageResponse firstResponse = receiveSingle(controlId);
-            if (firstResponse != null && !firstResponse.getMessage().trim().isEmpty()) {
-                responses.add(firstResponse);
-                logger.info("Received first response");
+                    String responseText = llpToText(response.toString());
 
-                socket.setSoTimeout(extendedTimeout);
-                ClientMessageResponse extraResponse = receiveSingle(controlId);
-                if (extraResponse != null && !extraResponse.getMessage().trim().isEmpty()) {
-                    responses.add(extraResponse);
-                    logger.info("Received second response");
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Socket error", e);
-        }
+                    List<String> uuids = extractUUIDs(responseText);
+                    if (!uuids.isEmpty()) {
+                        for (String uuid : uuids) {
+                            ClientMessage clientMessage = clientMessageList.getMessageByControlId(uuid);
+                            if (clientMessage != null) {
+                                clientMessage.addResponse(responseText);
+                                MDC.put("clientLogger", this.clientName);
+                                messageLogger.injectReceive(uuid, responseText);
+                                notifyUIMessageUpdate(uuid, clientMessage.getResponses());
+                                logger.info("Asynchronously received: \n{}\nand matched response for {}", responseText, uuid);
+                                break;
+                            }
+                        }
+                    } else {
+                        logger.warn("Received unmatched response: {}", responseText);
+                    }
 
-        return responses;
-    }
-
-    private ClientMessageResponse receiveSingle(String controlId) {
-        try {
-            StringBuilder response = new StringBuilder();
-            int c;
-            while ((c = in.read()) != -1) {
-                response.append((char) c);
-                if (c == HL7LLPCharacters.FS.getCharacter()) {
+                } catch (SocketTimeoutException e) {
+                    logger.debug("Timeout exception fo host {}", clientName);
+                } catch (IOException e) {
+                    logger.error("Error in async receive loop for host {}", clientName, e);
                     break;
                 }
             }
-            String responseText = llpToText(response.toString());
-            if (!responseText.contains(controlId)) {
-                logger.info("\nReceived response for another message, expected: \n{}\nfrom Host {}", responseText, clientName);
-                List<String> uuids = extractUUIDs(responseText);
-                for (String uuid : uuids) {
-                    ClientMessage clientMessage = clientMessageList.getMessageByControlId(uuid);
-                    if (clientMessage != null) {
-                        clientMessage.addResponse(responseText);
-                        //ONLY UI CODE NOT FOR AT SOLUTION
-                        notifyUIMessageUpdate(uuid, clientMessage.getResponses());
-                        break;
-                    }
-                }
-
-                socket.setSoTimeout(4000);
-                return receiveSingle(controlId);
-            }
-            ClientMessage message = clientMessageList.getMessageByControlId(controlId);
-            if (message != null) {
-                message.addResponse(responseText);
-            }
-            logger.info("\nReceived response: \n{}\nfrom Host {}", responseText, clientName);
-            return new ClientMessageResponse(responseText);
-        } catch (SocketTimeoutException e) {
-            logger.info("Not found any response");
-            return null;
-        } catch (IOException e) {
-            logger.error("Error reading response from host {}", clientName, e);
-            return null;
-        }
+        });
     }
 
     //ONLY UI CODE NOT FOR AT SOLUTION

@@ -58,12 +58,12 @@ public class MessageController {
 
     @PostMapping("/send")
     public ResponseEntity<List<ClientMessageResponse>> sendMessage(@RequestBody SendMessageRequest request) {
-        List<ClientMessageResponse> response;
+        List<ClientMessageResponse> response = new ArrayList<>();
 
         Client client = clients.getClient(request.hostName);
 
         if (client instanceof HL7Client) {
-            response = client.send(request.message, request.controlId);
+            client.send(request.message, request.controlId);
         } else if (client instanceof WSClient) {
             response = Collections.singletonList(new ClientMessageResponse(client.send(request.messageType, request.message, request.controlId)));
         } else {

@@ -296,21 +296,30 @@ export class MessageListsService {
   // Additional message operations...
   updateMessageResponses(controlId: string, responses: ClientMessageResponse[], listId?: string): void {
     const targetListId = listId || this.activeListId;
-    if (!targetListId) return;
+    if (!targetListId) {
+      console.warn('updateMessageResponses: No target list ID');
+      return;
+    }
+
+    console.log(`MessageListsService.updateMessageResponses called with controlId: ${controlId}`, responses);
+    console.log(`Target list ID: ${targetListId}`);
+    console.log('Current lists:', this.lists.map(l => ({ id: l.id, name: l.name, messageCount: l.messages.length })));
 
     this.lists = this.lists.map(list => 
       list.id === targetListId 
         ? {
             ...list,
-            messages: list.messages.map(msg => 
-              msg.messageControlId === controlId 
-                ? { ...msg, responses }
-                : msg
-            ),
+            messages: list.messages.map(msg => {
+              const isMatch = msg.messageControlId === controlId;
+              console.log(`Checking message ${msg.id} with controlId ${msg.messageControlId}: ${isMatch ? 'MATCH' : 'no match'}`);
+              return isMatch ? { ...msg, responses } : msg;
+            }),
             updatedAt: new Date()
           }
         : list
     );
+    
+    console.log('Lists updated, notifying listeners');
     this.notifyListeners();
   }
   clearAllResponses(listId?: string): void {
