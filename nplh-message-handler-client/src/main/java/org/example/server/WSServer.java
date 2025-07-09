@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.example.server.impl.SoapHandler;
 import org.example.server.impl.VSSHandler;
+import org.example.server.impl.VTGWSHandler;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
@@ -31,7 +32,11 @@ public class WSServer extends Server {
 
             server = HttpServer.create(new InetSocketAddress(port), 0);
 
-            SoapHandler soapHandler = (hostType.equals("VSS")) ? new VSSHandler(messageLogger, serverName) : new SoapHandler(messageLogger, serverName);
+            SoapHandler soapHandler = switch (hostType) {
+                case "VSS" -> new VSSHandler(messageLogger, serverName);
+                case "VTG" -> new VTGWSHandler(messageLogger, serverName);
+                default    -> new SoapHandler(messageLogger, serverName);
+            };
 
             server.createContext(path, soapHandler);
             server.setExecutor(null);
