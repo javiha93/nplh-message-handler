@@ -1,9 +1,12 @@
 package org.example.client;
 
+import org.example.client.message.ClientMessage;
+import org.example.client.message.ClientMessageList;
 import org.example.domain.host.WSHost;
 import org.example.domain.host.host.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,17 +20,15 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.example.utils.MessageHandler.formatXml;
+
 public class WSClient extends Client {
 
     static final Logger logger = LoggerFactory.getLogger(HL7Client.class);
+    final org.example.logging.MessageLogger messageLogger;
     private final String baseUrl;
     private Map<String, String> headers = new HashMap<>();
-
-    public WSClient(WSHost host) {
-        this.clientName = host.name();
-        this.baseUrl = "http://127.0.0.1:" + 80 + host.getPath();
-        this.headers = host.getHeader() != null ? host.getHeader() : new HashMap<>();
-    }
+    ClientMessageList clientMessageList;
 
     public WSClient(String hostName, String hostType, Connection connection) {
         this.clientName = hostName;
@@ -36,6 +37,10 @@ public class WSClient extends Client {
         if (!connection.getApiKeyValue().isEmpty()) {
             this.headers = Map.of(connection.getApiKeyFile(), connection.getApiKeyValue());
         }
+        clientMessageList = new ClientMessageList();
+
+        this.messageLogger = new org.example.logging.MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), this.clientName);
+        MDC.put("clientLogger", this.clientName);
     }
 
     @Override
@@ -59,6 +64,11 @@ public class WSClient extends Client {
                 OutputStream reqStream = con.getOutputStream();
                 reqStream.write(requestBody.getBytes());
                 logger.info("\nSent message: \n{}\nto Host {}", messageBody, clientName);
+                ClientMessage clientMessage = new ClientMessage(messageBody);
+                clientMessageList.add(clientMessage);
+                MDC.put("clientLogger", this.clientName);
+                messageLogger.info("[SEND]: \n\n{} \n", messageBody);
+
 
                 StringBuilder r = new StringBuilder();
                 BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
@@ -68,9 +78,10 @@ public class WSClient extends Client {
                 }
                 br.close();
 
-                logger.info("\nReceived response: \n{}\nfrom Host {}",
-                        extractSoapResponse(r.toString()),
-                        clientName);
+                String soapResponse = extractSoapResponse(r.toString());
+                logger.info("\nReceived response: \n{}\nfrom Host {}", soapResponse, clientName);
+                clientMessage.addResponse(soapResponse);
+                messageLogger.info("[RECEIVE]: \n\n{} \n####################################################################\n", formatXml(soapResponse));
 
                 return extractSoapResponse(r.toString());
             } catch (Exception e) {

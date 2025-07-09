@@ -19,6 +19,11 @@ public class ClientMessage {
         this.responses = new ArrayList<>();
     }
 
+    public ClientMessage(String message) {
+        this.message = message;
+        this.responses = new ArrayList<>();
+    }
+
     public void addResponse(String message) {
         if (responses == null) {
             responses = new ArrayList<>();

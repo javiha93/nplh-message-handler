@@ -8,8 +8,6 @@ import org.example.client.Clients;
 import org.example.client.HL7Client;
 import org.example.client.WSClient;
 import org.example.client.message.ClientMessageResponse;
-import org.example.domain.host.Host;
-import org.example.domain.host.HostDeserializer;
 import org.example.domain.host.host.HostInfoList;
 import org.example.domain.message.Message;
 import org.example.server.Servers;
@@ -40,8 +38,10 @@ public class MessageController {
     public MessageController(MessageService messageService, IrisService irisService) {
         this.messageService = messageService;
         this.irisService = irisService;
-        this.clients = new Clients(irisService.getHostInfo());
-        this.servers = new Servers();
+
+        HostInfoList hostInfoList = irisService.getHostInfo();
+        this.servers = new Servers(hostInfoList);
+        this.clients = new Clients(hostInfoList);
     }
 
     @PostMapping("/generate")
@@ -87,14 +87,14 @@ public class MessageController {
     @PostMapping("/convert")
     public ResponseEntity<MessageService.MessageResponse> convertMessage(@RequestBody UnifiedConvertRequest request) {
         MessageService.MessageResponse convertedMessage;
-        
+
         if (request.getSlide() != null && request.getStatus() != null) {
             // Case for slide with status
             convertedMessage = messageService.convertMessage(
-                request.getMessage(), 
-                request.getMessageType(),
-                request.getSlide(), 
-                request.getStatus()
+                    request.getMessage(),
+                    request.getMessageType(),
+                    request.getSlide(),
+                    request.getStatus()
             );
         } else if (request.getBlock() != null && request.getStatus() != null) {
             // Case for block with status
@@ -115,17 +115,17 @@ public class MessageController {
         } else if (request.getSlide() != null) {
             // Case for slide only
             convertedMessage = messageService.convertMessage(
-                request.getMessage(), 
-                request.getMessageType(),
-                request.getHostType(),
-                request.getSlide()
+                    request.getMessage(),
+                    request.getMessageType(),
+                    request.getHostType(),
+                    request.getSlide()
             );
         } else if (request.getSpecimen() != null) {
             // Case for specimen
             convertedMessage = messageService.convertMessage(
-                request.getMessage(), 
-                request.getMessageType(), 
-                request.getSpecimen()
+                    request.getMessage(),
+                    request.getMessageType(),
+                    request.getSpecimen()
             );
         } else if (request.getBlock() != null) {
             // Case for specimen
@@ -137,18 +137,18 @@ public class MessageController {
         } else if (request.getStatus() != null) {
             // Case for status only
             convertedMessage = messageService.convertMessage(
-                request.getMessage(), 
-                request.getMessageType(), 
-                request.getStatus()
+                    request.getMessage(),
+                    request.getMessageType(),
+                    request.getStatus()
             );
         } else {
             // Basic case - message and type only
             convertedMessage = messageService.convertMessage(
-                request.getMessage(), 
-                request.getMessageType()
+                    request.getMessage(),
+                    request.getMessageType()
             );
         }
-        
+
         return ResponseEntity.ok(convertedMessage);
     }
 
