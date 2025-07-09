@@ -23,7 +23,7 @@ public class Servers {
         for (HostInfo host: wsClients) {
             List<Connection> outboundConnections = host.getOutboundConnections();
             for (Connection connection: outboundConnections) {
-                serverList.add(new WSServer(host.getHostName(), connection.getWsLocation()));
+                serverList.add(new WSServer(host.getHostName(), host.getHostType(), connection.getWsLocation()));
             }
         }
     }
