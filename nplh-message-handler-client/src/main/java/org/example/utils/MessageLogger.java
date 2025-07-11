@@ -1,13 +1,26 @@
 package org.example.logging;
 
 import org.slf4j.Logger;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.apache.catalina.manager.JspHelper.escapeXml;
 
 public class MessageLogger {
 
@@ -17,6 +30,57 @@ public class MessageLogger {
     public MessageLogger(Logger logger, String clientLogger) {
         this.delegate = logger;
         this.clientLogger = clientLogger;
+    }
+
+    public void addServerMessage(String caseName, String messageText) {
+        StringBuilder sb = new StringBuilder();
+
+        String timestamp = java.time.LocalDateTime.now().toString();
+
+        sb.append("<serverMessage>\n");
+        sb.append("  <received>").append(timestamp).append("</received>\n");
+        sb.append("  <case>").append(caseName).append("</case>\n");
+        sb.append("  <messageText>\n");
+        sb.append(indentXml(formatMessageText(messageText), "    "));
+        sb.append("\n  </messageText>\n");
+
+        sb.append("</serverMessage>");
+
+        delegate.info(sb.toString());
+    }
+
+    public void addServerMessage(String caseName, String messageText, List<String> responses) {
+        StringBuilder sb = new StringBuilder();
+
+        String timestamp = java.time.LocalDateTime.now().toString();
+
+        sb.append("<serverMessage>\n");
+        sb.append("  <received>").append(timestamp).append("</received>\n");
+        sb.append("  <case>").append(caseName).append("</case>\n");
+        sb.append("  <messageText>\n");
+        sb.append(indentXml(formatMessageText(messageText), "    ")).append("\n");
+        sb.append("  </messageText>\n");
+
+        if (!responses.isEmpty()) {
+            sb.append("  <responses>\n");
+        }
+
+        for (String response : responses) {
+            sb.append("    <response>\n");
+            sb.append("      <sent>").append(timestamp).append("</sent>\n");
+            sb.append("      <messageText>\n");
+            sb.append(indentXml(formatMessageText(response), "        ")).append("\n");
+            sb.append("      </messageText>\n");
+            sb.append("    </response>\n");
+        }
+
+        if (!responses.isEmpty()) {
+            sb.append("  </responses>\n");
+        }
+
+        sb.append("</serverMessage>\n");
+
+        delegate.info(sb.toString());
     }
 
     public void info(String format, Object... arguments) {
@@ -73,5 +137,38 @@ public class MessageLogger {
             delegate.error("Error injecting RECEIVE block into log for controlId {}: {}", controlId, e.getMessage(), e);
         }
     }
+
+    private String formatMessageText(String input) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(new InputSource(new StringReader(input)));
+
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(doc), new StreamResult(writer));
+
+            return stripXmlDeclaration(writer.toString());
+        } catch (Exception e) {
+            return escapeXml(input);
+        }
+    }
+
+    private String indentXml(String xml, String indent) {
+        return Arrays.stream(xml.split("\n"))
+                .map(line -> indent + line)
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String stripXmlDeclaration(String xml) {
+        return xml.replaceFirst("^<\\?xml[^>]+\\?>\\s*", "").strip();
+    }
+
+
+
+
 }
 

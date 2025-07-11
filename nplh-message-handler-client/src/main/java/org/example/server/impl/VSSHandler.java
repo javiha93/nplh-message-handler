@@ -2,8 +2,13 @@ package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
 import org.example.logging.MessageLogger;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
-import java.io.IOException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.StringReader;
 
 public class VSSHandler extends SoapHandler {
     public VSSHandler(MessageLogger messageLogger, String serverName) {
@@ -11,8 +16,8 @@ public class VSSHandler extends SoapHandler {
     }
 
     @Override
-    protected void response(HttpExchange exchange, String soapAction) throws IOException {
-        String soapResponse = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
+    protected String buildResponse(HttpExchange exchange, String soapAction) {
+        return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
                 "xmlns:web=\"http://webservice.vss.ventana.com/\">\n" +
                 "   <soapenv:Header/>\n" +
                 "   <soapenv:Body>\n" +
@@ -23,10 +28,25 @@ public class VSSHandler extends SoapHandler {
                 "       </" + soapAction + "Response>\n" +
                 "   </soapenv:Body>\n" +
                 "</soapenv:Envelope>";
+    }
 
-        exchange.getResponseHeaders().set("Content-Type", "text/xml");
-        exchange.sendResponseHeaders(200, soapResponse.length());
-        exchange.getResponseBody().write(soapResponse.getBytes());
-        exchange.getResponseBody().close();
+    @Override
+    protected String getCaseId(String message) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(new InputSource(new StringReader(message)));
+
+            NodeList caseIdList = doc.getElementsByTagName("CaseID");
+            if (caseIdList.getLength() > 0) {
+                return caseIdList.item(0).getTextContent();
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
