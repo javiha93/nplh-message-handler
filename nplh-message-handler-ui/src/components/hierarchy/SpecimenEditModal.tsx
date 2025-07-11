@@ -239,7 +239,7 @@ const SpecimenEditModal: React.FC<SpecimenEditModalProps> = ({ specimen, onClose
             {editedSpecimen.supplementalInfos?.supplementalInfoList && editedSpecimen.supplementalInfos.supplementalInfoList.length > 0 && (
               <div className="mb-4 border rounded-md p-3">
                 <h4 className="font-medium mb-2">Existing Information</h4>
-                {editedSpecimen.supplementalInfos.supplementalInfoList.map((info, index) => (
+                {editedSpecimen.supplementalInfos.supplementalInfoList.map((info: any, index: number) => (
                   <div key={`suppl-${index}`} className="flex items-center mb-2 p-2 bg-gray-50 rounded">
                     <div className="flex-grow">
                       <span className="font-medium mr-2">{info.type}:</span>

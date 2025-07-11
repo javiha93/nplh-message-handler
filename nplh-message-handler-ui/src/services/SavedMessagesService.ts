@@ -1,5 +1,10 @@
 import { messageService, SendMessageRequest } from './MessageService';
 
+export interface ClientMessageResponse {
+  message: string;
+  receiveTime: string;
+}
+
 export interface SavedMessage {
   id: string;
   content: string;
@@ -7,7 +12,7 @@ export interface SavedMessage {
   messageType: string;
   messageControlId?: string;
   timestamp: Date;
-  responses?: string[];
+  responses?: ClientMessageResponse[];
 }
 
 export class SavedMessagesService {
@@ -64,7 +69,7 @@ export class SavedMessagesService {
     this.notifyListeners();
   }
 
-  updateMessageResponses(controlId: string, responses: string[]): void {
+  updateMessageResponses(controlId: string, responses: ClientMessageResponse[]): void {
     this.messages = this.messages.map(msg => 
       msg.messageControlId === controlId 
         ? { ...msg, responses: responses }
@@ -98,7 +103,7 @@ export class SavedMessagesService {
     this.notifyListeners();
   }
 
-  async sendMessage(savedMessage: SavedMessage): Promise<string[]> {
+  async sendMessage(savedMessage: SavedMessage): Promise<ClientMessageResponse[]> {
     const request: SendMessageRequest = {
       message: savedMessage.content,
       hostName: savedMessage.host,

@@ -80,6 +80,7 @@ export interface BlocksList {
 }
 
 export interface Procedure {
+  [key: string]: any;
   tissue?: {
     type?: string;
     description?: string;
@@ -105,6 +106,9 @@ export interface Specimen {
   receivedDateTime?: string;
   procedure?: Procedure;
   blocks?: BlocksList;
+  supplementalInfos?: {
+    supplementalInfoList: any[];
+  };
 }
 
 export interface SpecimensList {

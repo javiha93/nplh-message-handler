@@ -9,8 +9,7 @@ import { ClientMessageResponse } from '../components/savedMessages/services/Save
 import { 
   MessageConfigHelper, 
   BASE_STATUS_OPTIONS, 
-  VANTAGE_WS_STATUS_OPTIONS,
-  DP600_SLIDE_STATUS_OPTIONS 
+  VANTAGE_WS_STATUS_OPTIONS
 } from '../config/messageConfig';
 import { hostService } from './HostService';
 

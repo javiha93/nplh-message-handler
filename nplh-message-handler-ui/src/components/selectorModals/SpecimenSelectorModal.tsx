@@ -52,7 +52,7 @@ const SpecimenSelectorModal: React.FC<SpecimenSelectorModalProps> = ({
             Order: {order.sampleId || 'No ID'}
           </div>
 
-          {order.specimens?.specimenList?.map((specimen, specimenIndex) => (
+          {order.specimens?.specimenList?.map((specimen: any, specimenIndex: number) => (
             <div key={`specimen-${specimenIndex}`} className="ml-6 mt-3 border-l-2 pl-4 border-gray-300">
               <div className="flex items-center">
                 <div

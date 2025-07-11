@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Edit, Save, X } from 'lucide-react';
+import { Save, X } from 'lucide-react';
 
 interface MessageEditorProps {
   message: string;

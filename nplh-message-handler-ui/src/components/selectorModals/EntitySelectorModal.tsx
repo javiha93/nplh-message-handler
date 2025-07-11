@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Specimen, Block, Slide, Order } from '../../types/Message';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface EntitySelectorModalProps {
   isOpen: boolean;
@@ -15,27 +14,28 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
   onClose,
   message,
   onSelectEntity
-}) => {  const [expandedSpecimens, setExpandedSpecimens] = useState<Record<string, boolean>>({});
-  const [expandedBlocks, setExpandedBlocks] = useState<Record<string, boolean>>({});
+}) => {  
+  // const [expandedSpecimens, setExpandedSpecimens] = useState<Record<string, boolean>>({});
+  // const [expandedBlocks, setExpandedBlocks] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<'orders' | 'specimens' | 'blocks' | 'slides'>('orders');
 
   useEffect(() => {
     if (message) {
       const order = message.patient?.orders?.orderList?.[0];      if (order?.specimens?.specimenList) {
-        const initialExpandedSpecimens = order.specimens.specimenList.reduce((acc: Record<string, boolean>, _: any, index: number) => {
-          acc[index] = true;
-          return acc;
-        }, {} as Record<string, boolean>);
+        // const initialExpandedSpecimens = order.specimens.specimenList.reduce((acc: Record<string, boolean>, _: any, index: number) => {
+        //   acc[index] = true;
+        //   return acc;
+        // }, {} as Record<string, boolean>);
 
-        const initialExpandedBlocks = order.specimens.specimenList.reduce((acc: Record<string, boolean>, specimen: any) => {
-          specimen.blocks?.blockList?.forEach((block: any) => {
-            acc[block.id] = true;
-          });
-          return acc;
-        }, {} as Record<string, boolean>);
+        // const initialExpandedBlocks = order.specimens.specimenList.reduce((acc: Record<string, boolean>, specimen: any) => {
+        //   specimen.blocks?.blockList?.forEach((block: any) => {
+        //     acc[block.id] = true;
+        //   });
+        //   return acc;
+        // }, {} as Record<string, boolean>);
 
-        setExpandedSpecimens(initialExpandedSpecimens);
-        setExpandedBlocks(initialExpandedBlocks);
+        // setExpandedSpecimens(initialExpandedSpecimens);
+        // setExpandedBlocks(initialExpandedBlocks);
       }
     }
   }, [isOpen, message]);
@@ -49,19 +49,19 @@ const EntitySelectorModal: React.FC<EntitySelectorModalProps> = ({
     return null;
   }
 
-  const toggleSpecimen = (specimenIndex: number) => {
-    setExpandedSpecimens({
-      ...expandedSpecimens,
-      [specimenIndex]: !expandedSpecimens[specimenIndex]
-    });
-  };
+  // const toggleSpecimen = (specimenIndex: number) => {
+  //   setExpandedSpecimens({
+  //     ...expandedSpecimens,
+  //     [specimenIndex]: !expandedSpecimens[specimenIndex]
+  //   });
+  // };
 
-  const toggleBlock = (blockId: string) => {
-    setExpandedBlocks({
-      ...expandedBlocks,
-      [blockId]: !expandedBlocks[blockId]
-    });
-  };
+  // const toggleBlock = (blockId: string) => {
+  //   setExpandedBlocks({
+  //     ...expandedBlocks,
+  //     [blockId]: !expandedBlocks[blockId]
+  //   });
+  // };
   const handleSelectSpecimen = (specimen: Specimen) => {
     onSelectEntity('Specimen', specimen);
     onClose();

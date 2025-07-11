@@ -21,7 +21,7 @@ useEffect(() => {
   if (message) {
     const order = message.patient?.orders?.orderList?.[0];
     if (order?.specimens?.specimenList) {
-      const initialExpandedSpecimens = order.specimens.specimenList.reduce((acc, _, index) => {
+      const initialExpandedSpecimens = order.specimens.specimenList.reduce((acc: {[key: number]: boolean}, _: any, index: number) => {
         acc[index] = true;
         return acc;
       }, {} as Record<string, boolean>);
@@ -72,7 +72,7 @@ useEffect(() => {
             Order: {order.sampleId || 'No ID'}
           </div>
 
-          {order.specimens?.specimenList?.map((specimen, specimenIndex) => (
+          {order.specimens?.specimenList?.map((specimen: any, specimenIndex: number) => (
             <div key={`specimen-${specimenIndex}`} className="ml-6 mt-3 border-l-2 pl-4 border-gray-300">
               <div className="flex items-center">
                 <div
@@ -87,7 +87,7 @@ useEffect(() => {
                 </div>
               </div>
 
-              {expandedSpecimens[specimenIndex] && specimen.blocks?.blockList?.map((block, blockIndex) => (
+              {expandedSpecimens[specimenIndex] && specimen.blocks?.blockList?.map((block: any, blockIndex: number) => (
                 <div key={`block-${blockIndex}`} className="ml-6 mt-2 border-l-2 pl-4 border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="font-medium text-sm">

@@ -41,13 +41,13 @@ const HierarchyEditModal: React.FC<HierarchyEditModalProps> = ({ isOpen, onClose
     });
   };
 
-  const toggleSlide = (specimenIndex: number, blockIndex: number, slideIndex: number) => {
-    const key = `${specimenIndex}-${blockIndex}-${slideIndex}`;
-    setExpandedSlides({
-      ...expandedSlides,
-      [key]: !expandedSlides[key]
-    });
-  };
+  // const toggleSlide = (specimenIndex: number, blockIndex: number, slideIndex: number) => {
+  //   const key = `${specimenIndex}-${blockIndex}-${slideIndex}`;
+  //   setExpandedSlides({
+  //     ...expandedSlides,
+  //     [key]: !expandedSlides[key]
+  //   });
+  // };
 
   const getNextSequence = (currentSequence: string) => {
     // If the sequence is a number, increment it
@@ -80,7 +80,7 @@ const HierarchyEditModal: React.FC<HierarchyEditModalProps> = ({ isOpen, onClose
       }
     };
 
-    const lastBlock = lastSpecimen.blocks.blockList[lastSpecimen.blocks.blockList.length - 1];
+    const lastBlock = lastSpecimen.blocks?.blockList?.[lastSpecimen.blocks.blockList.length - 1];
     const newBlock = {
         ...JSON.parse(JSON.stringify(lastBlock)),
         id: newId + ";1",
@@ -91,7 +91,7 @@ const HierarchyEditModal: React.FC<HierarchyEditModalProps> = ({ isOpen, onClose
         }
     };
 
-    const lastSlide = lastBlock.slides.slideList[lastBlock.slides.slideList.length - 1];
+    const lastSlide = lastBlock?.slides?.slideList?.[lastBlock.slides.slideList.length - 1];
     const newSlide = {
         ...JSON.parse(JSON.stringify(lastSlide)),
         id: newId + ";1;1",
@@ -123,7 +123,7 @@ const HierarchyEditModal: React.FC<HierarchyEditModalProps> = ({ isOpen, onClose
       }
     };
 
-    const lastSlide = lastBlock.slides.slideList[lastBlock.slides.slideList.length - 1];
+    const lastSlide = lastBlock?.slides?.slideList?.[lastBlock.slides.slideList.length - 1];
     const newSlide = {
     ...JSON.parse(JSON.stringify(lastSlide)),
     id: newId + ";1",
@@ -295,7 +295,7 @@ const HierarchyEditModal: React.FC<HierarchyEditModalProps> = ({ isOpen, onClose
                           ))}
                           
                           {/* Add new slide button */}
-                          {block.slides?.slideList?.length > 0 && (
+                          {(block.slides?.slideList?.length || 0) > 0 && (
                             <div className="ml-6 mt-2">
                               <button
                                 onClick={() => addNewSlide(specimenIndex, blockIndex)}
@@ -312,7 +312,7 @@ const HierarchyEditModal: React.FC<HierarchyEditModalProps> = ({ isOpen, onClose
                   ))}
                   
                   {/* Add new block button */}
-                  {specimen.blocks?.blockList?.length > 0 && (
+                  {(specimen.blocks?.blockList?.length || 0) > 0 && (
                     <div className="ml-6 mt-3">
                       <button
                         onClick={() => addNewBlock(specimenIndex)}
@@ -329,7 +329,7 @@ const HierarchyEditModal: React.FC<HierarchyEditModalProps> = ({ isOpen, onClose
           ))}
           
           {/* Add new specimen button */}
-          {order.specimens?.specimenList?.length > 0 && (
+          {(order.specimens?.specimenList?.length || 0) > 0 && (
             <div className="ml-6 mt-4">
               <button
                 onClick={addNewSpecimen}

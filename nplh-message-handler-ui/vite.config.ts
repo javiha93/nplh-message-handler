@@ -83,7 +83,17 @@ const messageUpdatePlugin = () => {
 export default defineConfig({
   plugins: [react(), messageUpdatePlugin()],
   server: {
-    port: 5173,
+    port: 8084,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8085',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
+  preview: {
+    port: 8084,
     proxy: {
       '/api': {
         target: 'http://localhost:8085',

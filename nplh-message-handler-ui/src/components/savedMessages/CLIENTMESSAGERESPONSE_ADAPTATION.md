@@ -39,11 +39,6 @@ El endpoint ahora maneja ambos formatos:
 
 ### ✅ **3. Comando PowerShell Corregido**
 
-**Para entorno de desarrollo (puerto 5173)**:
-```powershell
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $jsonBytes = [Convert]::FromBase64String('eyJyZXNwb25zZXMiOlt7Im1lc3NhZ2UiOiJNU0h8Xn5cXCZ8Um9jaGUgRGlhZ25vc3RpY3N8VkVOVEFOQSBDb25uZWN0fExJU3xBUExBQnwyMDI1MDYxMjA4MjM1Nnx8QUNLXl5BQ0t8MTk3Q0E2NDAtRTJBMC00NDk4LTg1NUUtMzREQkJFNDg4QkJEfFB8Mi40XG5NU0F8Q0F8NDk3NDg2NjctOTcxMC00YWMzLWJmZDgtNjNhNmUxY2U1YTg4IiwicmVjZWl2ZVRpbWUiOiIyMDI1LTA2LTEyVDEwOjIzOjU2LjMxMzg3NDMifSx7Im1lc3NhZ2UiOiJNU0h8Xn5cXCZ8Um9jaGUgRGlhZ25vc3RpY3N8VkVOVEFOQSBDb25uZWN0fExJU3xBUExBQnwyMDI1MDYxMjA4MjM1N3x8T1JMXk8yMl5PUkxfTzIyfEUyQkY3NDkyLTJCMTYtNDdENS1CNERDLUI3MjVFRDgxNTk0RXxQfDIuNFxuTVNBfEFFfDQ5NzQ4NjY3LTk3MTAtNGFjMy1iZmQ4LTYzYTZlMWNlNWE4OFxuRVJSfHx8NDIxNjN8RXx8fFRoaXMgbWVzc2FnZSBjb250cm9sIElEIGFscmVhZHkgZXhpc3RzLiIsInJlY2VpdmVUaW1lIjoiMjAyNS0wNi0xMlQxMDoyNDowMS4xMDY1NjYzIn1dLCJjb250cm9sSWQiOiI0OTc0ODY2Ny05NzEwLTRhYzMtYmZkOC02M2E2ZTFjZTVhODgifQ=='); $body = [System.Text.Encoding]::UTF8.GetString($jsonBytes); Invoke-RestMethod -Uri 'http://localhost:5173/api/ui/messages/update-responses' -Method POST -ContentType 'application/json' -Body $body
-```
-
 **Para entorno de producción (puerto 8084)**:
 ```powershell
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $jsonBytes = [Convert]::FromBase64String('eyJyZXNwb25zZXMiOlt7Im1lc3NhZ2UiOiJNU0h8Xn5cXCZ8Um9jaGUgRGlhZ25vc3RpY3N8VkVOVEFOQSBDb25uZWN0fExJU3xBUExBQnwyMDI1MDYxMjA4MjM1Nnx8QUNLXl5BQ0t8MTk3Q0E2NDAtRTJBMC00NDk4LTg1NUUtMzREQkJFNDg4QkJEfFB8Mi40XG5NU0F8Q0F8NDk3NDg2NjctOTcxMC00YWMzLWJmZDgtNjNhNmUxY2U1YTg4IiwicmVjZWl2ZVRpbWUiOiIyMDI1LTA2LTEyVDEwOjIzOjU2LjMxMzg3NDMifSx7Im1lc3NhZ2UiOiJNU0h8Xn5cXCZ8Um9jaGUgRGlhZ25vc3RpY3N8VkVOVEFOQSBDb25uZWN0fExJU3xBUExBQnwyMDI1MDYxMjA4MjM1N3x8T1JMXk8yMl5PUkxfTzIyfEUyQkY3NDkyLTJCMTYtNDdENS1CNERDLUI3MjVFRDgxNTk0RXxQfDIuNFxuTVNBfEFFfDQ5NzQ4NjY3LTk3MTAtNGFjMy1iZmQ4LTYzYTZlMWNlNWE4OFxuRVJSfHx8NDIxNjN8RXx8fFRoaXMgbWVzc2FnZSBjb250cm9sIElEIGFscmVhZHkgZXhpc3RzLiIsInJlY2VpdmVUaW1lIjoiMjAyNS0wNi0xMlQxMDoyNDowMS4xMDY1NjYzIn1dLCJjb250cm9sSWQiOiI0OTc0ODY2Ny05NzEwLTRhYzMtYmZkOC02M2E2ZTFjZTVhODgifQ=='); $body = [System.Text.Encoding]::UTF8.GetString($jsonBytes); Invoke-RestMethod -Uri 'http://localhost:8084/api/ui/messages/update-responses' -Method POST -ContentType 'application/json' -Body $body
@@ -100,4 +95,4 @@ Al enviar tu comando, ahora recibirás una respuesta como esta:
 
 La UI está ahora completamente adaptada para manejar el nuevo formato `ClientMessageResponse` mientras mantiene compatibilidad con formatos legacy. Los receive times se muestran correctamente en todos los modales y componentes.
 
-**Para usar en tu entorno**, simplemente cambia el puerto en el comando de `5173` (desarrollo) a `8084` (tu entorno) y funcionará perfectamente.
+**Para usar en tu entorno**, simplemente cambia el puerto en el comando de `8084` (producción) a `5173` (desarrollo) si necesitas usar el entorno de desarrollo, o mantén `8084` para producción.
