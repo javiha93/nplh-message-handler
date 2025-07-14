@@ -19,6 +19,10 @@ export const useMessageGenerator = () => {
   const [formState, setFormState] = useState(formStateService.getState());
   const [savedMessages, setSavedMessages] = useState(savedMessagesService.getMessages());
   const [snackbarState, setSnackbarState] = useState(snackbarService.getState());
+  
+  // Local state for hanging timeout configuration
+  const [hangingTimeoutSeconds, setHangingTimeoutSeconds] = useState(7);
+  const [showTimeoutConfig, setShowTimeoutConfig] = useState(false);
 
   // Subscribe to service updates
   useEffect(() => {
@@ -343,6 +347,79 @@ export const useMessageGenerator = () => {
       uiStateService.setSendingAll(false);
     }
   };
+
+  const sendAllSavedMessagesHanging = async () => {
+    if (savedMessages.length === 0) {
+      uiStateService.setError('No hay mensajes guardados para enviar.');
+      return;
+    }
+
+    try {
+      uiStateService.setSendingAll(true);
+      uiStateService.clearError();
+
+      for (let i = 0; i < savedMessages.length; i++) {
+        const savedMessage = savedMessages[i];
+        console.log(`Enviando mensaje ${i + 1}/${savedMessages.length}: ${savedMessage.messageControlId}`);
+        
+        // Send the message
+        await sendSavedMessage(savedMessage);
+        
+        // Wait for response or timeout (except for the last message)
+        if (i < savedMessages.length - 1) {
+          const controlId = savedMessage.messageControlId;
+          if (controlId) {
+            await waitForResponseOrTimeout(controlId, hangingTimeoutSeconds * 1000);
+          } else {
+            // If no controlId, just wait 1 second before next message
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+      console.log('Todos los mensajes hanging enviados exitosamente');
+    } catch (error) {
+      console.error('Error sending all hanging messages:', error);
+      uiStateService.setError('Error al enviar todos los mensajes hanging.');
+    } finally {
+      uiStateService.setSendingAll(false);
+    }
+  };
+
+  const waitForResponseOrTimeout = async (controlId: string, timeoutMs: number): Promise<void> => {
+    return new Promise((resolve) => {
+      let hasResolved = false;
+      
+      // Set up timeout
+      const timeoutId = setTimeout(() => {
+        if (!hasResolved) {
+          hasResolved = true;
+          console.log(`Timeout reached for controlId: ${controlId}`);
+          resolve();
+        }
+      }, timeoutMs);
+
+      // Set up response listener
+      const handleResponse = (responseControlId: string) => {
+        if (responseControlId === controlId && !hasResolved) {
+          hasResolved = true;
+          console.log(`Response received for controlId: ${controlId}`);
+          clearTimeout(timeoutId);
+          resolve();
+        }
+      };
+
+      // Register callback temporarily
+      messageUpdateService.registerUpdateCallback(handleResponse);
+      
+      // Clean up after resolution
+      const cleanup = () => {
+        messageUpdateService.unregisterUpdateCallback(handleResponse);
+      };
+      
+      // Ensure cleanup happens after resolution
+      setTimeout(cleanup, timeoutMs + 100);
+    });
+  };
   // Helper method for backward compatibility
   const updateMessageResponses = (controlId: string, responses: string[]) => {
     // Convert string responses to ClientMessageResponse format
@@ -478,6 +555,12 @@ export const useMessageGenerator = () => {
     // Saved messages
     savedMessages,
     
+    // Hanging timeout configuration
+    hangingTimeoutSeconds,
+    setHangingTimeoutSeconds,
+    showTimeoutConfig,
+    setShowTimeoutConfig,
+    
     // Snackbar
     snackbar: snackbarState,
     closeSnackbar: () => snackbarService.close(),
@@ -521,7 +604,9 @@ export const useMessageGenerator = () => {
     clearMessageResponses,
     reorderSavedMessages,
     sendSavedMessage,
-    sendAllSavedMessages,    updateMessageResponses,
+    sendAllSavedMessages,
+    sendAllSavedMessagesHanging,
+    updateMessageResponses,
     updateMessageContent,
     updateMessageComment,
     updateMessageControlId,

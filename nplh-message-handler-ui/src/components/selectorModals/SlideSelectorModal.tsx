@@ -42,7 +42,6 @@ const SlideSelectorModal: React.FC<SlideSelectorModalProps> = ({
 }, [isOpen]);
 
   if (!isOpen || !message) {
-    console.log("Modal not open or message is null", { isOpen, messageExists: !!message });
     return null;
   }
 

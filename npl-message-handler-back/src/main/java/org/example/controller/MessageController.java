@@ -64,10 +64,12 @@ public class MessageController {
 
         if (client instanceof HL7Client) {
             client.send(request.message, request.controlId);
-        } else if (client instanceof WSClient) {
-            response = Collections.singletonList(new ClientMessageResponse(client.send(request.messageType, request.message, request.controlId)));
+       } else if (client instanceof WSClient) {
+            String result = client.send(request.messageType, request.message, request.controlId);
+            response = Collections.singletonList(new ClientMessageResponse(result));
         } else {
-            response = Collections.singletonList(new ClientMessageResponse(client.send(request.messageType, request.message, request.controlId)));
+            String result = client.send(request.messageType, request.message, request.controlId);
+            response = Collections.singletonList(new ClientMessageResponse(result));
         }
 
         return ResponseEntity.ok(response);

@@ -6,6 +6,8 @@ import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../../
 import ListSelector from './ListSelector';
 import { messageService } from '../../../services/MessageService';
 import { snackbarService } from '../../../services/SnackbarService';
+import { messageUpdateService } from '../../../services/messageUpdateService';
+import TimeoutConfig from '../../common/TimeoutConfig';
 import StrictModeDroppable from '../../common/StrictModeDroppable';
 
 // Simple Tooltip Component
@@ -60,6 +62,10 @@ const Tooltip: React.FC<TooltipProps> = ({ children, content, position = 'bottom
 interface MessageSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  hangingTimeoutSeconds?: number;
+  setHangingTimeoutSeconds?: (seconds: number) => void;
+  showTimeoutConfig?: boolean;
+  setShowTimeoutConfig?: (show: boolean) => void;
   onMessageClick: (message: SavedMessage) => void;
   onEditMessage?: (message: SavedMessage) => void;
 }
@@ -67,6 +73,10 @@ interface MessageSidebarProps {
 const MessageSidebar: React.FC<MessageSidebarProps> = ({
   isOpen,
   onClose,
+  hangingTimeoutSeconds: externalHangingTimeoutSeconds,
+  setHangingTimeoutSeconds: externalSetHangingTimeoutSeconds,
+  showTimeoutConfig: externalShowTimeoutConfig,
+  setShowTimeoutConfig: externalSetShowTimeoutConfig,
   onMessageClick,
   onEditMessage
 }) => {
@@ -74,6 +84,15 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   const [lists, setLists] = useState<MessageList[]>([]);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [isSendingAll, setIsSendingAll] = useState(false);
+  
+  // Timeout configuration state - use external state if provided, otherwise use internal state
+  const [internalHangingTimeoutSeconds, setInternalHangingTimeoutSeconds] = useState(7);
+  const [internalShowTimeoutConfig, setInternalShowTimeoutConfig] = useState(false);
+  
+  const hangingTimeoutSeconds = externalHangingTimeoutSeconds ?? internalHangingTimeoutSeconds;
+  const setHangingTimeoutSeconds = externalSetHangingTimeoutSeconds ?? setInternalHangingTimeoutSeconds;
+  const showTimeoutConfig = externalShowTimeoutConfig ?? internalShowTimeoutConfig;
+  const setShowTimeoutConfig = externalSetShowTimeoutConfig ?? setInternalShowTimeoutConfig;
 
   const [width, setWidth] = useState<number>(384);
   const [isResizing, setIsResizing] = useState(false);
@@ -214,7 +233,77 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     } finally {
       setIsSendingAll(false);
     }
-  };  const handleClearAllResponses = async () => {
+  };
+
+  const handleSendAllMessagesHanging = async () => {
+    if (savedMessages.length === 0) return;
+    
+    setIsSendingAll(true);
+    try {
+      for (let i = 0; i < savedMessages.length; i++) {
+        const message = savedMessages[i];
+        console.log(`Enviando mensaje ${i + 1}/${savedMessages.length}: ${message.messageControlId}`);
+        
+        // Send the message
+        await messageListsService.sendMessage(message);
+        
+        // Wait for response or timeout (except for the last message)
+        if (i < savedMessages.length - 1) {
+          const controlId = message.messageControlId;
+          if (controlId) {
+            await waitForResponseOrTimeout(controlId, hangingTimeoutSeconds * 1000);
+          } else {
+            // If no controlId, just wait 1 second before next message
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+      console.log('Todos los mensajes hanging enviados exitosamente');
+    } catch (error) {
+      console.error('Error sending all hanging messages:', error);
+      alert('Error al enviar los mensajes hanging. Algunos mensajes pueden no haberse enviado.');
+    } finally {
+      setIsSendingAll(false);
+    }
+  };
+
+  const waitForResponseOrTimeout = async (controlId: string, timeoutMs: number): Promise<void> => {
+    return new Promise((resolve) => {
+      let hasResolved = false;
+      
+      // Set up timeout
+      const timeoutId = setTimeout(() => {
+        if (!hasResolved) {
+          hasResolved = true;
+          console.log(`Timeout reached for controlId: ${controlId}`);
+          resolve();
+        }
+      }, timeoutMs);
+
+      // Set up response listener
+      const handleResponse = (responseControlId: string) => {
+        if (responseControlId === controlId && !hasResolved) {
+          hasResolved = true;
+          console.log(`Response received for controlId: ${controlId}`);
+          clearTimeout(timeoutId);
+          resolve();
+        }
+      };
+
+      // Register callback temporarily
+      messageUpdateService.registerUpdateCallback(handleResponse);
+      
+      // Clean up after resolution
+      const cleanup = () => {
+        messageUpdateService.unregisterUpdateCallback(handleResponse);
+      };
+      
+      // Ensure cleanup happens after resolution
+      setTimeout(cleanup, timeoutMs + 100);
+    });
+  };
+
+  const handleClearAllResponses = async () => {
     try {
       // Call backend to delete all messages
       await messageService.deleteAllMessages();
@@ -577,9 +666,9 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
         )}
       </div>
 
-      {/* Footer con botón de enviar todos */}
+      {/* Footer con botones de enviar todos */}
       {savedMessages.length > 0 && (
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-gray-200 space-y-2">
           <button
             onClick={handleSendAllMessages}
             disabled={isSendingAll}
@@ -591,6 +680,30 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
           >
             {isSendingAll ? 'Enviando...' : `Enviar Todos (${savedMessages.length})`}
           </button>
+          <div className="relative">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleSendAllMessagesHanging}
+                disabled={isSendingAll}
+                className={`flex-1 py-2 px-3 rounded-lg text-white font-medium transition-colors text-sm ${
+                  isSendingAll
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-orange-600 hover:bg-orange-700'
+                }`}
+              >
+                {isSendingAll ? 'Enviando...' : `Enviar Todos Hanging (${savedMessages.length})`}
+              </button>
+              <div className="flex items-center">
+                <TimeoutConfig
+                  currentTimeout={hangingTimeoutSeconds}
+                  onTimeoutChange={setHangingTimeoutSeconds}
+                  isVisible={showTimeoutConfig}
+                  onToggle={() => setShowTimeoutConfig(!showTimeoutConfig)}
+                  onClose={() => setShowTimeoutConfig(false)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

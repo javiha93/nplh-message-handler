@@ -6,9 +6,49 @@ import EditModalsContainer from './editModals/EditModalsContainer';
 import SelectorModalsContainer from './messageGenerator/SelectorModalsContainer';
 import MessageSidebarSection from './messageGenerator/MessageSidebarSection';
 
+// Import debug utilities
+import '../utils/debugMessageUpdates';
+
 const MessageGenerator: React.FC = () => {
   // Get all state and handlers from the main hook
   const hookData = useMessageGenerator();
+
+  // Debug logging for message updates
+  React.useEffect(() => {
+    console.log('🔍 MessageGenerator mounted - checking message update service status...');
+
+    // Check if global update function exists
+    if ((window as any).updateMessageResponses) {
+      console.log('✅ Global updateMessageResponses function is available');
+    } else {
+      console.log('❌ Global updateMessageResponses function is NOT available');
+    }
+
+    // Check if globalThis.messageUpdates exists
+    if ((globalThis as any).messageUpdates) {
+      console.log('✅ globalThis.messageUpdates exists:', (globalThis as any).messageUpdates);
+    } else {
+      console.log('ℹ️  globalThis.messageUpdates does not exist yet');
+    }
+
+    // Expose hookData for debugging
+    (window as any).hookData = hookData;
+
+    // Test the service periodically
+    const interval = setInterval(() => {
+      if ((globalThis as any).messageUpdates) {
+        const updates = (globalThis as any).messageUpdates;
+        const controlIds = Object.keys(updates);
+        if (controlIds.length > 0) {
+          console.log('🔍 Found pending message updates:', controlIds);
+        }
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [hookData]);
 
   return (
     <MessageGeneratorLayout
@@ -26,7 +66,8 @@ const MessageGenerator: React.FC = () => {
         isFetchingData={hookData.isFetchingData}
         isGeneratingMessage={hookData.isGeneratingMessage}
         isSendingMessage={hookData.isSendingMessage}
-        generateButtonDisabled={hookData.generateButtonDisabled}        messageTypes={hookData.messageTypes}
+        generateButtonDisabled={hookData.generateButtonDisabled}
+        messageTypes={hookData.messageTypes}
         hosts={hookData.hosts}
         isLoadingHosts={hookData.isLoadingHosts}
         selectedSpecimen={hookData.selectedSpecimen}
@@ -97,9 +138,14 @@ const MessageGenerator: React.FC = () => {
         handleBlockSelect={hookData.handleBlockSelect}
         handleSlideSelect={hookData.handleSlideSelect}
         handleEntitySelect={hookData.handleEntitySelect}
-      />      <MessageSidebarSection
+      />
+      <MessageSidebarSection
         isSidebarOpen={hookData.isSidebarOpen}
         snackbar={hookData.snackbar}
+        hangingTimeoutSeconds={hookData.hangingTimeoutSeconds}
+        setHangingTimeoutSeconds={hookData.setHangingTimeoutSeconds}
+        showTimeoutConfig={hookData.showTimeoutConfig}
+        setShowTimeoutConfig={hookData.setShowTimeoutConfig}
         onToggleSidebar={hookData.toggleSidebar}
         onCloseSnackbar={hookData.closeSnackbar}
       />

@@ -1,9 +1,10 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical } from 'lucide-react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../utils/responseFormatUtils';
 import StrictModeDroppable from '../common/StrictModeDroppable';
+import TimeoutConfig from '../common/TimeoutConfig';
+import { messageUpdateService } from '../../services/messageUpdateService';
 
 interface SavedMessage {
   id: string;
@@ -22,6 +23,11 @@ interface MessageSidebarProps {
   onRemoveMessage: (id: string) => void;
   onSendMessage: (message: SavedMessage) => void;
   onSendAllMessages: () => void;
+  onSendAllMessagesHanging: () => void;
+  hangingTimeoutSeconds: number;
+  setHangingTimeoutSeconds: (seconds: number) => void;
+  showTimeoutConfig: boolean;
+  setShowTimeoutConfig: (show: boolean) => void;
   onClearAllResponses: () => void;
   onClearMessageResponses: (messageId: string) => void;
   onReorderMessages: (startIndex: number, endIndex: number) => void;
@@ -36,6 +42,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   onRemoveMessage,
   onSendMessage,
   onSendAllMessages,
+  onSendAllMessagesHanging,
+  hangingTimeoutSeconds,
+  setHangingTimeoutSeconds,
+  showTimeoutConfig,
+  setShowTimeoutConfig,
   onClearAllResponses,
   onClearMessageResponses,
   onReorderMessages,
@@ -338,9 +349,9 @@ useEffect(() => {
             </StrictModeDroppable>
           </DragDropContext>
           )}
-        </div>        {/* Footer con botón de enviar todos */}
+        </div>        {/* Footer con botones de enviar todos */}
         {savedMessages.length > 0 && (
-          <div className="p-3 border-t border-gray-200">
+          <div className="p-3 border-t border-gray-200 space-y-2">
             <button
               onClick={onSendAllMessages}
               disabled={isSendingAll}
@@ -352,6 +363,30 @@ useEffect(() => {
             >
               {isSendingAll ? 'Enviando...' : `Enviar Todos (${savedMessages.length})`}
             </button>
+            <div className="relative">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={onSendAllMessagesHanging}
+                  disabled={isSendingAll}
+                  className={`flex-1 py-2 px-3 rounded-lg text-white font-medium transition-colors text-sm ${
+                    isSendingAll
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-orange-600 hover:bg-orange-700'
+                  }`}
+                >
+                  {isSendingAll ? 'Enviando...' : `Enviar Todos Hanging (${savedMessages.length})`}
+                </button>
+                <div className="flex items-center">
+                  <TimeoutConfig
+                    currentTimeout={hangingTimeoutSeconds}
+                    onTimeoutChange={setHangingTimeoutSeconds}
+                    isVisible={showTimeoutConfig}
+                    onToggle={() => setShowTimeoutConfig(!showTimeoutConfig)}
+                    onClose={() => setShowTimeoutConfig(false)}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

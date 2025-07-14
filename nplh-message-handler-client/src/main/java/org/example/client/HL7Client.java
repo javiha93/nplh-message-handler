@@ -164,6 +164,7 @@ public class HL7Client extends Client {
             int exitCode = process.waitFor();
 
             if (exitCode == 0) {
+                logger.info (powerShellCommand);
                 logger.info("PowerShell ejecutado correctamente. Salida:\n{}", output);
             } else {
                 logger.error("Error en PowerShell (Código {}):\n{}", exitCode, errors);

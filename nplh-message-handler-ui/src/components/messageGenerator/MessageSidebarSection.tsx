@@ -7,12 +7,18 @@ import Snackbar from '../Snackbar';
 interface MessageSidebarSectionProps {
   // Sidebar state
   isSidebarOpen: boolean;
-    // Snackbar state
+  // Snackbar state
   snackbar: {
     message: string;
     type: 'success' | 'error' | 'info' | 'warning';
     isVisible: boolean;
   };
+  
+  // Timeout configuration
+  hangingTimeoutSeconds: number;
+  setHangingTimeoutSeconds: (seconds: number) => void;
+  showTimeoutConfig: boolean;
+  setShowTimeoutConfig: (show: boolean) => void;
   
   // Handlers
   onToggleSidebar: () => void;
@@ -22,6 +28,10 @@ interface MessageSidebarSectionProps {
 const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
   isSidebarOpen,
   snackbar,
+  hangingTimeoutSeconds,
+  setHangingTimeoutSeconds,
+  showTimeoutConfig,
+  setShowTimeoutConfig,
   onToggleSidebar,
   onCloseSnackbar
 }) => {
@@ -71,6 +81,10 @@ const MessageSidebarSection: React.FC<MessageSidebarSectionProps> = ({
       <MultiListMessageSidebar
         isOpen={isSidebarOpen}
         onClose={onToggleSidebar}
+        hangingTimeoutSeconds={hangingTimeoutSeconds}
+        setHangingTimeoutSeconds={setHangingTimeoutSeconds}
+        showTimeoutConfig={showTimeoutConfig}
+        setShowTimeoutConfig={setShowTimeoutConfig}
         onMessageClick={handleMessageClick}
         onEditMessage={handleEditMessage}
       />
