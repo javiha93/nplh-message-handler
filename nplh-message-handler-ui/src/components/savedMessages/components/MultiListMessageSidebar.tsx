@@ -242,7 +242,6 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     try {
       for (let i = 0; i < savedMessages.length; i++) {
         const message = savedMessages[i];
-        console.log(`Enviando mensaje ${i + 1}/${savedMessages.length}: ${message.messageControlId}`);
         
         // Send the message
         await messageListsService.sendMessage(message);
@@ -275,7 +274,6 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
       const timeoutId = setTimeout(() => {
         if (!hasResolved) {
           hasResolved = true;
-          console.log(`Timeout reached for controlId: ${controlId}`);
           resolve();
         }
       }, timeoutMs);
@@ -284,7 +282,6 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
       const handleResponse = (responseControlId: string) => {
         if (responseControlId === controlId && !hasResolved) {
           hasResolved = true;
-          console.log(`Response received for controlId: ${controlId}`);
           clearTimeout(timeoutId);
           resolve();
         }

@@ -31,8 +31,6 @@ export const useMessageGenerator = () => {
     const unsubscribeSaved = savedMessagesService.subscribe(setSavedMessages);
     const unsubscribeSnackbar = snackbarService.subscribe(setSnackbarState);    // Register for real-time message updates
     const handleMessageUpdate = (controlId: string, responses: ClientMessageResponse[]) => {
-      console.log(`handleMessageUpdate called with controlId: ${controlId}`, responses);
-      
       // Update both services to maintain consistency
       savedMessagesService.updateMessageResponses(controlId, responses);
       messageListsService.updateMessageResponses(controlId, responses);
@@ -40,7 +38,6 @@ export const useMessageGenerator = () => {
       // Also update the main form state if this is the current message
       const currentControlId = formStateService.getState().currentMessageControlId;
       if (currentControlId === controlId) {
-        console.log('Updating main form sendResponse because controlId matches current message');
         formStateService.setSendResponse(responses);
       }
     };
@@ -360,7 +357,6 @@ export const useMessageGenerator = () => {
 
       for (let i = 0; i < savedMessages.length; i++) {
         const savedMessage = savedMessages[i];
-        console.log(`Enviando mensaje ${i + 1}/${savedMessages.length}: ${savedMessage.messageControlId}`);
         
         // Send the message
         await sendSavedMessage(savedMessage);
@@ -393,7 +389,6 @@ export const useMessageGenerator = () => {
       const timeoutId = setTimeout(() => {
         if (!hasResolved) {
           hasResolved = true;
-          console.log(`Timeout reached for controlId: ${controlId}`);
           resolve();
         }
       }, timeoutMs);
@@ -402,7 +397,6 @@ export const useMessageGenerator = () => {
       const handleResponse = (responseControlId: string) => {
         if (responseControlId === controlId && !hasResolved) {
           hasResolved = true;
-          console.log(`Response received for controlId: ${controlId}`);
           clearTimeout(timeoutId);
           resolve();
         }
