@@ -13,7 +13,8 @@ interface Client {
 }
 
 // Base URL for backend API calls
-const API_BASE_URL = 'http://localhost:8085/api/messages';
+const API_MESSAGE_URL = 'http://localhost:8085/api/messages';
+const API_HOST_URL = 'http://localhost:8085/api/hosts';
 
 /**
  * Servicio para manejar hosts dinámicos obtenidos del backend
@@ -41,12 +42,12 @@ class HostService {
       console.log('Fetching hosts from backend...');
       
       // Intentar primero el endpoint hostClients
-      let response = await fetch(`${API_BASE_URL}/hostClients`);
+      let response = await fetch(`${API_MESSAGE_URL}/clients`);
       
       if (!response.ok) {
         console.warn('hostClients endpoint failed, trying hostsClient');
         // Intentar el endpoint alternativo hostsClient
-        response = await fetch(`${API_BASE_URL}/hostsClient`);
+        response = await fetch(`${API_MESSAGE_URL}/client`);
         if (!response.ok) {
           throw new Error(`Both endpoints failed: ${response.status}`);
         }

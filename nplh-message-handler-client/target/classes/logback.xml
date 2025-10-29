@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Appender para consola -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="SIFT_CLIENT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
+            <key>clientLogger</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+
+        <sift>
+            <appender name="CLIENT-${clientLogger}" class="org.example.utils.XmlWrapperFileAppender">
+                <param name="rootTag" value="clientMessages"/>
+                <file>C:/tmp/mocks/client/Client_${clientLogger}.xml</file>
+                <append>true</append>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>C:/tmp/mocks/client/Client_${clientLogger}.%d{yyyy-MM-dd}.xml</fileNamePattern>
+                    <maxHistory>7</maxHistory>
+                    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>%msg%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
+    </appender>
+
+    <appender name="SIFT_SERVER" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
+            <key>serverLogger</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+
+        <sift>
+            <appender name="SERVER-${serverLogger}" class="org.example.utils.XmlWrapperFileAppender">
+                <param name="rootTag" value="serverMessages"/>
+                <file>C:/tmp/mocks/server/Server_${serverLogger}.xml</file>
+                <append>true</append>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>C:/tmp/mocks/server/Server_${serverLogger}.%d{yyyy-MM-dd}.xml</fileNamePattern>
+                    <maxHistory>7</maxHistory>
+                    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>%msg%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
+    </appender>
+
+    <logger name="clients" level="INFO" additivity="true">
+        <appender-ref ref="SIFT_CLIENT"/>
+    </logger>
+
+    <logger name="servers" level="INFO" additivity="true">
+        <appender-ref ref="SIFT_SERVER"/>
+    </logger>
+
+    <!-- Root solo a consola -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
