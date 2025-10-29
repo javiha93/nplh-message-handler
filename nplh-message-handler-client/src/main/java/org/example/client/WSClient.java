@@ -2,8 +2,10 @@ package org.example.client;
 
 import org.example.client.message.ClientMessage;
 import org.example.client.message.ClientMessageList;
-import org.example.domain.host.WSHost;
+import org.example.utils.MessageLogger;
 import org.example.domain.host.host.Connection;
+import org.example.service.IrisService;
+import org.example.utils.MockType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -16,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,23 +27,29 @@ import static org.example.utils.MessageHandler.formatXml;
 
 public class WSClient extends Client {
 
-    static final Logger logger = LoggerFactory.getLogger(HL7Client.class);
-    final org.example.logging.MessageLogger messageLogger;
+    static final Logger logger = LoggerFactory.getLogger(WSClient.class);
+    final MessageLogger messageLogger;
+    IrisService irisService;
+
     private final String baseUrl;
     private Map<String, String> headers = new HashMap<>();
     ClientMessageList clientMessageList;
 
-    public WSClient(String hostName, String hostType, Connection connection) {
+    public WSClient(String hostName, String hostType, Connection connection, IrisService irisService) {
         this.clientName = hostName;
         this.clientType = hostType;
+        this.irisService = irisService;
+
+        irisService.enableWSConnection(hostName, connection.getId());
         this.baseUrl = "http://127.0.0.1:" + 80 + connection.getWsName();
         if (!connection.getApiKeyValue().isEmpty()) {
-            this.headers = Map.of(connection.getApiKeyFile(), connection.getApiKeyValue());
+            this.headers = Map.of(connection.getApiKeyTag(), connection.getApiKeyValue());
         }
         clientMessageList = new ClientMessageList();
 
-        this.messageLogger = new org.example.logging.MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), this.clientName);
+        this.messageLogger = new MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), irisService, this.clientName, MockType.CLIENT);
         MDC.put("clientLogger", this.clientName);
+        logger.info("Connect Client {} on url {}", clientName, this.baseUrl);
     }
 
     @Override
@@ -67,7 +76,6 @@ public class WSClient extends Client {
                 ClientMessage clientMessage = new ClientMessage(messageBody);
                 clientMessageList.add(clientMessage);
                 MDC.put("clientLogger", this.clientName);
-                messageLogger.info("[SEND]: \n\n{} \n", messageBody);
 
 
                 StringBuilder r = new StringBuilder();
@@ -81,7 +89,7 @@ public class WSClient extends Client {
                 String soapResponse = extractSoapResponse(r.toString());
                 logger.info("\nReceived response: \n{}\nfrom Host {}", soapResponse, clientName);
                 clientMessage.addResponse(soapResponse);
-                messageLogger.info("[RECEIVE]: \n\n{} \n####################################################################\n", formatXml(soapResponse));
+                messageLogger.addClientMessage("", controlId, messageBody, List.of(formatXml(soapResponse)));
 
                 return extractSoapResponse(r.toString());
             } catch (Exception e) {

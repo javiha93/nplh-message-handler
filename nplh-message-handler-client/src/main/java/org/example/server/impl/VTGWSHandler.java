@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.example.utils.MessageLogger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
 
 public class VTGWSHandler extends SoapHandler {
 
-    public VTGWSHandler(org.example.logging.MessageLogger messageLogger, String serverName) {
+    public VTGWSHandler(MessageLogger messageLogger, String serverName) {
         super(messageLogger, serverName);
     }
 

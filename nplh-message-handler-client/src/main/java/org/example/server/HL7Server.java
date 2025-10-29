@@ -1,26 +1,48 @@
 package org.example.server;
 
 import org.example.domain.host.HL7Host;
+import org.example.domain.host.host.Connection;
+import org.example.service.IrisService;
 import org.example.utils.HL7LLPCharacters;
+import org.example.utils.MessageLogger;
+import org.example.utils.MockType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static org.example.utils.MessageHandler.llpToText;
 
 public class HL7Server extends Server implements Runnable {
     static final Logger logger = LoggerFactory.getLogger(HL7Server.class);
+    private final MessageLogger messageLogger;
+
+    IrisService irisService;
     ServerSocket serverSocket;
     boolean isRunning;
 
-    public HL7Server(HL7Host host) {
+    public HL7Server(String hostName, Connection connection, IrisService irisService) {
         try {
-            serverSocket = new ServerSocket(host.getServerPort());
+            serverName = hostName;
+            serverSocket = new ServerSocket(connection.getPort());
+            serverSocket.setSoTimeout(1000);
             this.isRunning = true;
+            this.irisService = irisService;
+            this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);
+            MDC.put("serverLogger", this.serverName);
+
+            if (!irisService.checkTCPConnectionStatus(connection.getId())) {
+                irisService.enableTCPConnection(serverName, connection.getId());
+            }
 
             Thread thread = new Thread(this);
             thread.setDaemon(true);
@@ -32,7 +54,7 @@ public class HL7Server extends Server implements Runnable {
 
     @Override
     public void run() {
-        logger.info("[{}] Servidor HL7 escuchando en puerto {}", serverName, serverSocket.getLocalPort());
+        logger.info("Connect Client [{}] on port {}", serverName, serverSocket.getLocalPort());
 
         while (isRunning) {
             readMessage();
@@ -41,7 +63,8 @@ public class HL7Server extends Server implements Runnable {
 
     private String readMessage() {
         try (Socket socket = serverSocket.accept();
-             InputStream inputStream = socket.getInputStream()) {
+             InputStream inputStream = socket.getInputStream();
+             OutputStream outputStream = socket.getOutputStream()) {
 
             StringBuilder rawMessage = new StringBuilder();
             int current;
@@ -62,12 +85,55 @@ public class HL7Server extends Server implements Runnable {
             String fullLlpMessage = rawMessage.toString();
             String cleanTextMessage = llpToText(fullLlpMessage);
 
-            logger.info("[{}] Mensaje interceptado:\n{}", serverName, cleanTextMessage);
+            MDC.put("serverLogger", this.serverName);
+            messageLogger.addServerMessage("", cleanTextMessage);
+            response(outputStream, cleanTextMessage);
 
             return cleanTextMessage;
 
+        } catch (SocketTimeoutException e) {
+            return null;
         } catch (Exception e) {
             logger.error("[{}] Error procesando conexión HL7", serverName, e);
+        }
+
+        return null;
+    }
+
+    protected void response(OutputStream outputStream, String receivedMessage) {
+        try {
+            String responseText = "MSH|^~\\&|LIS|XYZ Laboratory|Ventana|ABC Laboratory|20251015150037||ACK|"+ UUID.randomUUID() + "|P|2.4" + HL7LLPCharacters.CR.getCharacter() +
+                    "MSA|CA|" + extractUUID(receivedMessage);
+
+            String fullResponse = HL7LLPCharacters.VT.getCharacter() +
+                    responseText +
+                    HL7LLPCharacters.FS.getCharacter() +
+                    HL7LLPCharacters.CR.getCharacter();
+
+            outputStream.write(fullResponse.getBytes());
+            outputStream.flush();
+
+            logger.info("Sent response: {}", responseText);
+
+            // Registrar la respuesta
+            List<String> responses = new ArrayList<>();
+            responses.add(responseText);
+            messageLogger.addServerMessage("", receivedMessage, responses);
+
+        } catch (IOException e) {
+            logger.error("Error sending response", e);
+        }
+    }
+
+    protected String extractUUID(String hl7Message) {
+        String[] lines = hl7Message.split("\\r?\\n");
+        for (String line : lines) {
+            if (line.startsWith("MSH")) {
+                String[] fields = line.split("\\|");
+                if (fields.length > 10) {
+                    return fields[9];
+                }
+            }
         }
         return null;
     }

@@ -8,7 +8,6 @@
         </encoder>
     </appender>
 
-    <!-- SiftingAppender solo para loggers bajo "clients." -->
     <appender name="SIFT_CLIENT" class="ch.qos.logback.classic.sift.SiftingAppender">
         <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
             <key>clientLogger</key>
@@ -16,19 +15,17 @@
         </discriminator>
 
         <sift>
-            <appender name="CLIENT-${clientLogger}" class="ch.qos.logback.core.FileAppender">
-                <file>C:/tmp/mocks/client/Client_${clientLogger}.log</file>
+            <appender name="CLIENT-${clientLogger}" class="org.example.utils.XmlWrapperFileAppender">
+                <param name="rootTag" value="clientMessages"/>
+                <file>C:/tmp/mocks/client/Client_${clientLogger}.xml</file>
                 <append>true</append>
                 <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                    <!-- patrón de archivo por día -->
-                    <fileNamePattern>C:/tmp/mocks/client/Client_${clientLogger}.%d{yyyy-MM-dd}.log</fileNamePattern>
-                    <!-- retener solo los últimos 7 días -->
+                    <fileNamePattern>C:/tmp/mocks/client/Client_${clientLogger}.%d{yyyy-MM-dd}.xml</fileNamePattern>
                     <maxHistory>7</maxHistory>
-                    <!-- limpia archivos con más antigüedad que maxHistory -->
                     <cleanHistoryOnStart>true</cleanHistoryOnStart>
                 </rollingPolicy>
                 <encoder>
-                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level - %msg%n</pattern>
+                    <pattern>%msg%n</pattern>
                 </encoder>
             </appender>
         </sift>
@@ -46,11 +43,8 @@
                 <file>C:/tmp/mocks/server/Server_${serverLogger}.xml</file>
                 <append>true</append>
                 <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                    <!-- patrón de archivo por día -->
-                    <fileNamePattern>C:/tmp/mocks/client/Client_${serverLogger}.%d{yyyy-MM-dd}.xml</fileNamePattern>
-                    <!-- retener solo los últimos 7 días -->
+                    <fileNamePattern>C:/tmp/mocks/server/Server_${serverLogger}.%d{yyyy-MM-dd}.xml</fileNamePattern>
                     <maxHistory>7</maxHistory>
-                    <!-- limpia archivos con más antigüedad que maxHistory -->
                     <cleanHistoryOnStart>true</cleanHistoryOnStart>
                 </rollingPolicy>
                 <encoder>
@@ -60,7 +54,6 @@
         </sift>
     </appender>
 
-    <!-- Logger jerárquico para todos los loggers bajo "clients." -->
     <logger name="clients" level="INFO" additivity="true">
         <appender-ref ref="SIFT_CLIENT"/>
     </logger>

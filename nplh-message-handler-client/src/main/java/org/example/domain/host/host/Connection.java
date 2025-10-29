@@ -10,8 +10,10 @@ public class Connection {
     private String status;
     private String ip;
     private Integer port;
+    private String path;
     private String wsName;
     private String wsLocation;
     private String apiKeyFile;
     private String apiKeyValue;
+    private String apiKeyTag;
 }

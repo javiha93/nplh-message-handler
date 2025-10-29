@@ -58,6 +58,15 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- Dependencia al módulo común -->
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>nplh-message-handler-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        
         <dependency>
             <groupId>org.example</groupId>
             <artifactId>nplh-message-handler-client</artifactId>
@@ -98,7 +107,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.example.Main</mainClass>
+                            <mainClass>org.example.Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -123,19 +132,21 @@
                 <configuration>
                     <executable>true</executable>
                     <finalName>nplh-message-handler</finalName>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <classifier>boot</classifier> <!-- Esto genera el JAR repackaged con un clasificador -->
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

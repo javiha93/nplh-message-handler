@@ -74,18 +74,14 @@ export class SavedMessagesService {
   }
 
   updateMessageResponses(controlId: string, responses: ClientMessageResponse[]): void {
-    console.log(`updateMessageResponses called with controlId: ${controlId}`, responses);
-    console.log('Current messages before update:', this.messages.map(m => ({ id: m.id, controlId: m.messageControlId })));
-    
+
     this.messages = this.messages.map(msg => 
       msg.messageControlId === controlId 
         ? { ...msg, responses: responses }
         : msg
     );
     
-    console.log('Updated messages:', this.messages.map(m => ({ id: m.id, controlId: m.messageControlId, hasResponses: !!m.responses })));
     this.notifyListeners();
-    console.log('Listeners notified');
   }
   clearAllResponses(): void {
     this.messages = this.messages.map(msg => ({

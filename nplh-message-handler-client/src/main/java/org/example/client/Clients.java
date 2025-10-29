@@ -5,6 +5,9 @@ import org.example.domain.host.Host;
 import org.example.domain.host.host.Connection;
 import org.example.domain.host.host.HostInfo;
 import org.example.domain.host.host.HostInfoList;
+import org.example.service.IrisService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,36 +16,29 @@ import java.util.Objects;
 @Getter
 public class Clients {
 
+    IrisService irisService;
     List<Client> clientList = new ArrayList<>();
 
-    public Clients(HostInfoList hostInfoList) {
+    static final Logger logger = LoggerFactory.getLogger(Clients.class);
+
+    public Clients(HostInfoList hostInfoList, IrisService irisService) {
+        this.irisService = irisService;
+
+        logger.info("****************************************************************************************************");
+        logger.info("***                                    ENABLING CLIENTS                                          ***");
+
         addHL7Clients(hostInfoList.getHL7Hosts());
         addWSClients(hostInfoList.getWSHosts());
         addAutomationClients(hostInfoList.getAutomationSWHosts());
 
-//        HL7Client lis = new HL7Client(HL7Host.LIS);
-//        HL7Client vtg = new HL7Client(HL7Host.VTG);
-//        WSClient upathCloud = new WSClient(WSHost.UPATH_CLOUD);
-//        WSClient vtgWs = new WSClient(WSHost.VANTAGE_WS);
-//        //RestClient restClient = new RestClient(RESTHost.AUTOMATION_SW);
-//
-//        for (RESTHost restHost: getRestHostInfo()) {
-//            RestClient restClient = new RestClient(restHost);
-//            clientList.add(restClient);
-//        }
-//
-//        clientList.add(lis);
-//        clientList.add(vtg);
-//        clientList.add(upathCloud);
-//        clientList.add(vtgWs);
-        //clientList.add(restClient);
+        logger.info("****************************************************************************************************");
     }
 
     private void addHL7Clients(List<HostInfo> hl7Hosts) {
         for (HostInfo host: hl7Hosts) {
             List<Connection> inboundConnections = host.getInboundConnections();
             for (Connection connection: inboundConnections) {
-                clientList.add(new HL7Client(host.getHostName(), host.getHostType(), connection));
+                clientList.add(new HL7Client(host.getHostName(), host.getHostType(), connection, irisService));
             }
         }
     }
@@ -51,7 +47,7 @@ public class Clients {
         for (HostInfo host: wsClients) {
             List<Connection> inboundConnections = host.getInboundConnections();
             for (Connection connection: inboundConnections) {
-                clientList.add(new WSClient(host.getHostName(), host.getHostType(), connection));
+                clientList.add(new WSClient(host.getHostName(), host.getHostType(), connection, irisService));
             }
         }
     }
@@ -60,7 +56,7 @@ public class Clients {
         for (HostInfo host: automationHosts) {
             List<Connection> inboundConnections = host.getInboundConnections();
             for (Connection connection: inboundConnections) {
-                clientList.add(new RestClient(host.getHostName(), host.getHostType(), connection));
+                clientList.add(new RestClient(host.getHostName(), host.getHostType(), connection, irisService));
             }
         }
     }

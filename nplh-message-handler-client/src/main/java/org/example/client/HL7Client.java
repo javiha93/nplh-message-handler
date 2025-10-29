@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.example.domain.host.host.Connection;
-import org.example.logging.MessageLogger;
+import org.example.utils.MessageLogger;
+import org.example.service.IrisService;
 import org.example.utils.HL7LLPCharacters;
 import org.example.client.message.ClientMessage;
 import org.example.client.message.ClientMessageList;
 import org.example.client.message.ClientMessageResponse;
+import org.example.utils.MockType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -30,40 +32,39 @@ import static org.example.utils.MessageHandler.*;
 public class HL7Client extends Client {
 
     static final Logger logger = LoggerFactory.getLogger(HL7Client.class);
-    final org.example.logging.MessageLogger messageLogger;
+    final MessageLogger messageLogger;
+    IrisService irisService;
+
     Socket socket;
     PrintWriter out;
     BufferedReader in;
+    Connection connection;
     ClientMessageList clientMessageList;
 
-    public HL7Client(String hostName, String hostType, Connection connection) {
+    public HL7Client(String hostName, String hostType, Connection connection, IrisService irisService) {
         this.clientName = hostName;
         this.clientType = hostType;
-        this.messageLogger = new MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), this.clientName);
+        this.connection = connection;
+        this.messageLogger = new MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), irisService, this.clientName, MockType.CLIENT);
+        this.irisService = irisService;
+
         MDC.put("clientLogger", this.clientName);
-        try {
-            socket = new Socket(connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort());
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            clientMessageList = new ClientMessageList();
-            logger.info("Connect Client {} on port {}", hostName, connection.getPort());
+        clientMessageList = new ClientMessageList();
 
-            startAsyncReceiver();
-
-        } catch (UnknownHostException e) {
-            logger.error("Unknown host {} , {}:{}", hostName, connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort(), e);
-        } catch (IOException e) {
-            logger.error("Error connecting to {}:{}", connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(),connection.getPort(), e);
-        }
+        openSocket();
     }
 
     @Override
     public void send(String message, String controlId) {
+        openSocket();
+
         String llpMessage = textToLlp(message);
         ClientMessage clientMessage = new ClientMessage(message, controlId);
         clientMessageList.add(clientMessage);
         MDC.put("clientLogger", this.clientName);
-        messageLogger.info("[SEND][{}]: \n\n{} \n\n####################################################################\n", controlId, message);
+        messageLogger.addClientMessage("TEST", controlId, message);
+
+        //messageLogger.info("[SEND][{}]: \n\n{} \n\n####################################################################\n", controlId, message);
         for (char c : llpMessage.toCharArray()) {
             out.write(c);
         }
@@ -82,6 +83,11 @@ public class HL7Client extends Client {
                         if (c == HL7LLPCharacters.FS.getCharacter()) break;
                     }
 
+                    if (response.isEmpty()) {
+                        closeSocket();
+                        return;
+                    }
+
                     String responseText = llpToText(response.toString());
 
                     List<String> uuids = extractUUIDs(responseText);
@@ -91,7 +97,8 @@ public class HL7Client extends Client {
                             if (clientMessage != null) {
                                 clientMessage.addResponse(responseText);
                                 MDC.put("clientLogger", this.clientName);
-                                messageLogger.injectReceive(uuid, responseText);
+                                messageLogger.addResponse(uuid, responseText);
+                                //messageLogger.injectReceive(uuid, responseText);
                                 notifyUIMessageUpdate(uuid, clientMessage.getResponses());
                                 logger.info("Asynchronously received: \n{}\nand matched response for {}", responseText, uuid);
                                 break;
@@ -104,11 +111,45 @@ public class HL7Client extends Client {
                 } catch (SocketTimeoutException e) {
                     logger.debug("Timeout exception fo host {}", clientName);
                 } catch (IOException e) {
-                    logger.error("Error in async receive loop for host {}", clientName, e);
+                    closeSocket();
+                    logger.error("Error in async receive loop for host {}", clientName, e.getMessage());
                     break;
                 }
             }
         });
+    }
+
+    public void closeSocket() {
+        try {
+            if (!socket.isClosed()) {
+                socket.close();
+                logger.info("Closed {} socket client", clientName);
+            }
+        } catch (IOException e) {
+            logger.error("Unable to close {} socket client", clientName);
+        }
+    }
+
+    public void openSocket() {
+        try {
+            if (socket == null || socket.isClosed()) {
+                if (!irisService.checkTCPConnectionStatus(connection.getId())) {
+                    irisService.enableTCPConnection(clientName, connection.getId());
+                }
+
+                socket = new Socket(this.connection.getIp().isEmpty() ? "127.0.0.1" : this.connection.getIp(), this.connection.getPort());
+                out = new PrintWriter(socket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                logger.info("Connect Client {} on port {}", clientName, this.connection.getPort());
+
+                startAsyncReceiver();
+            }
+
+        } catch (UnknownHostException e) {
+            logger.error("Unknown host {} , {}:{}", clientName, connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort(), e);
+        } catch (IOException e) {
+            logger.error("Error connecting to {}:{}", connection.getIp().isEmpty() ? "127.0.0.1" : connection.getIp(), connection.getPort(), e);
+        }
     }
 
     //ONLY UI CODE NOT FOR AT SOLUTION

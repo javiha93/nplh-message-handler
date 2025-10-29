@@ -4,8 +4,11 @@ import org.example.client.message.ClientMessage;
 import org.example.client.message.ClientMessageList;
 import org.example.domain.host.RESTHost;
 import org.example.domain.host.host.Connection;
+import org.example.service.IrisService;
+import org.example.utils.MockType;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.example.utils.MessageLogger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,27 +22,18 @@ import static org.example.utils.MessageHandler.formatXml;
 
 public class RestClient extends Client {
 
-    final org.example.logging.MessageLogger messageLogger;
+    final org.example.utils.MessageLogger messageLogger;
 
     private String apikey;
     ClientMessageList clientMessageList;
 
-    public RestClient(RESTHost host) {
-        this.clientName = host.name();
-        this.apikey = host.getApiKey();
-        clientMessageList = new ClientMessageList();
-
-        this.messageLogger = new org.example.logging.MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), this.clientName);
-        MDC.put("clientLogger", this.clientName);
-    }
-
-    public RestClient(String hostName, String hostType, Connection connection) {
+    public RestClient(String hostName, String hostType, Connection connection, IrisService irisService) {
         this.clientName = hostName;
         this.clientType = hostType;
         this.apikey = connection.getApiKeyValue();
         clientMessageList = new ClientMessageList();
 
-        this.messageLogger = new org.example.logging.MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), this.clientName);
+        this.messageLogger = new MessageLogger(LoggerFactory.getLogger("clients." + this.clientName), irisService, this.clientName, MockType.CLIENT);
         MDC.put("clientLogger", this.clientName);
     }
 

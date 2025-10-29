@@ -7,8 +7,10 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="npl-message-handler-back" />
-        <module name="nplh-message-handler-client" />
+        <module name="nplh-message-handler-common" />
         <module name="hl7-message-generator" />
+        <module name="nplh-message-handler-client" />
+        <module name="nplh-message-handler-controller" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -20,6 +22,7 @@
       <module name="hl7-message-generator" options="-parameters" />
       <module name="monster-parser" options="-parameters" />
       <module name="npl-message-handler-back" options="-parameters" />
+      <module name="nplh-message-handler-controller" options="-parameters" />
     </option>
   </component>
 </project>

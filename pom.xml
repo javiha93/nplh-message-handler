@@ -15,8 +15,10 @@
 
     <!-- Módulos que componen el proyecto -->
     <modules>
+        <module>nplh-message-handler-common</module> <!-- Módulo Común -->
         <module>npl-message-handler-back</module> <!-- Módulo Spring Boot -->
-        <module>nplh-message-handler-client</module>    <!-- Módulo React (aunque no sea Maven) -->
+        <module>nplh-message-handler-client</module>    <!-- Módulo Cliente -->
+        <module>nplh-message-handler-controller</module> <!-- Módulo Controller -->
     </modules>
 
     <!-- Propiedades comunes -->

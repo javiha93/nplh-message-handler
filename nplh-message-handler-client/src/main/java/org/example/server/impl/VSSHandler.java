@@ -1,7 +1,7 @@
 package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
-import org.example.logging.MessageLogger;
+import org.example.utils.MessageLogger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;

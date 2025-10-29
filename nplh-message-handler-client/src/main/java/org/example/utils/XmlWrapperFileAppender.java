@@ -10,7 +10,7 @@ import java.nio.file.StandardOpenOption;
 
 public class XmlWrapperFileAppender<E> extends FileAppender<E> {
 
-    public String rootTag = "serverMessages";
+    public String rootTag = "messages";
 
     @Override
     public void start() {
@@ -48,15 +48,15 @@ public class XmlWrapperFileAppender<E> extends FileAppender<E> {
 
     @Override
     public void stop() {
-        String closingTag = "</" + rootTag + ">";
-        try {
-            if (getOutputStream() != null) {
-                getOutputStream().write(closingTag.getBytes(StandardCharsets.UTF_8));
-                getOutputStream().flush();
-            }
-        } catch (IOException e) {
-            addError("Error writing XML footer", e);
-        }
+//        String closingTag = "</" + rootTag + ">";
+//        try {
+//            if (getOutputStream() != null) {
+//                getOutputStream().write(closingTag.getBytes(StandardCharsets.UTF_8));
+//                getOutputStream().flush();
+//            }
+//        } catch (IOException e) {
+//            addError("Error writing XML footer", e);
+//        }
 
         super.stop();
     }

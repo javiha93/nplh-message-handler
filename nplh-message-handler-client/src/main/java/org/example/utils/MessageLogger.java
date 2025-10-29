@@ -1,86 +1,127 @@
-package org.example.logging;
+package org.example.utils;
 
+import org.example.service.IrisService;
 import org.slf4j.Logger;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.apache.catalina.manager.JspHelper.escapeXml;
 
 public class MessageLogger {
 
     private final Logger delegate;
-    private final String clientLogger;
+    private final String name;
+    private final MockType mockType;
+    private final String BASE_LOG_PATH;
+    private static String BASE_SERVER_LOG_PATH = "C:/tmp/mocks/server/";
+    private static String LOG_FILE_ROUTE;
 
-    public MessageLogger(Logger logger, String clientLogger) {
+    public MessageLogger(Logger logger, IrisService irisService, String name, MockType mockType) {
         this.delegate = logger;
-        this.clientLogger = clientLogger;
+        this.name = name;
+        this.mockType = mockType;
+        this.BASE_LOG_PATH = irisService.getSharingPath();
+    }
+
+    // === Public Logging APIs ===
+
+    public void addClientMessage(String caseName,  String controlId, String messageText) {
+        addClientMessage(caseName, controlId, messageText, List.of());
+    }
+
+    public void addClientMessage(String caseName, String controlId, String messageText, List<String> responses) {
+        String timestamp = now();
+        XElement root = new XElement("clientMessage")
+                .addChild("received", timestamp)
+                .addChild("case", caseName)
+                .addChild("controlId", controlId)
+                .addChild("messageText", formatMessageText(messageText), false);
+
+        if (!responses.isEmpty()) {
+            XElement responsesElem = new XElement("responses");
+            for (String response : responses) {
+                responsesElem.addChild(
+                        new XElement("response")
+                                .addChild("sent", timestamp)
+                                .addChild("messageText", response, true)
+                );
+            }
+            root.addChild(responsesElem);
+        }
+
+        writeEntryToXmlLog(root.render(), true);
     }
 
     public void addServerMessage(String caseName, String messageText) {
-        StringBuilder sb = new StringBuilder();
-
-        String timestamp = java.time.LocalDateTime.now().toString();
-
-        sb.append("<serverMessage>\n");
-        sb.append("  <received>").append(timestamp).append("</received>\n");
-        sb.append("  <case>").append(caseName).append("</case>\n");
-        sb.append("  <messageText>\n");
-        sb.append(indentXml(formatMessageText(messageText), "    "));
-        sb.append("\n  </messageText>\n");
-
-        sb.append("</serverMessage>");
-
-        delegate.info(sb.toString());
+        addServerMessage(caseName, messageText, List.of());
     }
 
     public void addServerMessage(String caseName, String messageText, List<String> responses) {
-        StringBuilder sb = new StringBuilder();
-
-        String timestamp = java.time.LocalDateTime.now().toString();
-
-        sb.append("<serverMessage>\n");
-        sb.append("  <received>").append(timestamp).append("</received>\n");
-        sb.append("  <case>").append(caseName).append("</case>\n");
-        sb.append("  <messageText>\n");
-        sb.append(indentXml(formatMessageText(messageText), "    ")).append("\n");
-        sb.append("  </messageText>\n");
+        String timestamp = now();
+        XElement root = new XElement("serverMessage")
+                .addChild("sent", timestamp)
+                .addChild("case", caseName)
+                .addChild("messageText", messageText, true);
 
         if (!responses.isEmpty()) {
-            sb.append("  <responses>\n");
+            XElement responsesElem = new XElement("responses");
+            for (String response : responses) {
+                responsesElem.addChild(
+                        new XElement("response")
+                                .addChild("received", timestamp)
+                                .addChild("messageText", response, true)
+                );
+            }
+            root.addChild(responsesElem);
         }
 
-        for (String response : responses) {
-            sb.append("    <response>\n");
-            sb.append("      <sent>").append(timestamp).append("</sent>\n");
-            sb.append("      <messageText>\n");
-            sb.append(indentXml(formatMessageText(response), "        ")).append("\n");
-            sb.append("      </messageText>\n");
-            sb.append("    </response>\n");
+        writeEntryToXmlLog(root.render(), false);
+    }
+
+    public void addResponse(String controlId, String message) {
+        Path logFile = getLogFilePath();
+
+        try {
+            XElement root = XElement.parse(Files.readString(logFile));
+
+            for (XElement clientMessage : root.children) {
+                XElement messageText = clientMessage.getChild("messageText");
+                messageText.setText(escapeXml(messageText.text));
+            }
+
+            Optional<XElement> clientMessageOpt = root.children.stream()
+                    .filter(e -> "clientMessage".equals(e.name))
+                    .filter(e -> controlId.equals(e.getChildText("controlId")))
+                    .findFirst();
+
+            if (clientMessageOpt.isEmpty()) {
+                throw new RuntimeException("No clientMessage with controlId=" + controlId);
+            }
+
+            XElement clientMessage = clientMessageOpt.get();
+            XElement responses = clientMessage.getChild("responses");
+
+            if (responses == null) {
+                responses = new XElement("responses");
+                clientMessage.addChild(responses);
+            }
+
+            for (XElement response : responses.children) {
+                XElement messageText = response.getChild("messageText");
+                messageText.setText(escapeXml(messageText.text));
+            }
+
+            XElement response = new XElement("response")
+                    .addChild("received", now())
+                    .addChild("messageText", formatMessageText(message), false);
+
+            responses.addChild(response);
+
+            Files.writeString(logFile, root.render());
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading or writing XML log file", e);
         }
-
-        if (!responses.isEmpty()) {
-            sb.append("  </responses>\n");
-        }
-
-        sb.append("</serverMessage>\n");
-
-        delegate.info(sb.toString());
     }
 
     public void info(String format, Object... arguments) {
@@ -99,76 +140,71 @@ public class MessageLogger {
         delegate.warn(format, arguments);
     }
 
-    public void injectReceive(String controlId, String receiveText) {
+    // === Private Helpers ===
+
+    private Path getLogFilePath() {
+        if (mockType.equals(MockType.CLIENT)) {
+            return Paths.get( BASE_LOG_PATH + "mocks/client/Client_" + name + ".xml");
+        } else if (mockType.equals(MockType.SERVER)) {
+            return Paths.get(LOG_FILE_ROUTE = BASE_LOG_PATH + "mocks/server/Server_" + name + ".xml");
+        } else {
+            throw new RuntimeException("Wrong mockType: " + mockType.toString());
+        }
+    }
+
+    private Path getServerLogFilePath() {
+        return Paths.get(BASE_SERVER_LOG_PATH + "Server_" + name + ".xml");
+    }
+
+    private String now() {
+        return LocalDateTime.now().toString();
+    }
+
+    private void writeEntryToXmlLog(String messageXml, boolean isClient) {
+        Path logFile =getLogFilePath();
+//        if (isClient) {
+//            logFile = getClientLogFilePath();
+//        } else {
+//            logFile = getServerLogFilePath();
+//        }
+
+
         try {
-            Path logFile = Paths.get("C:/tmp/mocks/client/Client_" + clientLogger + ".log");
-            List<String> lines = Files.readAllLines(logFile);
-
-            String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
-
-            List<String> receiveBlock = new ArrayList<>();
-            receiveBlock.add("\t" + timestamp + " INFO  - [RECEIVE]: \n");
-            receiveBlock.addAll(Arrays.stream(receiveText.split("\r?\n"))
-                    .map(line -> "\t" + line)
-                    .collect(Collectors.toList()));
-            receiveBlock.add(""); // línea en blanco
-
-            List<String> modifiedLines = new ArrayList<>();
-            boolean insideTargetBlock = false;
-            boolean receiveInserted = false;
-
-            for (String line : lines) {
-                if (line.contains("[SEND][" + controlId + "]")) {
-                    insideTargetBlock = true;
-                }
-
-                if (insideTargetBlock && line.trim().startsWith("####") && !receiveInserted) {
-                    modifiedLines.addAll(receiveBlock);
-                    receiveInserted = true;
-                    insideTargetBlock = false;
-                }
-
-                modifiedLines.add(line);
+            if (!Files.exists(logFile)) {
+                messageXml = messageXml.trim() + "\n</messages>";
+                delegate.info(messageXml);
+                return;
             }
 
-            Files.write(logFile, modifiedLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            List<String> lines = Files.readAllLines(logFile);
 
+            if (!lines.isEmpty() && lines.get(lines.size() - 1).trim().equals("</messages>")) {
+                lines.remove(lines.size() - 1);
+            }
+
+            lines.add(messageXml.trim());
+            lines.add("</messages>");
+
+            Files.write(logFile, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
-            delegate.error("Error injecting RECEIVE block into log for controlId {}: {}", controlId, e.getMessage(), e);
+            delegate.error("Error writing XML log: {}", e.getMessage(), e);
         }
     }
 
     private String formatMessageText(String input) {
-        try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(new InputSource(new StringReader(input)));
-
-            Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-            StringWriter writer = new StringWriter();
-            transformer.transform(new DOMSource(doc), new StreamResult(writer));
-
-            return stripXmlDeclaration(writer.toString());
-        } catch (Exception e) {
-            return escapeXml(input);
-        }
-    }
-
-    private String indentXml(String xml, String indent) {
-        return Arrays.stream(xml.split("\n"))
-                .map(line -> indent + line)
+        // Escapar entidades XML comunes, mantener saltos de línea para legibilidad
+        return Arrays.stream(input.split("\n"))
+                .map(line -> escapeXml(line))
                 .collect(Collectors.joining("\n"));
     }
 
-    private String stripXmlDeclaration(String xml) {
-        return xml.replaceFirst("^<\\?xml[^>]+\\?>\\s*", "").strip();
+    private String escapeXml(String s) {
+        if (s == null) return null;
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
     }
 
-
-
-
 }
-

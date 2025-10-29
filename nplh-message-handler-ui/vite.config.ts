@@ -4,13 +4,9 @@ import react from '@vitejs/plugin-react'
 
 // Custom plugin to handle message update endpoint
 const messageUpdatePlugin = () => {
-  // Store message updates in the server context
-  let messageUpdates: Record<string, any[]> = {};
-  
   return {
     name: 'message-update',
     configureServer(server: any) {
-      // Endpoint to receive message updates from backend
       server.middlewares.use('/api/ui/messages/update-responses', (req: any, res: any) => {
         console.log('🌐 Endpoint called:', req.method, req.url);
         
@@ -58,37 +54,34 @@ const messageUpdatePlugin = () => {
 
               console.log(`🔥 RECEIVED MESSAGE UPDATE for controlId: ${controlId}`, finalResponses);
               
-              // Store the update in server context
-              messageUpdates[controlId] = finalResponses;
-              console.log('✅ Message update stored in server context for controlId:', controlId);
-              console.log('📦 Current messageUpdates:', Object.keys(messageUpdates));
-              
-              // Also try to call the global function directly if available
+              // Store the update so it can be retrieved by the frontend
               try {
-                // Check if there's a global function available
-                if (typeof globalThis !== 'undefined' && (globalThis as any).updateMessageResponses) {
-                  console.log('📞 Calling globalThis.updateMessageResponses directly');
-                  (globalThis as any).updateMessageResponses(controlId, finalResponses);
-                } else {
-                  console.log('ℹ️  No globalThis.updateMessageResponses available');
+                // Store in a simple object instead of Map to avoid TypeScript issues
+                if (typeof globalThis !== 'undefined') {
+                  if (!(globalThis as any).messageUpdates) {
+                    (globalThis as any).messageUpdates = {};
+                  }
+                  (globalThis as any).messageUpdates[controlId] = finalResponses;
+                  console.log('✅ Message update stored globally for controlId:', controlId);
+                  console.log('📦 Current globalThis.messageUpdates:', (globalThis as any).messageUpdates);
                 }
               } catch (e) {
-                console.warn('Could not call global function:', e);
+                console.warn('❌ Could not store message update globally:', e);
               }
               
-              // Try to broadcast via eval (last resort for dev server)
+              // Also dispatch a global event for immediate processing
               try {
-                // This is a hack for development - in production you'd use proper messaging
-                const script = `
-                  if (typeof window !== 'undefined' && window.updateMessageResponses) {
-                    console.log('� Calling window.updateMessageResponses via eval');
-                    window.updateMessageResponses('${controlId}', ${JSON.stringify(finalResponses)});
-                  }
-                `;
-                // Note: This won't work in dev server context, but it's here for completeness
-                console.log('📝 Would execute script (if in browser context):', script);
+                if (typeof global !== 'undefined' && global.process) {
+                  // Node.js environment - dispatch to global
+                  process.nextTick(() => {
+                    if ((global as any).updateMessageResponses) {
+                      console.log('📢 Calling global.updateMessageResponses for controlId:', controlId);
+                      (global as any).updateMessageResponses(controlId, finalResponses);
+                    }
+                  });
+                }
               } catch (e) {
-                console.warn('Could not execute browser script:', e);
+                console.warn('Could not dispatch global event:', e);
               }
               
               res.statusCode = 200;
@@ -108,29 +101,6 @@ const messageUpdatePlugin = () => {
               res.end(JSON.stringify({ error: 'Invalid JSON body' }));
             }
           });
-        } else {
-          res.statusCode = 405;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Method not allowed' }));
-        }
-      });
-
-      // Endpoint for frontend to poll for message updates
-      server.middlewares.use('/api/ui/messages/poll-updates', (req: any, res: any) => {
-        if (req.method === 'GET') {
-          console.log('🔄 Frontend polling for message updates...');
-          
-          // Return all available updates and clear them
-          const updates = { ...messageUpdates };
-          messageUpdates = {}; // Clear after returning
-          
-          if (Object.keys(updates).length > 0) {
-            console.log('📤 Returning updates to frontend:', Object.keys(updates));
-          }
-          
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify(updates));
         } else {
           res.statusCode = 405;
           res.setHeader('Content-Type', 'application/json');

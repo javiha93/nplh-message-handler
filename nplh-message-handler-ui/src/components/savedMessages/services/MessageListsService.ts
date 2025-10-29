@@ -311,7 +311,6 @@ export class MessageListsService {
             ...list,
             messages: list.messages.map(msg => {
               const isMatch = msg.messageControlId === controlId;
-              console.log(`Checking message ${msg.id} with controlId ${msg.messageControlId}: ${isMatch ? 'MATCH' : 'no match'}`);
               return isMatch ? { ...msg, responses } : msg;
             }),
             updatedAt: new Date()
@@ -319,7 +318,6 @@ export class MessageListsService {
         : list
     );
     
-    console.log('Lists updated, notifying listeners');
     this.notifyListeners();
   }
   clearAllResponses(listId?: string): void {
