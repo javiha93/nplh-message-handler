@@ -100,6 +100,8 @@ public class HostController {
         }
     }
 
+    /*
+    // DEPRECATED: Ahora se usa modifyServer para toggle functionality
     @PostMapping("/servers/toggle")
     public ResponseEntity<ServerDTO> toggleServer(@RequestBody ToggleServerRequest request) {
         try {
@@ -126,6 +128,7 @@ public class HostController {
     public static class ToggleServerRequest {
         public String serverName;
     }
+    */
     
     @Data
     public static class ServerDTO {

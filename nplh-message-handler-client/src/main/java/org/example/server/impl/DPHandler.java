@@ -1,6 +1,7 @@
 package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
+import org.example.server.WSServer;
 import org.example.utils.MessageLogger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -12,8 +13,8 @@ import java.io.StringReader;
 
 public class DPHandler extends SoapHandler {
 
-    public DPHandler(MessageLogger messageLogger, String serverName) {
-        super(messageLogger, serverName);
+    public DPHandler(MessageLogger messageLogger, String serverName, WSServer server) {
+        super(messageLogger, serverName, server);
     }
 
     @Override

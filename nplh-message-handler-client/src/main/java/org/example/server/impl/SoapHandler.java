@@ -2,6 +2,7 @@ package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.example.server.WSServer;
 import org.example.utils.MessageLogger;
 import org.slf4j.MDC;
 
@@ -19,12 +20,14 @@ public class SoapHandler implements HttpHandler {
 
     private final MessageLogger messageLogger;
     private final String serverName;
+    protected WSServer server;
     protected String messageReceived;
     protected Boolean isSuccessful;
 
-    public SoapHandler(MessageLogger messageLogger, String serverName) {
+    public SoapHandler(MessageLogger messageLogger, String serverName, WSServer server) {
         this.messageLogger = messageLogger;
         this.serverName = serverName;
+        this.server = server;
         this.isSuccessful = true;
     }
     @Override

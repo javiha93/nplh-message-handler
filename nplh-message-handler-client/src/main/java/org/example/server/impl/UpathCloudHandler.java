@@ -1,6 +1,7 @@
 package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
+import org.example.server.WSServer;
 import org.example.utils.MessageLogger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -12,8 +13,8 @@ import java.io.StringReader;
 
 public class UpathCloudHandler extends SoapHandler {
 
-    public UpathCloudHandler(MessageLogger messageLogger, String serverName) {
-        super(messageLogger, serverName);
+    public UpathCloudHandler(MessageLogger messageLogger, String serverName, WSServer server) {
+        super(messageLogger, serverName, server);
     }
 
     @Override

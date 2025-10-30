@@ -77,36 +77,32 @@ class ServerService {
   }
   
   /**
-   * Toggle el estado de un servidor
+   * Toggle el estado de un servidor usando modifyServer
    */
   async toggleServer(serverName: string): Promise<Server> {
     try {
       console.log('Toggling server:', serverName);
       
-      const response = await fetch(`${API_HOST_URL}/servers/toggle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ serverName })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to toggle server: HTTP ${response.status}`);
-      }
-      
-      const updatedServer: Server = await response.json();
-      console.log('Server toggled successfully:', updatedServer);
-      
-      // Update cached servers
-      const serverIndex = this.cachedServers.findIndex(s => 
+      // Primero obtener el servidor actual para conocer su estado
+      const currentServers = await this.getServers();
+      const currentServer = currentServers.find(s => 
         (s.serverName || s.name || s.hostName) === serverName
       );
-      if (serverIndex >= 0) {
-        this.cachedServers[serverIndex] = updatedServer;
+      
+      if (!currentServer) {
+        throw new Error(`Server not found: ${serverName}`);
       }
       
-      return updatedServer;
+      // Crear el objeto con el estado toggleado
+      const serverData: Partial<Server> = {
+        serverName: currentServer.serverName,
+        isRunning: !currentServer.isRunning, // Toggle del estado actual
+        applicationResponse: currentServer.applicationResponse,
+        communicationResponse: currentServer.communicationResponse
+      };
+      
+      // Usar modifyServer para hacer el toggle
+      return await this.modifyServer(serverData);
     } catch (error) {
       console.error('Error toggling server:', error);
       throw error;

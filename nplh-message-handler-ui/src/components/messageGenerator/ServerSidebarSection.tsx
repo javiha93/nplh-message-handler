@@ -109,14 +109,22 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
 
   // Helper functions para manejar ResponseStatus
   const getResponseStatusDisplay = (responseStatus: any) => {
-    if (!responseStatus) return '✗';
+    if (!responseStatus) {
+      return <span className="text-red-500 font-semibold">✗</span>;
+    }
     if (typeof responseStatus === 'boolean') {
       // Compatibilidad hacia atrás con Boolean
-      return responseStatus ? '✓' : '✗';
+      return responseStatus ? 
+        <span className="text-green-500 font-semibold">✓</span> : 
+        <span className="text-red-500 font-semibold">✗</span>;
     }
-    if (responseStatus.isError) return '⚠';
-    if (responseStatus.isEnable) return '✓';
-    return '✗';
+    if (responseStatus.isError) {
+      return <span className="text-yellow-500 font-semibold">⚠</span>;
+    }
+    if (responseStatus.isEnable) {
+      return <span className="text-green-500 font-semibold">✓</span>;
+    }
+    return <span className="text-red-500 font-semibold">✗</span>;
   };
 
   const hasResponseStatus = (server: Server) => {
@@ -200,13 +208,16 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                           <h4 className="font-medium text-gray-700">{serverName}</h4>
                           {hasResponseStatus(server) && (
                             <div className="bg-gray-100 rounded-md px-2 py-1 mt-2 inline-flex items-center gap-2">
-                              <span className="text-xs text-gray-600">
-                                App: {getResponseStatusDisplay(server.applicationResponse)} | 
-                                Comm: {getResponseStatusDisplay(server.communicationResponse)}
-                              </span>
+                              <div className="text-xs text-gray-600 flex items-center gap-1">
+                                <span>App:</span>
+                                {getResponseStatusDisplay(server.applicationResponse)}
+                                <span>|</span>
+                                <span>Comm:</span>
+                                {getResponseStatusDisplay(server.communicationResponse)}
+                              </div>
                               <button
                                 onClick={() => handleEditServer(server)}
-                                className="p-0.5 rounded text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="p-0.5 rounded text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
                                 title="Edit server configuration"
                               >
                                 <Edit size={12} />
@@ -243,20 +254,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
             </div>
           )}
 
-          {/* Static server info */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="font-medium text-gray-700 mb-2">Development Servers</h3>
-            <div className="text-sm text-gray-600 space-y-1">
-              <div className="flex justify-between">
-                <span>Backend API:</span>
-                <span className="text-green-600">Running (8085)</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Frontend Dev:</span>
-                <span className="text-green-600">Running (8084)</span>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
       

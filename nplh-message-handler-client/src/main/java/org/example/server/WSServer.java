@@ -12,6 +12,7 @@ import org.slf4j.MDC;
 
 import java.net.InetSocketAddress;
 
+
 public class WSServer extends Server {
 
     private HttpServer server;
@@ -28,6 +29,7 @@ public class WSServer extends Server {
         this.connection = connection;
         this.serverName = serverName;
         this.communicationResponse = ResponseStatus.enabled();
+        this.applicationResponse = ResponseStatus.disabled();
         this.isRunning = false;
 
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);
@@ -42,11 +44,11 @@ public class WSServer extends Server {
             server = HttpServer.create(new InetSocketAddress(connection.getPort()), 0);
 
             SoapHandler soapHandler = switch (hostType) {
-                case "VSS" -> new VSSHandler(messageLogger, serverName);
-                case "VTG" -> new VTGWSHandler(messageLogger, serverName);
-                case "DP" -> new DPHandler(messageLogger, serverName);
-                case "VIRTUOSO" -> new UpathCloudHandler(messageLogger, serverName);
-                default    -> new SoapHandler(messageLogger, serverName);
+                case "VSS" -> new VSSHandler(messageLogger, serverName, this);
+                case "VTG" -> new VTGWSHandler(messageLogger, serverName, this);
+                case "DP" -> new DPHandler(messageLogger, serverName, this);
+                case "VIRTUOSO" -> new UpathCloudHandler(messageLogger, serverName, this);
+                default    -> new SoapHandler(messageLogger, serverName, this);
             };
 
             server.createContext(connection.getPath(), soapHandler);
@@ -94,11 +96,9 @@ public class WSServer extends Server {
         super.setIsRunning(isRunning);
 
         if (isRunning && !wasRunning) {
-            // Activar servidor: crear y iniciar HttpServer
             logger.info("Activating WS Server [{}]", serverName);
             startServer();
         } else if (!isRunning && wasRunning) {
-            // Desactivar servidor: parar HttpServer
             logger.info("Deactivating WS Server [{}]", serverName);
             stopServer();
         }

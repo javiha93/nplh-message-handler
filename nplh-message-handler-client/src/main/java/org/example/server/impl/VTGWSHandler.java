@@ -1,6 +1,7 @@
 package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
+import org.example.server.WSServer;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -18,8 +19,8 @@ import java.util.regex.Pattern;
 
 public class VTGWSHandler extends SoapHandler {
 
-    public VTGWSHandler(MessageLogger messageLogger, String serverName) {
-        super(messageLogger, serverName);
+    public VTGWSHandler(MessageLogger messageLogger, String serverName, WSServer server) {
+        super(messageLogger, serverName, server);
     }
 
     @Override
@@ -63,7 +64,7 @@ public class VTGWSHandler extends SoapHandler {
                 "   <soapenv:Body>\n" +
                 "       <" + soapAction + "Response>\n" +
                 "           <" + soapAction + "Result>" +
-                "               <IsSuccessful>" + isSuccessful + "</IsSuccessful>\n" +
+                "               <IsSuccessful>" + !server.getCommunicationResponse().getIsError() + "</IsSuccessful>\n" +
                 "           </" + soapAction + "Result>\n" +
                 "       </" + soapAction + "Response>\n" +
                 "   </soapenv:Body>\n" +
