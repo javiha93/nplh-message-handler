@@ -5,6 +5,7 @@ import MessageFormSection from './messageGenerator/MessageFormSection';
 import EditModalsContainer from './editModals/EditModalsContainer';
 import SelectorModalsContainer from './messageGenerator/SelectorModalsContainer';
 import MessageSidebarSection from './messageGenerator/MessageSidebarSection';
+import ServerSidebarSection from './messageGenerator/ServerSidebarSection';
 
 const MessageGenerator: React.FC = () => {
   // Get all state and handlers from the main hook
@@ -13,8 +14,10 @@ const MessageGenerator: React.FC = () => {
   return (
     <MessageGeneratorLayout
       isSidebarOpen={hookData.isSidebarOpen}
+      isServerSidebarOpen={hookData.isServerSidebarOpen}
       isMessageSaved={hookData.isMessageSaved}
       onToggleSidebar={hookData.toggleSidebar}
+      onToggleServerSidebar={hookData.toggleServerSidebar}
     >
       <MessageFormSection
         sampleId={hookData.sampleId}
@@ -102,6 +105,11 @@ const MessageGenerator: React.FC = () => {
         snackbar={hookData.snackbar}
         onToggleSidebar={hookData.toggleSidebar}
         onCloseSnackbar={hookData.closeSnackbar}
+      />
+      
+      <ServerSidebarSection
+        isServerSidebarOpen={hookData.isServerSidebarOpen}
+        onToggleServerSidebar={hookData.toggleServerSidebar}
       />
     </MessageGeneratorLayout>
   );

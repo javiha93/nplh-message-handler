@@ -24,6 +24,7 @@ type UIStateType = {
   
   // UI states
   isSidebarOpen: boolean;
+  isServerSidebarOpen: boolean;
   isMessageSaved: boolean;
   messageCopied: boolean;
   
@@ -60,6 +61,7 @@ class UIStateService {
       
       // UI states
       isSidebarOpen: false,
+      isServerSidebarOpen: false,
       isMessageSaved: false,
       messageCopied: false,
       
@@ -159,6 +161,10 @@ class UIStateService {
     this.updateState({ isSidebarOpen: !this.state.isSidebarOpen });
   }
 
+  public toggleServerSidebar(): void {
+    this.updateState({ isServerSidebarOpen: !this.state.isServerSidebarOpen });
+  }
+
   public setMessageSaved(isSaved: boolean): void {
     this.updateState({ isMessageSaved: isSaved });
     
@@ -237,6 +243,7 @@ class UIStateService {
       
       // UI states
       isSidebarOpen: false,
+      isServerSidebarOpen: false,
       isMessageSaved: false,
       messageCopied: false,
       

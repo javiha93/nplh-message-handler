@@ -57,4 +57,13 @@ public class Servers {
             }
         }
     }
+
+    public Server getServerByName(String serverName) throws Exception {
+        for (Server server : serverList) {
+            if (server.getServerName().equals(serverName)) {
+                return  server;
+            }
+        }
+        throw new Exception("Not found server");
+    }
 }

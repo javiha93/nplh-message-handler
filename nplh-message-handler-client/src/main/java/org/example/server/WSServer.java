@@ -26,6 +26,7 @@ public class WSServer extends Server {
         this.hostType = hostType;
         this.serverName = serverName;
         this.communicationResponse = true;
+        this.isRunning = false;
 
         this.irisService = irisService;
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);
@@ -58,10 +59,28 @@ public class WSServer extends Server {
             server.createContext(connection.getPath(), soapHandler);
             server.setExecutor(null);
             server.start();
+            isRunning = true;
 
             logger.info("Connect Server [{}] at location {}", serverName, location);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // Getters públicos para Jackson serialization
+    public String getHostType() {
+        return hostType;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setHostType(String hostType) {
+        this.hostType = hostType;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

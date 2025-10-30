@@ -28,7 +28,6 @@ public class HL7Server extends Server implements Runnable {
 
     IrisService irisService;
     ServerSocket serverSocket;
-    boolean isRunning;
 
     public HL7Server(String hostName, Connection connection, IrisService irisService) {
         try {
@@ -101,28 +100,6 @@ public class HL7Server extends Server implements Runnable {
     }
 
     protected void response(OutputStream outputStream, String receivedMessage) {
-        try {
-            String responseText = "MSH|^~\\&|LIS|XYZ Laboratory|Ventana|ABC Laboratory|20251015150037||ACK|"+ UUID.randomUUID() + "|P|2.4" + HL7LLPCharacters.CR.getCharacter() +
-                    "MSA|CA|" + extractUUID(receivedMessage);
-
-            String fullResponse = HL7LLPCharacters.VT.getCharacter() +
-                    responseText +
-                    HL7LLPCharacters.FS.getCharacter() +
-                    HL7LLPCharacters.CR.getCharacter();
-
-            outputStream.write(fullResponse.getBytes());
-            outputStream.flush();
-
-            logger.info("Sent response: {}", responseText);
-
-            // Registrar la respuesta
-            List<String> responses = new ArrayList<>();
-            responses.add(responseText);
-            messageLogger.addServerMessage("", receivedMessage, responses);
-
-        } catch (IOException e) {
-            logger.error("Error sending response", e);
-        }
     }
 
     protected String extractUUID(String hl7Message) {
@@ -137,5 +114,4 @@ public class HL7Server extends Server implements Runnable {
         }
         return null;
     }
-
 }

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class VTGHandler extends HL7Server {
-    static final Logger logger = LoggerFactory.getLogger(LISHandler.class);
+    static final Logger logger = LoggerFactory.getLogger(VTGHandler.class);
     private final MessageLogger messageLogger;
 
     public VTGHandler(String hostName, Connection connection, IrisService irisService) {

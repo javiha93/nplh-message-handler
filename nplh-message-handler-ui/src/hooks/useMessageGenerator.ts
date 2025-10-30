@@ -460,6 +460,7 @@ export const useMessageGenerator = () => {
     isSlideSelectorModalOpen: uiState.isSlideSelectorModalOpen,
     isEntitySelectorModalOpen: uiState.isEntitySelectorModalOpen,
     isSidebarOpen: uiState.isSidebarOpen,
+    isServerSidebarOpen: uiState.isServerSidebarOpen,
     isSendingAll: uiState.isSendingAll,
     isClearingAll: uiState.isClearingAll,    isMessageSaved: uiState.isMessageSaved,
       // Static data
@@ -507,6 +508,7 @@ export const useMessageGenerator = () => {
     toggleSlideSelectorModal: () => uiStateService.toggleSlideSelectorModal(),
     toggleEntitySelectorModal: () => uiStateService.toggleEntitySelectorModal(),
     toggleSidebar: () => uiStateService.toggleSidebar(),
+    toggleServerSidebar: () => uiStateService.toggleServerSidebar(),
     
     // Core functionality
     generateMessage,
