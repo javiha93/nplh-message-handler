@@ -77,6 +77,29 @@ public class HostController {
         return dto;
     }
 
+    @PostMapping("servers/modifyServer")
+    public ResponseEntity<ServerDTO> modifyServer(@RequestBody ServerDTO serverInfo) {
+        try {
+            Server server = servers.getServerByName(serverInfo.serverName);
+
+            if (server == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            server.setIsRunning(serverInfo.getIsRunning());
+            server.setApplicationResponse(serverInfo.getApplicationResponse());
+            server.setCommunicationResponse(serverInfo.getCommunicationResponse());
+
+            // Convert to DTO and return
+            ServerDTO dto = convertToDTO(server);
+            return ResponseEntity.ok(dto);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
     @PostMapping("/servers/toggle")
     public ResponseEntity<ServerDTO> toggleServer(@RequestBody ToggleServerRequest request) {
         try {

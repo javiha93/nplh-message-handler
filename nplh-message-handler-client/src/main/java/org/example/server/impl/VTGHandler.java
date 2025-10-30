@@ -22,7 +22,7 @@ public class VTGHandler extends HL7Server {
         super(hostName, connection, irisService);
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
-        this.applicationResponse = ResponseStatus.enabledWithError("ErrorDePrueba");
+        this.applicationResponse = ResponseStatus.enabled();
         this.communicationResponse = ResponseStatus.disabled();
     }
 

@@ -1,6 +1,7 @@
 export interface ResponseStatus {
   isEnable?: boolean;
   isError?: boolean;
+  errorText?: string;
 }
 
 export interface Server {
@@ -108,6 +109,43 @@ class ServerService {
       return updatedServer;
     } catch (error) {
       console.error('Error toggling server:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Modifica el estado completo de un servidor (applicationResponse y communicationResponse)
+   */
+  async modifyServer(serverData: Partial<Server>): Promise<Server> {
+    try {
+      console.log('Modifying server:', serverData);
+      
+      const response = await fetch(`${API_HOST_URL}/servers/modifyServer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(serverData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedServer = await response.json();
+      console.log('Server modified successfully:', updatedServer);
+
+      // Update cached servers
+      const serverIndex = this.cachedServers.findIndex(s => 
+        (s.serverName || s.name || s.hostName) === serverData.serverName
+      );
+      if (serverIndex >= 0) {
+        this.cachedServers[serverIndex] = updatedServer;
+      }
+      
+      return updatedServer;
+    } catch (error) {
+      console.error('Error modifying server:', error);
       throw error;
     }
   }

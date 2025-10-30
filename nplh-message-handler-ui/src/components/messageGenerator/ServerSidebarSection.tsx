@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, RefreshCw, XCircle } from 'lucide-react';
+import { X, RefreshCw, XCircle, Edit } from 'lucide-react';
 import { serverService, Server } from '../../services/ServerService';
+import { ServerEditModal } from './ServerEditModal';
 
 interface ServerSidebarSectionProps {
   // Sidebar state
@@ -18,6 +19,8 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [togglingServers, setTogglingServers] = useState<Set<string>>(new Set());
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedServer, setSelectedServer] = useState<Server | null>(null);
 
   // Función para cargar servidores
   const loadServers = async () => {
@@ -68,7 +71,36 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     }
   }, [isServerSidebarOpen]);
 
+  // Funciones para el modal de edición
+  const handleEditServer = (server: Server) => {
+    setSelectedServer(server);
+    setEditModalOpen(true);
+  };
 
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedServer(null);
+  };
+
+  const handleSaveServer = async (serverData: Partial<Server>) => {
+    try {
+      const updatedServer = await serverService.modifyServer(serverData);
+      
+      // Actualizar la lista local
+      setServers(prevServers => 
+        prevServers.map(server => 
+          (server.serverName || server.name) === updatedServer.serverName 
+            ? updatedServer 
+            : server
+        )
+      );
+      
+      console.log('Server updated successfully:', updatedServer);
+    } catch (error) {
+      console.error('Error updating server:', error);
+      throw error; // Re-throw para que el modal pueda manejarlo
+    }
+  };
 
   // Función para obtener el nombre del servidor
   const getServerName = (server: Server) => {
@@ -167,13 +199,22 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-700">{serverName}</h4>
                           {hasResponseStatus(server) && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              App: {getResponseStatusDisplay(server.applicationResponse)} | 
-                              Comm: {getResponseStatusDisplay(server.communicationResponse)}
+                            <div className="bg-gray-100 rounded-md px-2 py-1 mt-2 inline-flex items-center gap-2">
+                              <span className="text-xs text-gray-600">
+                                App: {getResponseStatusDisplay(server.applicationResponse)} | 
+                                Comm: {getResponseStatusDisplay(server.communicationResponse)}
+                              </span>
+                              <button
+                                onClick={() => handleEditServer(server)}
+                                className="p-0.5 rounded text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Edit server configuration"
+                              >
+                                <Edit size={12} />
+                              </button>
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() => toggleServer(serverName)}
                             disabled={isToggling}
@@ -218,6 +259,14 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Modal de edición */}
+      <ServerEditModal
+        server={selectedServer}
+        isOpen={editModalOpen}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveServer}
+      />
     </div>
   );
 };
