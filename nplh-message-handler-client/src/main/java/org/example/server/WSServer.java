@@ -16,7 +16,7 @@ public class WSServer extends Server {
     private HttpServer server;
     private String hostType;
     private String location;
-    private IrisService irisService;
+    private final Connection connection;
 
     final MessageLogger messageLogger;
     static final Logger logger = LoggerFactory.getLogger(WSServer.class);
@@ -24,27 +24,19 @@ public class WSServer extends Server {
     public WSServer(String serverName, String hostType, Connection connection, IrisService irisService) {
         this.location = connection.getWsLocation();
         this.hostType = hostType;
+        this.connection = connection;
         this.serverName = serverName;
         this.communicationResponse = true;
         this.isRunning = false;
 
-        this.irisService = irisService;
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);
         MDC.put("serverLogger", this.serverName);
 
-        if (connection.getWsLocation() != null) {
-            if ((connection.getApiKeyValue() != null) && (connection.getApiKeyFile() != null)) {
-                irisService.configWSConnection(connection.getId(), connection.getWsLocation(), connection.getApiKeyFile(), connection.getApiKeyValue());
-            } else {
-                irisService.configWSConnection(connection.getId(), connection.getWsLocation());
-            }
-        }
+        configureWSConnection(serverName, connection, irisService);
+        startServer();
+    }
 
-        if (!irisService.checkWSConnectionStatus(connection.getId())) {
-            irisService.enableWSConnection(serverName, connection.getId());
-        }
-
-
+    private void startServer() {
         try {
             server = HttpServer.create(new InetSocketAddress(connection.getPort()), 0);
 
@@ -63,7 +55,51 @@ public class WSServer extends Server {
 
             logger.info("Connect Server [{}] at location {}", serverName, location);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error starting WS Server [{}]: {}", serverName, e.getMessage(), e);
+            isRunning = false;
+        }
+    }
+
+    private void stopServer() {
+        if (server != null) {
+            try {
+                logger.info("Stopping WS Server [{}]", serverName);
+                server.stop(0);
+                server = null;
+                logger.info("WS Server [{}] stopped successfully", serverName);
+            } catch (Exception e) {
+                logger.error("Error stopping WS Server [{}]: {}", serverName, e.getMessage(), e);
+            }
+        }
+    }
+
+    private void configureWSConnection(String serverName, Connection connection, IrisService irisService) {
+        if (connection.getWsLocation() != null) {
+            if ((connection.getApiKeyValue() != null) && (connection.getApiKeyFile() != null)) {
+                irisService.configWSConnection(connection.getId(), connection.getWsLocation(), connection.getApiKeyFile(), connection.getApiKeyValue());
+            } else {
+                irisService.configWSConnection(connection.getId(), connection.getWsLocation());
+            }
+        }
+
+        if (!irisService.checkWSConnectionStatus(connection.getId())) {
+            irisService.enableWSConnection(serverName, connection.getId());
+        }
+    }
+
+    @Override
+    public void setIsRunning(Boolean isRunning) {
+        boolean wasRunning = this.isRunning;
+        super.setIsRunning(isRunning);
+
+        if (isRunning && !wasRunning) {
+            // Activar servidor: crear y iniciar HttpServer
+            logger.info("Activating WS Server [{}]", serverName);
+            startServer();
+        } else if (!isRunning && wasRunning) {
+            // Desactivar servidor: parar HttpServer
+            logger.info("Deactivating WS Server [{}]", serverName);
+            stopServer();
         }
     }
 

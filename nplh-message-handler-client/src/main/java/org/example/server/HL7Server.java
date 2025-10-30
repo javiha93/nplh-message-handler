@@ -28,26 +28,64 @@ public class HL7Server extends Server implements Runnable {
 
     IrisService irisService;
     ServerSocket serverSocket;
+    private Thread serverThread;
+
+    private final int port;
 
     public HL7Server(String hostName, Connection connection, IrisService irisService) {
-        try {
-            serverName = hostName;
-            serverSocket = new ServerSocket(connection.getPort());
-            serverSocket.setSoTimeout(1000);
-            this.isRunning = true;
-            this.irisService = irisService;
-            this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);
-            MDC.put("serverLogger", this.serverName);
+        serverName = hostName;
 
-            if (!irisService.checkTCPConnectionStatus(connection.getId())) {
-                irisService.enableTCPConnection(serverName, connection.getId());
+        this.port = connection.getPort();
+        this.isRunning = true;
+        this.irisService = irisService;
+        this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);
+        MDC.put("serverLogger", this.serverName);
+
+        if (!irisService.checkTCPConnectionStatus(connection.getId())) {
+            irisService.enableTCPConnection(serverName, connection.getId());
+        }
+
+        startServerThread();
+    }
+
+    private void startServerThread() {
+        if (serverThread == null || !serverThread.isAlive()) {
+            try {
+                if (serverSocket == null || serverSocket.isClosed()) {
+                    serverSocket = new ServerSocket(port);
+                    serverSocket.setSoTimeout(1000);
+                    logger.info("Recreated server socket for [{}] on port {}", serverName, port);
+                }
+            } catch (IOException e) {
+                logger.error("Error recreating server socket for [{}]: {}", serverName, e.getMessage());
+                return;
             }
 
-            Thread thread = new Thread(this);
-            thread.setDaemon(true);
-            thread.start();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            serverThread = new Thread(this);
+            serverThread.setDaemon(true);
+            serverThread.start();
+        }
+    }
+
+    public void setIsRunning(Boolean isRunning) {
+        super.setIsRunning(isRunning);
+
+        if (isRunning) {
+            startServerThread();
+        } else {
+            logger.info("Stopping server [{}] on port {}", serverName, serverSocket.getLocalPort());
+
+            if (serverThread != null && serverThread.isAlive()) {
+                serverThread.interrupt();
+            }
+
+            try {
+                if (serverSocket != null && !serverSocket.isClosed()) {
+                    serverSocket.close();
+                }
+            } catch (IOException e) {
+                logger.warn("Error closing server socket for [{}]: {}", serverName, e.getMessage());
+            }
         }
     }
 
@@ -55,7 +93,7 @@ public class HL7Server extends Server implements Runnable {
     public void run() {
         logger.info("Connect Client [{}] on port {}", serverName, serverSocket.getLocalPort());
 
-        while (isRunning) {
+        while (isRunning && !Thread.currentThread().isInterrupted()) {
             readMessage();
         }
     }
@@ -64,6 +102,10 @@ public class HL7Server extends Server implements Runnable {
         try (Socket socket = serverSocket.accept();
              InputStream inputStream = socket.getInputStream();
              OutputStream outputStream = socket.getOutputStream()) {
+
+            if (!isRunning) {
+                return null;
+            }
 
             StringBuilder rawMessage = new StringBuilder();
             int current;
@@ -79,6 +121,10 @@ public class HL7Server extends Server implements Runnable {
                 }
 
                 rawMessage.append(c);
+            }
+
+            if (!isRunning) {
+                return null;
             }
 
             String fullLlpMessage = rawMessage.toString();
