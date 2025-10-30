@@ -20,6 +20,22 @@ public class MSA extends HL7Segment {
         return msh;
     }
 
+    public static MSA CommunicationOK(String originalControlId) {
+        MSA msh = new MSA();
+        msh.ackCode = "CA";
+        msh.messageControlId = originalControlId;
+
+        return msh;
+    }
+
+    public static MSA ApplicationOK(String originalControlId) {
+        MSA msh = new MSA();
+        msh.ackCode = "AA";
+        msh.messageControlId = originalControlId;
+
+        return msh;
+    }
+
     @Override
     public String toString() {
         String value = "MSA|" +

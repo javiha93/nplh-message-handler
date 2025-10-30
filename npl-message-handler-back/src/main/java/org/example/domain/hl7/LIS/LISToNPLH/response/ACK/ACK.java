@@ -1,7 +1,6 @@
 package org.example.domain.hl7.LIS.LISToNPLH.response.ACK;
 
 import org.example.domain.hl7.HL7Segment;
-import org.example.domain.hl7.LIS.LISToNPLH.OML21.dto.OSegment;
 
 public class ACK extends HL7Segment {
     MSH msh;
@@ -13,6 +12,24 @@ public class ACK extends HL7Segment {
 
         ack.msh = MSH.Default();
         ack.msa = MSA.Default();
+
+        return ack;
+    }
+
+    public static ACK CommunicationOK(String originalControlId){
+        ACK ack = new ACK();
+
+        ack.msh = MSH.Default();
+        ack.msa = MSA.CommunicationOK(originalControlId);
+
+        return ack;
+    }
+
+    public static ACK ApplicationOK(String originalControlId){
+        ACK ack = new ACK();
+
+        ack.msh = MSH.Default();
+        ack.msa = MSA.ApplicationOK(originalControlId);
 
         return ack;
     }

@@ -17,6 +17,7 @@ org\example\domain\host\host\ConnectionType.class
 org\example\domain\host\host\Connection.class
 org\example\client\message\ClientMessageList.class
 org\example\server\impl\VTGHandler.class
+org\example\server\impl\SoapHandler$ValidationResult.class
 org\example\utils\MessageLogger.class
 org\example\client\Client.class
 org\example\server\impl\DPHandler.class

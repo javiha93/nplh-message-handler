@@ -13,7 +13,7 @@ public class MSH extends org.example.domain.hl7.common.MSH {
 
     public static MSH Default()
     {
-        MSH msh = (MSH) org.example.domain.hl7.common.MSH.Default();
+        MSH msh = (MSH) org.example.domain.hl7.common.MSH.Default(new MSH());
         msh.setMessageType("ACK");
         msh.setMessageEvent("O21");
 
