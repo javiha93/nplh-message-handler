@@ -1,4 +1,4 @@
-package org.example.domain.hl7.LIS.LISToNPLH.response.ACK;
+package org.example.domain.hl7.VTG.VTGToNPLH.response.ACK;
 
 import org.example.domain.hl7.HL7Segment;
 
@@ -21,6 +21,7 @@ public class ACK extends HL7Segment {
 
         ack.msh = MSH.Default();
         ack.msa = MSA.CommunicationError(originalControlId, error);
+        ack.err = ERR.FromError(error);
 
         return ack;
     }
@@ -39,6 +40,7 @@ public class ACK extends HL7Segment {
 
         ack.msh = MSH.Default();
         ack.msa = MSA.ApplicationError(originalControlId, error);
+        ack.err = ERR.FromError(error);
 
         return ack;
     }

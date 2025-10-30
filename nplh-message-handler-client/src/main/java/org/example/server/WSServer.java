@@ -1,5 +1,6 @@
 package org.example.server;
 import com.sun.net.httpserver.HttpServer;
+import org.example.domain.ResponseStatus;
 import org.example.domain.host.host.Connection;
 import org.example.server.impl.*;
 import org.example.service.IrisService;
@@ -26,7 +27,7 @@ public class WSServer extends Server {
         this.hostType = hostType;
         this.connection = connection;
         this.serverName = serverName;
-        this.communicationResponse = true;
+        this.communicationResponse = ResponseStatus.enabled();
         this.isRunning = false;
 
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);

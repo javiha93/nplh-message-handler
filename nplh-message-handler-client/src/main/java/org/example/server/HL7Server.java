@@ -1,6 +1,5 @@
 package org.example.server;
 
-import org.example.domain.host.HL7Host;
 import org.example.domain.host.host.Connection;
 import org.example.service.IrisService;
 import org.example.utils.HL7LLPCharacters;
@@ -16,9 +15,6 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 import static org.example.utils.MessageHandler.llpToText;
 
@@ -98,13 +94,13 @@ public class HL7Server extends Server implements Runnable {
         }
     }
 
-    private String readMessage() {
+    private void readMessage() {
         try (Socket socket = serverSocket.accept();
              InputStream inputStream = socket.getInputStream();
              OutputStream outputStream = socket.getOutputStream()) {
 
             if (!isRunning) {
-                return null;
+                return;
             }
 
             StringBuilder rawMessage = new StringBuilder();
@@ -124,7 +120,7 @@ public class HL7Server extends Server implements Runnable {
             }
 
             if (!isRunning) {
-                return null;
+                return;
             }
 
             String fullLlpMessage = rawMessage.toString();
@@ -134,18 +130,33 @@ public class HL7Server extends Server implements Runnable {
             messageLogger.addServerMessage("", cleanTextMessage);
             response(outputStream, cleanTextMessage);
 
-            return cleanTextMessage;
-
         } catch (SocketTimeoutException e) {
-            return null;
         } catch (Exception e) {
             logger.error("[{}] Error procesando conexión HL7", serverName, e);
         }
 
-        return null;
     }
 
     protected void response(OutputStream outputStream, String receivedMessage) {
+    }
+
+    protected String formatHL7Response(String ack) {
+        return HL7LLPCharacters.VT.getCharacter() +
+                ack.replace('\n', HL7LLPCharacters.CR.getCharacter()) +
+                HL7LLPCharacters.FS.getCharacter() +
+                HL7LLPCharacters.CR.getCharacter();
+    }
+
+    protected void sendResponse(OutputStream outputStream, String response) {
+        try {
+            outputStream.write(response.getBytes());
+            outputStream.flush();
+
+            logger.info("Sent response: {}", response);
+
+        } catch (IOException e) {
+            logger.error("Error sending response", e);
+        }
     }
 
     protected String extractUUID(String hl7Message) {

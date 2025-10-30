@@ -1,9 +1,7 @@
-package org.example.domain.hl7.LIS.LISToNPLH.response.ACK;
+package org.example.domain.hl7.VTG.VTGToNPLH.response.ACK;
 
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
-
-import java.util.UUID;
 
 public class MSA extends HL7Segment {
     @HL7Position(position = 1)
@@ -12,20 +10,12 @@ public class MSA extends HL7Segment {
     @HL7Position(position = 4)
     private String messageControlId;
 
-    public static MSA Default() {
-        MSA msh = new MSA();
-        msh.ackCode = "CA";
-        msh.messageControlId = UUID.randomUUID().toString();
-
-        return msh;
-    }
-
     public static MSA CommunicationOK(String originalControlId) {
-        MSA msh = new MSA();
-        msh.ackCode = "CA";
-        msh.messageControlId = originalControlId;
+        MSA msa = new MSA();
+        msa.ackCode = "CA";
+        msa.messageControlId = originalControlId;
 
-        return msh;
+        return msa;
     }
 
     public static MSA ApplicationOK(String originalControlId) {
@@ -59,5 +49,4 @@ public class MSA extends HL7Segment {
                 nullSafe(messageControlId) + "|";                    // 2
         return cleanSegment(value);
     }
-
 }

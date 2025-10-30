@@ -1,6 +1,7 @@
 package org.example.server;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.example.domain.ResponseStatus;
 
 public class Server {
 
@@ -11,10 +12,10 @@ public class Server {
     protected Boolean isRunning = false;
 
     @JsonProperty("applicationResponse")
-    protected Boolean applicationResponse = false;
+    protected ResponseStatus applicationResponse = ResponseStatus.disabled();
     
     @JsonProperty("communicationResponse")
-    protected Boolean communicationResponse = false;
+    protected ResponseStatus communicationResponse = ResponseStatus.disabled();
 
     // Getters públicos para Jackson
     public String getServerName() {
@@ -25,11 +26,11 @@ public class Server {
         return isRunning;
     }
 
-    public Boolean getApplicationResponse() {
+    public ResponseStatus getApplicationResponse() {
         return applicationResponse;
     }
 
-    public Boolean getCommunicationResponse() {
+    public ResponseStatus getCommunicationResponse() {
         return communicationResponse;
     }
 
@@ -42,11 +43,11 @@ public class Server {
         this.isRunning = isRunning;
     }
 
-    public void setApplicationResponse(Boolean applicationResponse) {
+    public void setApplicationResponse(ResponseStatus applicationResponse) {
         this.applicationResponse = applicationResponse;
     }
 
-    public void setCommunicationResponse(Boolean communicationResponse) {
+    public void setCommunicationResponse(ResponseStatus communicationResponse) {
         this.communicationResponse = communicationResponse;
     }
 }

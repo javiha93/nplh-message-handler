@@ -75,6 +75,22 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     return server.serverName || server.name || server.hostName || server.id || 'Unknown Server';
   };
 
+  // Helper functions para manejar ResponseStatus
+  const getResponseStatusDisplay = (responseStatus: any) => {
+    if (!responseStatus) return '✗';
+    if (typeof responseStatus === 'boolean') {
+      // Compatibilidad hacia atrás con Boolean
+      return responseStatus ? '✓' : '✗';
+    }
+    if (responseStatus.isError) return '⚠';
+    if (responseStatus.isEnable) return '✓';
+    return '✗';
+  };
+
+  const hasResponseStatus = (server: Server) => {
+    return server.applicationResponse !== undefined || server.communicationResponse !== undefined;
+  };
+
 
 
   if (!isServerSidebarOpen) return null;
@@ -150,10 +166,10 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-700">{serverName}</h4>
-                          {(server.applicationResponse !== undefined || server.communicationResponse !== undefined) && (
+                          {hasResponseStatus(server) && (
                             <div className="text-xs text-gray-400 mt-1">
-                              App: {server.applicationResponse ? '✓' : '✗'} | 
-                              Comm: {server.communicationResponse ? '✓' : '✗'}
+                              App: {getResponseStatusDisplay(server.applicationResponse)} | 
+                              Comm: {getResponseStatusDisplay(server.communicationResponse)}
                             </div>
                           )}
                         </div>

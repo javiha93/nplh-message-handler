@@ -1,7 +1,12 @@
+export interface ResponseStatus {
+  isEnable?: boolean;
+  isError?: boolean;
+}
+
 export interface Server {
   serverName?: string;
-  applicationResponse?: boolean;
-  communicationResponse?: boolean;
+  applicationResponse?: ResponseStatus;
+  communicationResponse?: ResponseStatus;
   hostType?: string;
   location?: string;
   // Fallback properties for display

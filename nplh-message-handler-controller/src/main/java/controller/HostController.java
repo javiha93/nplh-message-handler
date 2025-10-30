@@ -3,6 +3,7 @@ package controller;
 import lombok.Data;
 import org.example.client.Client;
 import org.example.client.Clients;
+import org.example.domain.ResponseStatus;
 import org.example.domain.host.host.HostInfo;
 import org.example.domain.host.host.HostInfoList;
 import org.example.server.Server;
@@ -107,8 +108,8 @@ public class HostController {
     public static class ServerDTO {
         public String serverName;
         public Boolean isRunning;
-        public Boolean applicationResponse;
-        public Boolean communicationResponse;
+        public ResponseStatus applicationResponse;
+        public ResponseStatus communicationResponse;
         public String hostType;
         public String location;
 
