@@ -6,7 +6,7 @@ export interface ResponseStatus {
 
 export interface Server {
   serverName?: string;
-  applicationResponse?: ResponseStatus;
+  processApplicationACK?: ResponseStatus;
   communicationResponse?: ResponseStatus;
   hostType?: string;
   location?: string;
@@ -97,7 +97,7 @@ class ServerService {
       const serverData: Partial<Server> = {
         serverName: currentServer.serverName,
         isRunning: !currentServer.isRunning, // Toggle del estado actual
-        applicationResponse: currentServer.applicationResponse,
+        processApplicationACK: currentServer.processApplicationACK,
         communicationResponse: currentServer.communicationResponse
       };
       
@@ -110,7 +110,7 @@ class ServerService {
   }
 
   /**
-   * Modifica el estado completo de un servidor (applicationResponse y communicationResponse)
+   * Modifica el estado completo de un servidor (processApplicationACK y communicationResponse)
    */
   async modifyServer(serverData: Partial<Server>): Promise<Server> {
     try {

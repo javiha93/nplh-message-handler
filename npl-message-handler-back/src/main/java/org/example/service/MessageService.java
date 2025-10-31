@@ -36,6 +36,7 @@ import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessNewOrderRequest.ProcessNew
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessPatientUpdate.ProcessPatientUpdate;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessPhysicianUpdate.ProcessPhysicianUpdate;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessVTGEvent.ProcessVTGEvent;
+import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.ProcessApplicationACK;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -77,6 +78,9 @@ public class MessageService {
             case "ProcessPatientUpdate":
                 ProcessPatientUpdate processPatientUpdate = ProcessPatientUpdate.FromMessage(message);
                 return new MessageResponse(processPatientUpdate.toString(), processPatientUpdate.getTransactionId());
+            case "ProcessApplicationACK":
+                ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdOk("TEST");
+                return new MessageResponse(processApplicationACK.toString(), processApplicationACK.getTransactionId());
             case "ProcessNewOrderRequest":
                 ProcessNewOrderRequest processNewOrderRequest = ProcessNewOrderRequest.FromMessage(message);
                 return new MessageResponse(processNewOrderRequest.toString(), processNewOrderRequest.getTransactionId());

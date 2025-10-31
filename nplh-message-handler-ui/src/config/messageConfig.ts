@@ -151,7 +151,8 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       { id: 'ProcessCancelOrder', name: 'ProcessCancelOrder' },
       { id: 'ProcessAssignedPathologistUpdate', name: 'ProcessAssignedPathologistUpdate' },
       { id: 'ProcessPhysicianUpdate', name: 'ProcessPhysicianUpdate' },
-      { id: 'ProcessPatientUpdate', name: 'ProcessPatientUpdate' }
+      { id: 'ProcessPatientUpdate', name: 'ProcessPatientUpdate' },
+      { id: 'ProcessApplicationACK', name: 'ProcessApplicationACK' }
     ],
     statusOptions: VANTAGE_WS_STATUS_OPTIONS
   },

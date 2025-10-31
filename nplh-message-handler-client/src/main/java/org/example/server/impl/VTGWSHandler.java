@@ -1,6 +1,9 @@
 package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
+import org.example.client.WSClient;
+import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.CommunicationResponse;
+import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.ProcessApplicationACK;
 import org.example.server.WSServer;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -17,6 +20,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.example.utils.SoapMessageHandler.buildSoapEnvelope;
+
 public class VTGWSHandler extends SoapHandler {
 
     public VTGWSHandler(MessageLogger messageLogger, String serverName, WSServer server) {
@@ -25,7 +30,10 @@ public class VTGWSHandler extends SoapHandler {
 
     @Override
     protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
-        String soapResponse = buildCommunicationResponse(soapAction);
+        String soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionOk(soapAction).toString(), "VANTAGE WS");
+        //soapResponse = buildCommunicationResponse(soapAction);
+
+        String soapApplicationResponse = buildSoapEnvelope(ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived)).toString(), "VANTAGE WS");
 
         //soapResponse = buildApplicationResponse(getTransactionId(messageReceived));
 
@@ -55,20 +63,6 @@ public class VTGWSHandler extends SoapHandler {
             e.printStackTrace();
             return null;
         }
-    }
-
-    private String buildCommunicationResponse(String soapAction) {
-        return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
-                "xmlns:web=\"http://webservice.vantage.ventana.com/\">\n" +
-                "   <soapenv:Header/>\n" +
-                "   <soapenv:Body>\n" +
-                "       <" + soapAction + "Response>\n" +
-                "           <" + soapAction + "Result>" +
-                "               <IsSuccessful>" + !server.getCommunicationResponse().getIsError() + "</IsSuccessful>\n" +
-                "           </" + soapAction + "Result>\n" +
-                "       </" + soapAction + "Response>\n" +
-                "   </soapenv:Body>\n" +
-                "</soapenv:Envelope>";
     }
 
     private String buildApplicationResponse(String originalTransactionId) {

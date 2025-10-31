@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.example.utils.MessageHandler.formatXml;
+import static org.example.utils.SoapMessageHandler.buildSoapEnvelope;
 
 public class WSClient extends Client {
 
@@ -54,7 +55,7 @@ public class WSClient extends Client {
 
     @Override
     public String send(String soapAction, String messageBody, String controlId) {
-        String requestBody = buildSoapEnvelope(messageBody);
+        String requestBody = buildSoapEnvelope(messageBody, this.clientName);
 
         try {
             URL oURL = new URL(baseUrl + ".CLS");
@@ -118,22 +119,6 @@ public class WSClient extends Client {
             logger.error("Error sending message: {} to {}, Error:", messageBody, clientName, e);
             return e.getMessage();
         }
-    }
-
-    private String buildSoapEnvelope(String messageBody) {
-        String hostWeb = switch (this.clientName) {
-            case "VSS" -> "vss";
-            case "DP600" -> "dp600";
-            default -> "virtuoso";
-        };
-
-        return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
-                "xmlns:web=\"http://webservice." + hostWeb + ".ventana.com/\">\n" +
-                "   <soapenv:Header/>\n" +
-                "   <soapenv:Body>\n" +
-                messageBody + "\n" +
-                "   </soapenv:Body>\n" +
-                "</soapenv:Envelope>";
     }
 
     private String extractSoapResponse(String response) {
