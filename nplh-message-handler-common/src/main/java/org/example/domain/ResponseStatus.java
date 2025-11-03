@@ -18,21 +18,30 @@ public class ResponseStatus {
 
     @JsonProperty("errorText")
     private String errorText;
+
+    @JsonProperty("customResponse")
+    private String customResponse;
     
     // Constructor de conveniencia para crear estados comunes
     public static ResponseStatus enabled() {
-        return new ResponseStatus(true, false, "");
+        return new ResponseStatus(true, false, "", "");
     }
     
     public static ResponseStatus disabled() {
-        return new ResponseStatus(false, false, "");
+        return new ResponseStatus(false, false, "", "");
     }
     
     public static ResponseStatus enabledWithError(String errorText) {
-        return new ResponseStatus(true, true, errorText);
+        return new ResponseStatus(true, true, errorText, "");
+    }
+
+    public static ResponseStatus enabledWithCustomResponse(String customResponse) {
+        return new ResponseStatus(true, true, "", customResponse);
     }
 
     public Boolean hasErrorText() { return !errorText.isEmpty();}
+
+    public Boolean hasCustomResponse() { return !customResponse.isEmpty();}
     
     @Override
     public String toString() {

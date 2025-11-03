@@ -59,6 +59,7 @@ public class HostController {
             return ResponseEntity.status(500).body(null);
         }
     }
+
     
     private ServerDTO convertToDTO(Server server) {
         ServerDTO dto = new ServerDTO();

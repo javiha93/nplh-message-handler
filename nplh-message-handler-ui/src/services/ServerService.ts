@@ -2,6 +2,7 @@ export interface ResponseStatus {
   isEnable?: boolean;
   isError?: boolean;
   errorText?: string;
+  customResponse?: string; // ✨ Nuevo campo para custom response
 }
 
 export interface Server {
@@ -121,12 +122,14 @@ class ServerService {
         applicationResponse: serverData.applicationResponse || {
           isEnable: false,
           isError: false,
-          errorText: ''
+          errorText: '',
+          customResponse: ''
         },
         communicationResponse: serverData.communicationResponse || {
           isEnable: false,
           isError: false,
-          errorText: ''
+          errorText: '',
+          customResponse: ''
         },
         hostType: serverData.hostType || '',
         location: serverData.location || ''

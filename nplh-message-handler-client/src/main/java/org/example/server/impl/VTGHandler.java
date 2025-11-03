@@ -23,6 +23,7 @@ public class VTGHandler extends HL7Server {
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         this.applicationResponse = ResponseStatus.enabled();
+        applicationResponse.setCustomResponse(ACK.ApplicationOK("*originalControlId*").toString());
         this.communicationResponse = ResponseStatus.disabled();
     }
 
@@ -31,29 +32,35 @@ public class VTGHandler extends HL7Server {
         List<String> responses = new ArrayList<>();
 
         if (communicationResponse.getIsEnable()) {
-            ACK ack;
-            if (communicationResponse.getIsError()) {
-                ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText());
-            } else {
-                ack = ACK.CommunicationOK(extractUUID(receivedMessage));
-            }
-            sendResponse(outputStream, formatHL7Response(ack.toString()));
+            String ack;
 
-            responses.add(ack.toString());
+            if (communicationResponse.hasCustomResponse()) {
+                ack = communicationResponse.getCustomResponse();
+                ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
+            } else if (communicationResponse.getIsError()) {
+                ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
+            } else {
+                ack = ACK.CommunicationOK(extractUUID(receivedMessage)).toString();
+            }
+            sendResponse(outputStream, formatHL7Response(ack));
+
+            responses.add(ack);
         }
         if (applicationResponse.getIsEnable()) {
-            ACK ack;
-            if (applicationResponse.getIsError()) {
-                ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText());
+            String ack;
+            if (applicationResponse.hasCustomResponse()) {
+                ack = applicationResponse.getCustomResponse();
+                ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
+            } else if (applicationResponse.getIsError()) {
+                ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
             } else {
-                ack = ACK.ApplicationOK(extractUUID(receivedMessage));
+                ack = ACK.ApplicationOK(extractUUID(receivedMessage)).toString();
             }
-            sendResponse(outputStream, formatHL7Response(ack.toString()));
+            sendResponse(outputStream, formatHL7Response(ack));
 
-            responses.add(ack.toString());
+            responses.add(ack);
         }
 
-        // Registrar la respuesta
         messageLogger.addServerMessage("", receivedMessage, responses);
     }
 
