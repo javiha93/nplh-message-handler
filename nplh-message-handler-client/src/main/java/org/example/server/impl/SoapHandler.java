@@ -81,7 +81,7 @@ public class SoapHandler implements HttpHandler {
     }
 
     protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
-        String soapResponse = buildResponse(exchange, soapAction);
+        String soapResponse = "";
 
         exchange.getResponseHeaders().set("Content-Type", "text/xml");
         exchange.sendResponseHeaders(200, soapResponse.length());

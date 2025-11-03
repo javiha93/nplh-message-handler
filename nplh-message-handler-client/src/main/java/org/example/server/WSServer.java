@@ -34,6 +34,10 @@ public class WSServer extends Server {
         this.serverName = serverName;
         this.communicationResponse = ResponseStatus.enabled();
         this.applicationResponse = ResponseStatus.disabled();
+        if (hostType.equals("VTG")) {
+            this.applicationResponse = ResponseStatus.enabled();
+        }
+
         this.isRunning = false;
 
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + this.serverName), irisService, this.serverName, MockType.SERVER);

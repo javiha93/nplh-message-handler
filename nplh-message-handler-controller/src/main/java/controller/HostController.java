@@ -9,6 +9,8 @@ import org.example.domain.host.host.HostInfoList;
 import org.example.server.Server;
 import org.example.server.Servers;
 import org.example.service.IrisService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/hosts")
 @CrossOrigin(origins = "*")
 public class HostController {
+
+    private static final Logger logger = LoggerFactory.getLogger(HostController.class);
 
     private final IrisService irisService;
     private final Servers servers;
@@ -80,10 +84,29 @@ public class HostController {
     @PostMapping("servers/modifyServer")
     public ResponseEntity<ServerDTO> modifyServer(@RequestBody ServerDTO serverInfo) {
         try {
+            // ✨ Debug logging
+            logger.info("🔍 Received modifyServer request:");
+            logger.info("  serverName: {}", serverInfo.serverName);
+            logger.info("  isRunning: {}", serverInfo.getIsRunning());
+            logger.info("  applicationResponse: {}", serverInfo.getApplicationResponse());
+            logger.info("  communicationResponse: {}", serverInfo.getCommunicationResponse());
+
             Server server = servers.getServerByName(serverInfo.serverName);
 
             if (server == null) {
+                logger.error("❌ Server not found: {}", serverInfo.serverName);
                 return ResponseEntity.notFound().build();
+            }
+
+            // ✨ Validar y corregir campos nulos
+            if (serverInfo.getApplicationResponse() == null) {
+                logger.warn("⚠️ applicationResponse is null, using server's current value");
+                serverInfo.applicationResponse = server.getApplicationResponse();
+            }
+            
+            if (serverInfo.getCommunicationResponse() == null) {
+                logger.warn("⚠️ communicationResponse is null, using server's current value");
+                serverInfo.communicationResponse = server.getCommunicationResponse();
             }
 
             server.setIsRunning(serverInfo.getIsRunning());

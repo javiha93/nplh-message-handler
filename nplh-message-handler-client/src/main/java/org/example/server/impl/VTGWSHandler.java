@@ -15,9 +15,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,17 +32,27 @@ public class VTGWSHandler extends SoapHandler {
 
     @Override
     protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
-        String soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionOk(soapAction).toString(), "VANTAGE WS");
+        List<String> responses = new ArrayList<>();
 
-        exchange.getResponseHeaders().set("Content-Type", "text/xml");
-        exchange.sendResponseHeaders(200, soapResponse.length());
-        exchange.getResponseBody().write(soapResponse.getBytes());
-        exchange.getResponseBody().close();
+        if (server.getCommunicationResponse().getIsEnable()) {
+            String soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionOk(soapAction).toString(), "VANTAGE WS");
 
-        ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
-        client.send("ProcessApplicationACK", processApplicationACK.toString(), processApplicationACK.getTransactionId());
+            exchange.getResponseHeaders().set("Content-Type", "text/xml");
+            exchange.sendResponseHeaders(200, soapResponse.length());
+            exchange.getResponseBody().write(soapResponse.getBytes());
+            exchange.getResponseBody().close();
 
-        return Collections.singletonList(soapResponse);
+            responses.add(soapResponse);
+        }
+
+        if (server.getApplicationResponse().getIsEnable()) {
+            ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
+            client.send("ProcessApplicationACK", processApplicationACK.toString(), processApplicationACK.getTransactionId());
+
+            responses.add(processApplicationACK.toString());
+        }
+
+        return responses;
     }
 
     @Override

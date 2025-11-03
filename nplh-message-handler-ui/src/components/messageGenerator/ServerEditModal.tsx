@@ -15,7 +15,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   onClose, 
   onSave 
 }) => {
-  const [processApplicationACK, setApplicationResponse] = useState<ResponseStatus>({
+  const [applicationResponse, setApplicationResponse] = useState<ResponseStatus>({
     isEnable: false,
     isError: false,
     errorText: ''
@@ -31,7 +31,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   // Initialize form when server changes
   useEffect(() => {
     if (server) {
-      setApplicationResponse(server.processApplicationACK || { isEnable: false, isError: false, errorText: '' });
+      setApplicationResponse(server.applicationResponse || { isEnable: false, isError: false, errorText: '' });
       setCommunicationResponse(server.communicationResponse || { isEnable: false, isError: false, errorText: '' });
       setError(null);
     }
@@ -47,7 +47,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
       const serverData: Partial<Server> = {
         serverName: server.serverName,
         isRunning: server.isRunning,
-        processApplicationACK,
+        applicationResponse,
         communicationResponse
       };
       
@@ -139,8 +139,8 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
-                  checked={processApplicationACK.isEnable || false}
-                  onChange={() => toggleResponseStatus(processApplicationACK, setApplicationResponse, 'isEnable')}
+                  checked={applicationResponse.isEnable || false}
+                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isEnable')}
                   className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-600">Enabled</span>
@@ -148,20 +148,20 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
-                  checked={processApplicationACK.isError || false}
-                  disabled={!processApplicationACK.isEnable}
-                  onChange={() => toggleResponseStatus(processApplicationACK, setApplicationResponse, 'isError')}
+                  checked={applicationResponse.isError || false}
+                  disabled={!applicationResponse.isEnable}
+                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isError')}
                   className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                <span className={`text-sm ${processApplicationACK.isEnable ? 'text-gray-600' : 'text-gray-400'}`}>Has Error</span>
+                <span className={`text-sm ${applicationResponse.isEnable ? 'text-gray-600' : 'text-gray-400'}`}>Has Error</span>
               </label>
-              {processApplicationACK.isError && processApplicationACK.isEnable && (
+              {applicationResponse.isError && applicationResponse.isEnable && (
                 <div className="ml-7 mt-2">
                   <input
                     type="text"
                     placeholder="Enter error description..."
-                    value={processApplicationACK.errorText || ''}
-                    onChange={(e) => updateErrorText(processApplicationACK, setApplicationResponse, e.target.value)}
+                    value={applicationResponse.errorText || ''}
+                    onChange={(e) => updateErrorText(applicationResponse, setApplicationResponse, e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
                 </div>
@@ -211,9 +211,9 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
             <h4 className="text-sm font-medium text-gray-700">Preview:</h4>
             <div className="text-xs text-gray-600 space-y-1">
               <div className="flex items-center space-x-2">
-                <span>App: {processApplicationACK.isError ? '⚠' : processApplicationACK.isEnable ? '✓' : '✗'}</span>
-                {processApplicationACK.isError && processApplicationACK.errorText && (
-                  <span className="text-red-600 italic">({processApplicationACK.errorText})</span>
+                <span>App: {applicationResponse.isError ? '⚠' : applicationResponse.isEnable ? '✓' : '✗'}</span>
+                {applicationResponse.isError && applicationResponse.errorText && (
+                  <span className="text-red-600 italic">({applicationResponse.errorText})</span>
                 )}
               </div>
               <div className="flex items-center space-x-2">

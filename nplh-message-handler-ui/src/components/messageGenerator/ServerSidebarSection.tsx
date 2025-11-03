@@ -128,7 +128,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   };
 
   const hasResponseStatus = (server: Server) => {
-    return server.processApplicationACK !== undefined || server.communicationResponse !== undefined;
+    return server.applicationResponse !== undefined || server.communicationResponse !== undefined;
   };
 
 
@@ -210,7 +210,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                             <div className="bg-gray-100 rounded-md px-2 py-1 mt-2 inline-flex items-center gap-2">
                               <div className="text-xs text-gray-600 flex items-center gap-1">
                                 <span>App:</span>
-                                {getResponseStatusDisplay(server.processApplicationACK)}
+                                {getResponseStatusDisplay(server.applicationResponse)}
                                 <span>|</span>
                                 <span>Comm:</span>
                                 {getResponseStatusDisplay(server.communicationResponse)}

@@ -31,6 +31,8 @@ public class ResponseStatus {
     public static ResponseStatus enabledWithError(String errorText) {
         return new ResponseStatus(true, true, errorText);
     }
+
+    public Boolean hasErrorText() { return !errorText.isEmpty();}
     
     @Override
     public String toString() {

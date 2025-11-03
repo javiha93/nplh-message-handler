@@ -6,7 +6,7 @@ export interface ResponseStatus {
 
 export interface Server {
   serverName?: string;
-  processApplicationACK?: ResponseStatus;
+  applicationResponse?: ResponseStatus; // ✨ Corregido para coincidir con backend
   communicationResponse?: ResponseStatus;
   hostType?: string;
   location?: string;
@@ -97,7 +97,7 @@ class ServerService {
       const serverData: Partial<Server> = {
         serverName: currentServer.serverName,
         isRunning: !currentServer.isRunning, // Toggle del estado actual
-        processApplicationACK: currentServer.processApplicationACK,
+        applicationResponse: currentServer.applicationResponse, // ✨ Corregido
         communicationResponse: currentServer.communicationResponse
       };
       
@@ -114,14 +114,32 @@ class ServerService {
    */
   async modifyServer(serverData: Partial<Server>): Promise<Server> {
     try {
-      console.log('Modifying server:', serverData);
+      // ✨ Asegurar que todos los campos requeridos estén presentes
+      const completeServerData = {
+        serverName: serverData.serverName,
+        isRunning: serverData.isRunning || false,
+        applicationResponse: serverData.applicationResponse || {
+          isEnable: false,
+          isError: false,
+          errorText: ''
+        },
+        communicationResponse: serverData.communicationResponse || {
+          isEnable: false,
+          isError: false,
+          errorText: ''
+        },
+        hostType: serverData.hostType || '',
+        location: serverData.location || ''
+      };
+
+      console.log('🚀 Sending to backend:', completeServerData);
       
       const response = await fetch(`${API_HOST_URL}/servers/modifyServer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(serverData)
+        body: JSON.stringify(completeServerData)
       });
 
       if (!response.ok) {
