@@ -1,8 +1,17 @@
+export interface CustomResponse {
+  // ✨ Propiedades para el frontend
+  enabled?: boolean;
+  text?: string;
+  // ✨ Propiedades que vienen del backend
+  useCustomResponse?: boolean;
+  customResponseText?: string;
+}
+
 export interface ResponseStatus {
   isEnable?: boolean;
   isError?: boolean;
   errorText?: string;
-  customResponse?: string; // ✨ Nuevo campo para custom response
+  customResponse?: CustomResponse; // ✨ Ahora es un objeto con enabled y text
 }
 
 export interface Server {
@@ -115,21 +124,29 @@ class ServerService {
    */
   async modifyServer(serverData: Partial<Server>): Promise<Server> {
     try {
-      // ✨ Asegurar que todos los campos requeridos estén presentes
+      // ✨ Convertir datos del frontend al formato del backend
       const completeServerData = {
         serverName: serverData.serverName,
         isRunning: serverData.isRunning || false,
-        applicationResponse: serverData.applicationResponse || {
-          isEnable: false,
-          isError: false,
-          errorText: '',
-          customResponse: ''
+        applicationResponse: {
+          isEnable: serverData.applicationResponse?.isEnable || false,
+          isError: serverData.applicationResponse?.isError || false,
+          errorText: serverData.applicationResponse?.errorText || '',
+          customResponse: {
+            // ✨ Convertir propiedades del frontend al formato del backend
+            useCustomResponse: serverData.applicationResponse?.customResponse?.enabled || false,
+            customResponseText: serverData.applicationResponse?.customResponse?.text || ''
+          }
         },
-        communicationResponse: serverData.communicationResponse || {
-          isEnable: false,
-          isError: false,
-          errorText: '',
-          customResponse: ''
+        communicationResponse: {
+          isEnable: serverData.communicationResponse?.isEnable || false,
+          isError: serverData.communicationResponse?.isError || false,
+          errorText: serverData.communicationResponse?.errorText || '',
+          customResponse: {
+            // ✨ Convertir propiedades del frontend al formato del backend
+            useCustomResponse: serverData.communicationResponse?.customResponse?.enabled || false,
+            customResponseText: serverData.communicationResponse?.customResponse?.text || ''
+          }
         },
         hostType: serverData.hostType || '',
         location: serverData.location || ''

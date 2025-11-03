@@ -1,5 +1,6 @@
 package org.example.server.impl;
 
+import org.example.domain.CustomResponse;
 import org.example.domain.ResponseStatus;
 import org.example.domain.hl7.LIS.LISToNPLH.response.ACK.ACK;
 import org.example.domain.host.host.Connection;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,12 @@ public class LISHandler extends HL7Server {
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         this.applicationResponse = ResponseStatus.enabled();
+        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*").toString());
+        applicationResponse.setCustomResponse(customResponse);
+
         this.communicationResponse = ResponseStatus.enabled();
+        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*").toString());
+        communicationResponse.setCustomResponse(customResponse);
     }
 
     @Override

@@ -122,9 +122,9 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
       return <span className="text-yellow-500 font-semibold">⚠</span>;
     }
     if (responseStatus.isEnable) {
-      // ✨ Si tiene customResponse, mostrar ícono especial
-      if (responseStatus.customResponse) {
-        return <span className="text-blue-500 font-semibold" title={`Custom: ${responseStatus.customResponse}`}>🔧</span>;
+      // ✨ Si tiene customResponse habilitado, mostrar ícono especial
+      if (responseStatus.customResponse?.enabled && responseStatus.customResponse?.text) {
+        return <span className="text-blue-500 font-semibold" title={`Custom: ${responseStatus.customResponse.text}`}>🔧</span>;
       }
       return <span className="text-green-500 font-semibold">✓</span>;
     }

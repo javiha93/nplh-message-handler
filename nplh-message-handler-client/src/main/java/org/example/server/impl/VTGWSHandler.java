@@ -3,6 +3,8 @@ package org.example.server.impl;
 import com.sun.net.httpserver.HttpExchange;
 import org.example.client.Clients;
 import org.example.client.WSClient;
+import org.example.domain.CustomResponse;
+import org.example.domain.hl7.VTG.VTGToNPLH.response.ACK.ACK;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.CommunicationResponse;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.ProcessApplicationACK;
 import org.example.server.WSServer;
@@ -28,6 +30,12 @@ public class VTGWSHandler extends SoapHandler {
     public VTGWSHandler(MessageLogger messageLogger, String serverName, WSServer server, WSClient client ) {
         super(messageLogger, serverName, server);
         this.client = client;
+
+        CustomResponse customResponse = CustomResponse.disabled(buildSoapEnvelope(CommunicationResponse.FromSoapActionOk("soapAction").toString(), "VANTAGE WS"));
+        server.getApplicationResponse().setCustomResponse(customResponse);
+
+        customResponse = CustomResponse.disabled(ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*").toString());
+        server.getCommunicationResponse().setCustomResponse(customResponse);
     }
 
     @Override

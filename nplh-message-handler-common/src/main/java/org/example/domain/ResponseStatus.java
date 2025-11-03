@@ -20,28 +20,27 @@ public class ResponseStatus {
     private String errorText;
 
     @JsonProperty("customResponse")
-    private String customResponse;
+    private CustomResponse customResponse;
     
     // Constructor de conveniencia para crear estados comunes
     public static ResponseStatus enabled() {
-        return new ResponseStatus(true, false, "", "");
+        return new ResponseStatus(true, false, "", CustomResponse.empty());
     }
     
     public static ResponseStatus disabled() {
-        return new ResponseStatus(false, false, "", "");
+        return new ResponseStatus(false, false, "", CustomResponse.empty());
     }
     
     public static ResponseStatus enabledWithError(String errorText) {
-        return new ResponseStatus(true, true, errorText, "");
+        return new ResponseStatus(true, true, errorText, CustomResponse.empty());
     }
 
     public static ResponseStatus enabledWithCustomResponse(String customResponse) {
-        return new ResponseStatus(true, true, "", customResponse);
+        return new ResponseStatus(true, true, "", CustomResponse.enabled(customResponse));
     }
 
     public Boolean hasErrorText() { return !errorText.isEmpty();}
 
-    public Boolean hasCustomResponse() { return !customResponse.isEmpty();}
     
     @Override
     public String toString() {

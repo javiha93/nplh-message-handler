@@ -1,5 +1,6 @@
 package org.example.server.impl;
 
+import org.example.domain.CustomResponse;
 import org.example.domain.ResponseStatus;
 import org.example.domain.hl7.VTG.VTGToNPLH.response.ACK.ACK;
 import org.example.domain.host.host.Connection;
@@ -15,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VTGHandler extends HL7Server {
-    static final Logger logger = LoggerFactory.getLogger(VTGHandler.class);
     private final MessageLogger messageLogger;
 
     public VTGHandler(String hostName, Connection connection, IrisService irisService) {
@@ -23,8 +23,12 @@ public class VTGHandler extends HL7Server {
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         this.applicationResponse = ResponseStatus.enabled();
-        applicationResponse.setCustomResponse(ACK.ApplicationOK("*originalControlId*").toString());
+        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*").toString());
+        applicationResponse.setCustomResponse(customResponse);
+
         this.communicationResponse = ResponseStatus.disabled();
+        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*").toString());
+        communicationResponse.setCustomResponse(customResponse);
     }
 
     @Override
@@ -34,8 +38,8 @@ public class VTGHandler extends HL7Server {
         if (communicationResponse.getIsEnable()) {
             String ack;
 
-            if (communicationResponse.hasCustomResponse()) {
-                ack = communicationResponse.getCustomResponse();
+            if (communicationResponse.getCustomResponse().getUseCustomResponse()) {
+                ack = communicationResponse.getCustomResponse().getCustomResponseText();
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
             } else if (communicationResponse.getIsError()) {
                 ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
@@ -48,8 +52,8 @@ public class VTGHandler extends HL7Server {
         }
         if (applicationResponse.getIsEnable()) {
             String ack;
-            if (applicationResponse.hasCustomResponse()) {
-                ack = applicationResponse.getCustomResponse();
+            if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
+                ack = applicationResponse.getCustomResponse().getCustomResponseText();
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
             } else if (applicationResponse.getIsError()) {
                 ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
