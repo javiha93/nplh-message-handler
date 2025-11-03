@@ -28,10 +28,26 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ✨ Determine if ApplicationResponse can be enabled based on hostType
+  const isApplicationResponseAllowed = (hostType?: string): boolean => {
+    if (!hostType) return true;
+    const restrictedTypes = ['VSS', 'VIRTUOSO', 'DP'];
+    return !restrictedTypes.includes(hostType.toUpperCase());
+  };
+
   // Initialize form when server changes
   useEffect(() => {
     if (server) {
-      setApplicationResponse(server.applicationResponse || { isEnable: false, isError: false, errorText: '' });
+      const initialAppResponse = server.applicationResponse || { isEnable: false, isError: false, errorText: '' };
+      
+      // ✨ If hostType is restricted, force ApplicationResponse to disabled
+      if (!isApplicationResponseAllowed(server.hostType)) {
+        initialAppResponse.isEnable = false;
+        initialAppResponse.isError = false;
+        initialAppResponse.errorText = '';
+      }
+      
+      setApplicationResponse(initialAppResponse);
       setCommunicationResponse(server.communicationResponse || { isEnable: false, isError: false, errorText: '' });
       setError(null);
     }
@@ -63,8 +79,15 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   const toggleResponseStatus = (
     currentStatus: ResponseStatus, 
     setter: React.Dispatch<React.SetStateAction<ResponseStatus>>,
-    field: 'isEnable' | 'isError'
+    field: 'isEnable' | 'isError',
+    isApplicationResponse: boolean = false
   ) => {
+    // ✨ Check if ApplicationResponse can be enabled for this hostType
+    if (isApplicationResponse && field === 'isEnable' && !currentStatus[field] && !isApplicationResponseAllowed(server?.hostType)) {
+      // Prevent enabling ApplicationResponse for restricted hostTypes
+      return;
+    }
+
     if (field === 'isEnable' && !currentStatus[field]) {
       // Si estamos habilitando, asegurar que isError se ponga false y limpiar errorText
       setter({
@@ -140,17 +163,22 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
                 <input
                   type="checkbox"
                   checked={applicationResponse.isEnable || false}
-                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isEnable')}
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  disabled={!isApplicationResponseAllowed(server?.hostType)} // ✨ Disable for restricted hostTypes
+                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isEnable', true)} // ✨ Pass isApplicationResponse flag
+                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                <span className="text-sm text-gray-600">Enabled</span>
+                <span className={`text-sm ${isApplicationResponseAllowed(server?.hostType) ? 'text-gray-600' : 'text-gray-400'}`}>
+                  Enabled {!isApplicationResponseAllowed(server?.hostType) && 
+                    <span className="text-xs text-red-500">(Restricted for WS Host with {server?.hostType} type)</span>
+                  }
+                </span>
               </label>
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   checked={applicationResponse.isError || false}
                   disabled={!applicationResponse.isEnable}
-                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isError')}
+                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isError', true)}
                   className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <span className={`text-sm ${applicationResponse.isEnable ? 'text-gray-600' : 'text-gray-400'}`}>Has Error</span>
@@ -177,7 +205,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
                 <input
                   type="checkbox"
                   checked={communicationResponse.isEnable || false}
-                  onChange={() => toggleResponseStatus(communicationResponse, setCommunicationResponse, 'isEnable')}
+                  onChange={() => toggleResponseStatus(communicationResponse, setCommunicationResponse, 'isEnable', false)}
                   className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-600">Enabled</span>
@@ -187,7 +215,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
                   type="checkbox"
                   checked={communicationResponse.isError || false}
                   disabled={!communicationResponse.isEnable}
-                  onChange={() => toggleResponseStatus(communicationResponse, setCommunicationResponse, 'isError')}
+                  onChange={() => toggleResponseStatus(communicationResponse, setCommunicationResponse, 'isError', false)}
                   className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <span className={`text-sm ${communicationResponse.isEnable ? 'text-gray-600' : 'text-gray-400'}`}>Has Error</span>

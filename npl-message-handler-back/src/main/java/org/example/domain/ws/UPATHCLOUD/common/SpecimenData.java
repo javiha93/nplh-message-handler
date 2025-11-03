@@ -48,10 +48,9 @@ public class SpecimenData extends WSSegment {
     }
 
     public String toString(int indentationLevel) {
-        String specimenData = addIndentation(indentationLevel) + "<specimenData>\n";
+        String specimenData = "";
 
         if (!this.isEmpty()) {
-            indentationLevel ++;
 
             for (SlideData slideData : allSlideData) {
                 specimenData += nullSafe(slideData, SlideData::new).toString(indentationLevel) + "\n";
@@ -62,11 +61,7 @@ public class SpecimenData extends WSSegment {
                     + addIndentation(indentationLevel) + "<specimenBarcode>" +  nullSafe(specimenBarcode) + "</specimenBarcode>\n"
                     + addIndentation(indentationLevel) + "<specimenViewUrl>" +  nullSafe(specimenViewUrl) + "</specimenViewUrl>\n"
                     + addIndentation(indentationLevel) + "<status>" +  nullSafe(status) + "</status>\n";
-
-            indentationLevel --;
         }
-
-        specimenData += addIndentation(indentationLevel) + "</specimenData>\n";
         return specimenData;
     }
 }

@@ -43,8 +43,6 @@ public class UpathCloudHandler extends SoapHandler {
                 soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionOk(soapAction).toString(), "virtuoso");
             }
 
-            var x = buildResponse(exchange, soapAction);
-
             exchange.getResponseHeaders().set("Content-Type", "text/xml");
             exchange.sendResponseHeaders(200, soapResponse.length());
             exchange.getResponseBody().write(soapResponse.getBytes());
@@ -54,22 +52,6 @@ public class UpathCloudHandler extends SoapHandler {
         }
 
         return responses;
-    }
-
-    @Override
-    protected String buildResponse(HttpExchange exchange, String soapAction) {
-        return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:web=\"http://webservice.virtuoso.ventana.com/\">" +
-                "   <soapenv:Header/>" +
-                "   <soapenv:Body>" +
-                "      <web:" + soapAction + "Response>" +
-                "         <return>" +
-                "            <errorCode></errorCode>" +
-                "            <errorMessage></errorMessage>" +
-                "            <succeed>"+ isSuccessful + "</succeed>" +
-                "         </return>" +
-                "      </web:" + soapAction + "Response>" +
-                "   </soapenv:Body>" +
-                "</soapenv:Envelope>";
     }
 
     @Override
