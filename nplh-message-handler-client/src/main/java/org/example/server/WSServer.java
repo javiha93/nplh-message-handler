@@ -1,5 +1,7 @@
 package org.example.server;
 import com.sun.net.httpserver.HttpServer;
+import org.example.client.Clients;
+import org.example.client.WSClient;
 import org.example.domain.ResponseStatus;
 import org.example.domain.host.host.Connection;
 import org.example.server.impl.*;
@@ -19,11 +21,13 @@ public class WSServer extends Server {
     private String hostType;
     private String location;
     private final Connection connection;
+    private Clients clients;
 
     final MessageLogger messageLogger;
     static final Logger logger = LoggerFactory.getLogger(WSServer.class);
 
-    public WSServer(String serverName, String hostType, Connection connection, IrisService irisService) {
+    public WSServer(String serverName, String hostType, Connection connection, IrisService irisService, Clients clients) {
+        this.clients = clients;
         this.location = connection.getWsLocation();
         this.hostType = hostType;
         this.connection = connection;
@@ -45,7 +49,7 @@ public class WSServer extends Server {
 
             SoapHandler soapHandler = switch (hostType) {
                 case "VSS" -> new VSSHandler(messageLogger, serverName, this);
-                case "VTG" -> new VTGWSHandler(messageLogger, serverName, this);
+                case "VTG" -> new VTGWSHandler(messageLogger, serverName,  this, (WSClient) clients.getClient(serverName));
                 case "DP" -> new DPHandler(messageLogger, serverName, this);
                 case "VIRTUOSO" -> new UpathCloudHandler(messageLogger, serverName, this);
                 default    -> new SoapHandler(messageLogger, serverName, this);

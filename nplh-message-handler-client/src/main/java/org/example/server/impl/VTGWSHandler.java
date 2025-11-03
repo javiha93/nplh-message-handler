@@ -1,6 +1,7 @@
 package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
+import org.example.client.Clients;
 import org.example.client.WSClient;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.CommunicationResponse;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.ProcessApplicationACK;
@@ -24,23 +25,23 @@ import static org.example.utils.SoapMessageHandler.buildSoapEnvelope;
 
 public class VTGWSHandler extends SoapHandler {
 
-    public VTGWSHandler(MessageLogger messageLogger, String serverName, WSServer server) {
+    WSClient client;
+    public VTGWSHandler(MessageLogger messageLogger, String serverName, WSServer server, WSClient client ) {
         super(messageLogger, serverName, server);
+        this.client = client;
     }
 
     @Override
     protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
         String soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionOk(soapAction).toString(), "VANTAGE WS");
-        //soapResponse = buildCommunicationResponse(soapAction);
-
-        String soapApplicationResponse = buildSoapEnvelope(ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived)).toString(), "VANTAGE WS");
-
-        //soapResponse = buildApplicationResponse(getTransactionId(messageReceived));
 
         exchange.getResponseHeaders().set("Content-Type", "text/xml");
         exchange.sendResponseHeaders(200, soapResponse.length());
         exchange.getResponseBody().write(soapResponse.getBytes());
         exchange.getResponseBody().close();
+
+        ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
+        client.send("ProcessApplicationACK", processApplicationACK.toString(), processApplicationACK.getTransactionId());
 
         return Collections.singletonList(soapResponse);
     }
@@ -63,24 +64,6 @@ public class VTGWSHandler extends SoapHandler {
             e.printStackTrace();
             return null;
         }
-    }
-
-    private String buildApplicationResponse(String originalTransactionId) {
-        return "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" " +
-                "xmlns:web=\"http://webservice.vantage.ventana.com/\">\n" +
-                "   <soapenv:Header/>\n" +
-                "   <soapenv:Body>\n" +
-                "       <ProcessApplicationACK>\n" +
-                "           <applicationACK>" +
-                "                <ErrorCode></ErrorCode>\n" +
-                "                <ErrorDescription></ErrorDescription>\n" +
-                "                <IsSuccessful>" + isSuccessful + "</IsSuccessful>\n" +
-                "                <OriginalTransactionId>" + originalTransactionId + "</OriginalTransactionId>\n" +
-                "           </applicationACK>\n" +
-                "           <transactionId>" + UUID.randomUUID() + "</transactionId>\n" +
-                "       </ProcessApplicationACK>\n" +
-                "   </soapenv:Body>\n" +
-                "</soapenv:Envelope>";
     }
 
     private String getTransactionId(String requestBody) {

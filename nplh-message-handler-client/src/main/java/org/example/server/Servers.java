@@ -1,6 +1,7 @@
 package org.example.server;
 
 import lombok.Getter;
+import org.example.client.Clients;
 import org.example.domain.host.host.Connection;
 import org.example.domain.host.host.HostInfo;
 import org.example.domain.host.host.HostInfoList;
@@ -17,11 +18,13 @@ import java.util.List;
 public class Servers {
     List<Server> serverList = new ArrayList<>();
     IrisService irisService;
+    Clients clients;
 
     static final Logger logger = LoggerFactory.getLogger(Servers.class);
 
-    public Servers(HostInfoList hostInfoList, IrisService irisService) {
+    public Servers(HostInfoList hostInfoList, IrisService irisService, Clients clients) {
         this.irisService = irisService;
+        this.clients = clients;
 
         logger.info("****************************************************************************************************");
         logger.info("***                                    ENABLING SERVERS                                          ***");
@@ -53,7 +56,7 @@ public class Servers {
         for (HostInfo host: wsServers) {
             List<Connection> outboundConnections = host.getOutboundConnections();
             for (Connection connection: outboundConnections) {
-                serverList.add(new WSServer(host.getHostName(), host.getHostType(), connection, irisService));
+                serverList.add(new WSServer(host.getHostName(), host.getHostType(), connection, irisService, clients));
             }
         }
     }

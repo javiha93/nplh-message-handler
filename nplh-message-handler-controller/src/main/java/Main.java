@@ -22,12 +22,12 @@ public class Main {
     }
 
     @Bean
-    public Servers servers(HostInfoList hostInfoList, IrisService irisService) {
-        return new Servers(hostInfoList, irisService);
+    public Clients clients(HostInfoList hostInfoList, IrisService irisService) {
+        return new Clients(hostInfoList, irisService);
     }
 
     @Bean
-    public Clients clients(HostInfoList hostInfoList, IrisService irisService) {
-        return new Clients(hostInfoList, irisService);
+    public Servers servers(HostInfoList hostInfoList, IrisService irisService, Clients clients) {
+        return new Servers(hostInfoList, irisService, clients);
     }
 }
