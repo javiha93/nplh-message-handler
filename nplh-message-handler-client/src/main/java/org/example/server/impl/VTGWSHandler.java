@@ -1,10 +1,9 @@
 package org.example.server.impl;
 
 import com.sun.net.httpserver.HttpExchange;
-import org.example.client.Clients;
 import org.example.client.WSClient;
 import org.example.domain.CustomResponse;
-import org.example.domain.hl7.VTG.VTGToNPLH.response.ACK.ACK;
+import org.example.domain.ResponseStatus;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.CommunicationResponse;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.ProcessApplicationACK;
 import org.example.server.WSServer;
@@ -32,18 +31,27 @@ public class VTGWSHandler extends SoapHandler {
         this.client = client;
 
         CustomResponse customResponse = CustomResponse.disabled(buildSoapEnvelope(CommunicationResponse.FromSoapActionOk("soapAction").toString(), "VANTAGE WS"));
-        server.getApplicationResponse().setCustomResponse(customResponse);
+        server.getCommunicationResponse().setCustomResponse(customResponse);
 
         customResponse = CustomResponse.disabled(ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*").toString());
-        server.getCommunicationResponse().setCustomResponse(customResponse);
+        server.getApplicationResponse().setCustomResponse(customResponse);
     }
 
     @Override
     protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
         List<String> responses = new ArrayList<>();
 
-        if (server.getCommunicationResponse().getIsEnable()) {
-            String soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionOk(soapAction).toString(), "VANTAGE WS");
+        ResponseStatus communicationResponse = server.getCommunicationResponse();
+        if (communicationResponse.getIsEnable()) {
+
+            String soapResponse = "";
+            if (communicationResponse.getCustomResponse().getUseCustomResponse()) {
+                soapResponse = communicationResponse.getCustomResponse().getCustomResponseText();
+            } else if (communicationResponse.getIsError()) {
+                soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionError(soapAction).toString(), "VANTAGE WS");
+            } else {
+                soapResponse = buildSoapEnvelope(CommunicationResponse.FromSoapActionOk(soapAction).toString(), "VANTAGE WS");
+            }
 
             exchange.getResponseHeaders().set("Content-Type", "text/xml");
             exchange.sendResponseHeaders(200, soapResponse.length());
@@ -53,11 +61,26 @@ public class VTGWSHandler extends SoapHandler {
             responses.add(soapResponse);
         }
 
-        if (server.getApplicationResponse().getIsEnable()) {
-            ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
-            client.send("ProcessApplicationACK", processApplicationACK.toString(), processApplicationACK.getTransactionId());
+        ResponseStatus applicationResponse = server.getApplicationResponse();
+        if (applicationResponse.getIsEnable()) {
 
-            responses.add(processApplicationACK.toString());
+            String soapResponse = "";
+            String transactionId = "";
+            if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
+                soapResponse = applicationResponse.getCustomResponse().getCustomResponseText();
+                soapResponse = soapResponse.replace("*originalControlId*",getTransactionId(messageReceived));
+            } else if (applicationResponse.getIsError()) {
+                ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdError(getTransactionId(messageReceived), applicationResponse.getErrorText());
+                soapResponse = processApplicationACK.toString();
+                transactionId = processApplicationACK.getTransactionId();
+            } else {
+                ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
+                soapResponse = processApplicationACK.toString();
+                transactionId = processApplicationACK.getTransactionId();
+            }
+            client.send("ProcessApplicationACK",soapResponse, transactionId);
+
+            responses.add(soapResponse);
         }
 
         return responses;
