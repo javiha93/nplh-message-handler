@@ -1,7 +1,12 @@
 package org.example.server;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class Server {
 
@@ -11,11 +16,8 @@ public class Server {
     @JsonProperty("isRunning")
     protected Boolean isRunning = false;
 
-    @JsonProperty("applicationResponse")
-    protected ResponseStatus applicationResponse = ResponseStatus.disabled();
-    
-    @JsonProperty("communicationResponse")
-    protected ResponseStatus communicationResponse = ResponseStatus.disabled();
+    @JsonProperty("responses")
+    protected List<ResponseInfo> responses = new ArrayList<>();
 
     // Getters públicos para Jackson
     public String getServerName() {
@@ -26,12 +28,8 @@ public class Server {
         return isRunning;
     }
 
-    public ResponseStatus getApplicationResponse() {
-        return applicationResponse;
-    }
-
-    public ResponseStatus getCommunicationResponse() {
-        return communicationResponse;
+    public List<ResponseInfo> getResponses() {
+        return responses;
     }
 
     // Setters para completar el JavaBean pattern
@@ -43,11 +41,37 @@ public class Server {
         this.isRunning = isRunning;
     }
 
-    public void setApplicationResponse(ResponseStatus applicationResponse) {
-        this.applicationResponse = applicationResponse;
+    public void setResponses(List<ResponseInfo> responses) {
+        this.responses = responses != null ? responses : new ArrayList<>();
     }
 
-    public void setCommunicationResponse(ResponseStatus communicationResponse) {
-        this.communicationResponse = communicationResponse;
+    public void setDefaultResponse(ResponseInfo response) {
+        this.responses = new ArrayList<>();
+        if (response != null) {
+            responses.add(response);
+        }
+    }
+
+    public  void addResponse(ResponseInfo response) {
+        if (responses.isEmpty()) {
+            this.responses = new ArrayList<>();
+        }
+        if (response != null) {
+            responses.add(response);
+        }
+    }
+
+    public ResponseInfo getDefaultResponse() {
+        return responses.stream()
+                .filter(ResponseInfo::getIsDefault)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Not found default response"));
+    }
+
+    public ResponseInfo getResponseByType(String messageType) {
+        return responses.stream()
+                .filter(response -> messageType.equals(response.getMessageType()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Not found response with messageType " + messageType));
     }
 }

@@ -3,6 +3,7 @@ package org.example.server.impl;
 import com.sun.net.httpserver.HttpExchange;
 import org.example.client.WSClient;
 import org.example.domain.CustomResponse;
+import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.CommunicationResponse;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.ProcessApplicationACK;
@@ -31,18 +32,20 @@ public class VTGWSHandler extends SoapHandler {
         super(messageLogger, serverName, server);
         this.client = client;
 
+        ResponseInfo defaultResponse = server.getDefaultResponse();
+
         CustomResponse customResponse = CustomResponse.disabled(buildSoapEnvelope(CommunicationResponse.FromSoapActionOk("soapAction").toString(), "VANTAGE WS"));
-        server.getCommunicationResponse().setCustomResponse(customResponse);
+        defaultResponse.getCommunicationResponse().setCustomResponse(customResponse);
 
         customResponse = CustomResponse.disabled(ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*", "*controlId*").toString());
-        server.getApplicationResponse().setCustomResponse(customResponse);
+        defaultResponse.getApplicationResponse().setCustomResponse(customResponse);
     }
 
     @Override
     protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
         List<String> responses = new ArrayList<>();
 
-        ResponseStatus communicationResponse = server.getCommunicationResponse();
+        ResponseStatus communicationResponse = server.getDefaultResponse().getCommunicationResponse();
         if (communicationResponse.getIsEnable()) {
 
             String soapResponse = "";
@@ -62,7 +65,7 @@ public class VTGWSHandler extends SoapHandler {
             responses.add(soapResponse);
         }
 
-        ResponseStatus applicationResponse = server.getApplicationResponse();
+        ResponseStatus applicationResponse = server.getDefaultResponse().getApplicationResponse();
         if (applicationResponse.getIsEnable()) {
 
             String soapResponse = "";

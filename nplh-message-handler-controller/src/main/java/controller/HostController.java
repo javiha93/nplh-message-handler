@@ -3,6 +3,7 @@ package controller;
 import lombok.Data;
 import org.example.client.Client;
 import org.example.client.Clients;
+import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
 import org.example.domain.host.host.HostInfo;
 import org.example.domain.host.host.HostInfoList;
@@ -64,8 +65,7 @@ public class HostController {
     private ServerDTO convertToDTO(Server server) {
         ServerDTO dto = new ServerDTO();
         dto.serverName = server.getServerName();
-        dto.applicationResponse = server.getApplicationResponse();
-        dto.communicationResponse = server.getCommunicationResponse();
+        dto.responses = server.getResponses();
         dto.isRunning = server.getIsRunning();
         
         // Check if it's a WSServer using reflection to get additional properties
@@ -89,8 +89,15 @@ public class HostController {
             logger.info("🔍 Received modifyServer request:");
             logger.info("  serverName: {}", serverInfo.serverName);
             logger.info("  isRunning: {}", serverInfo.getIsRunning());
-            logger.info("  applicationResponse: {}", serverInfo.getApplicationResponse());
-            logger.info("  communicationResponse: {}", serverInfo.getCommunicationResponse());
+            logger.info("  responses count: {}", serverInfo.getResponses() != null ? serverInfo.getResponses().size() : 0);
+
+            if (serverInfo.getResponses() != null) {
+                for (int i = 0; i < serverInfo.getResponses().size(); i++) {
+                    ResponseInfo response = serverInfo.getResponses().get(i);
+                    logger.info("  response[{}]: messageType={}, isDefault={}",
+                            i, response.getMessageType(), response.getIsDefault());
+                }
+            }
 
             Server server = servers.getServerByName(serverInfo.serverName);
 
@@ -99,27 +106,104 @@ public class HostController {
                 return ResponseEntity.notFound().build();
             }
 
-            // ✨ Validar y corregir campos nulos
-            if (serverInfo.getApplicationResponse() == null) {
-                logger.warn("⚠️ applicationResponse is null, using server's current value");
-                serverInfo.applicationResponse = server.getApplicationResponse();
-            }
-            
-            if (serverInfo.getCommunicationResponse() == null) {
-                logger.warn("⚠️ communicationResponse is null, using server's current value");
-                serverInfo.communicationResponse = server.getCommunicationResponse();
+            // ✨ Actualizar el estado de ejecución del servidor
+            server.setIsRunning(serverInfo.getIsRunning());
+
+            // ✨ Actualizar todas las respuestas, no solo la default
+            if (serverInfo.getResponses() != null && !serverInfo.getResponses().isEmpty()) {
+
+                // Iterar sobre las respuestas recibidas del frontend
+                for (ResponseInfo incomingResponse : serverInfo.getResponses()) {
+
+                    // Buscar la respuesta correspondiente en el servidor por messageType
+                    ResponseInfo existingResponse = server.getResponses().stream()
+                            .filter(r -> r.getMessageType().equals(incomingResponse.getMessageType()))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (existingResponse != null) {
+                        // ✨ Actualizar la respuesta existente
+                        logger.info("🔄 Updating existing response: {}", incomingResponse.getMessageType());
+
+                        existingResponse.setIsDefault(incomingResponse.getIsDefault());
+
+                        // Actualizar applicationResponse si no es null
+                        if (incomingResponse.getApplicationResponse() != null) {
+                            existingResponse.setApplicationResponse(incomingResponse.getApplicationResponse());
+                            logger.info("  ✅ Updated applicationResponse for {}", incomingResponse.getMessageType());
+                        } else {
+                            logger.warn("  ⚠️ applicationResponse is null for {}, keeping existing value", incomingResponse.getMessageType());
+                        }
+
+                        // Actualizar communicationResponse si no es null
+                        if (incomingResponse.getCommunicationResponse() != null) {
+                            existingResponse.setCommunicationResponse(incomingResponse.getCommunicationResponse());
+                            logger.info("  ✅ Updated communicationResponse for {}", incomingResponse.getMessageType());
+                        } else {
+                            logger.warn("  ⚠️ communicationResponse is null for {}, keeping existing value", incomingResponse.getMessageType());
+                        }
+
+                    } else {
+                        // ✨ Agregar nueva respuesta si no existe
+                        logger.info("➕ Adding new response: {}", incomingResponse.getMessageType());
+
+                        // Validar que los campos requeridos no sean null
+                        if (incomingResponse.getApplicationResponse() == null) {
+                            incomingResponse.setApplicationResponse(ResponseStatus.disabled());
+                            logger.warn("  ⚠️ Creating default applicationResponse for new response");
+                        }
+
+                        if (incomingResponse.getCommunicationResponse() == null) {
+                            incomingResponse.setCommunicationResponse(ResponseStatus.disabled());
+                            logger.warn("  ⚠️ Creating default communicationResponse for new response");
+                        }
+
+                        server.addResponse(incomingResponse);
+                    }
+                }
+
+                // ✨ Asegurar que solo una respuesta esté marcada como default
+                long defaultCount = server.getResponses().stream()
+                        .mapToLong(r -> r.getIsDefault() ? 1 : 0)
+                        .sum();
+
+                if (defaultCount == 0) {
+                    // Si no hay default, hacer la primera como default
+                    if (!server.getResponses().isEmpty()) {
+                        server.getResponses().get(0).setIsDefault(true);
+                        logger.info("🔧 Set first response as default: {}", server.getResponses().get(0).getMessageType());
+                    }
+                } else if (defaultCount > 1) {
+                    // Si hay múltiples defaults, mantener solo el primero
+                    boolean foundFirst = false;
+                    for (ResponseInfo response : server.getResponses()) {
+                        if (response.getIsDefault() && !foundFirst) {
+                            foundFirst = true;
+                            logger.info("🔧 Keeping {} as default", response.getMessageType());
+                        } else if (response.getIsDefault()) {
+                            response.setIsDefault(false);
+                            logger.info("🔧 Removed default from {}", response.getMessageType());
+                        }
+                    }
+                }
+
+            } else {
+                logger.warn("⚠️ No responses provided in request, keeping server's existing responses");
             }
 
-            server.setIsRunning(serverInfo.getIsRunning());
-            server.setApplicationResponse(serverInfo.getApplicationResponse());
-            server.setCommunicationResponse(serverInfo.getCommunicationResponse());
+            // ✨ Log final state
+            logger.info("✅ Server {} updated successfully. Final state:", serverInfo.serverName);
+            logger.info("  isRunning: {}", server.getIsRunning());
+            server.getResponses().forEach(r ->
+                    logger.info("  response: {} (default: {})", r.getMessageType(), r.getIsDefault())
+            );
 
             // Convert to DTO and return
             ServerDTO dto = convertToDTO(server);
             return ResponseEntity.ok(dto);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("❌ Error modifying server: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(null);
         }
     }
@@ -158,10 +242,16 @@ public class HostController {
     public static class ServerDTO {
         public String serverName;
         public Boolean isRunning;
-        public ResponseStatus applicationResponse;
+        public List<ResponseInfo> responses;
         public ResponseStatus communicationResponse;
         public String hostType;
         public String location;
 
+        public ResponseInfo getDefaultResponse() {
+            return responses.stream()
+                    .filter(ResponseInfo::getIsDefault)
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Not found default response"));
+        }
     }
 }

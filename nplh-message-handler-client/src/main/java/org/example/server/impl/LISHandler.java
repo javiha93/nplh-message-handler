@@ -1,12 +1,12 @@
 package org.example.server.impl;
 
 import org.example.domain.CustomResponse;
+import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
 import org.example.domain.hl7.LIS.LISToNPLH.response.ACK.ACK;
 import org.example.domain.host.host.Connection;
 import org.example.server.HL7Server;
 import org.example.service.IrisService;
-import org.example.utils.HL7LLPCharacters;
 import org.example.utils.MessageLogger;
 import org.example.utils.MockType;
 import org.slf4j.Logger;
@@ -20,26 +20,31 @@ import java.util.UUID;
 
 public class LISHandler extends HL7Server {
 
-    static final Logger logger = LoggerFactory.getLogger(LISHandler.class);
     private final MessageLogger messageLogger;
 
     public LISHandler(String hostName, Connection connection, IrisService irisService) {
         super(hostName, connection, irisService);
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
-        this.applicationResponse = ResponseStatus.enabled();
-        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
-        applicationResponse.setCustomResponse(customResponse);
 
-        this.communicationResponse = ResponseStatus.enabled();
-        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
-        communicationResponse.setCustomResponse(customResponse);
+        CustomResponse customApplicationResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
+        CustomResponse customCommunicationResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
+
+        ResponseInfo scanSlideResponse = ResponseInfo.createCustomResponse("SCAN_SLIDE",
+                ResponseStatus.enabledWithCustomResponse(customApplicationResponse),
+                ResponseStatus.enabledWithCustomResponse(customCommunicationResponse));
+
+        ResponseInfo defaultResponse = ResponseInfo.createDefault(ResponseStatus.disabled(), ResponseStatus.enabledWithCustomResponse(customCommunicationResponse));
+
+        setResponses(List.of(scanSlideResponse, defaultResponse));
     }
 
     @Override
     protected void response(OutputStream outputStream, String receivedMessage) {
         List<String> responses = new ArrayList<>();
+        ResponseInfo responseInfo = getResponseFromMessage(receivedMessage);
 
+        ResponseStatus communicationResponse = responseInfo.getCommunicationResponse();
 
         if (communicationResponse.getIsEnable()) {
             String ack;
@@ -58,6 +63,7 @@ public class LISHandler extends HL7Server {
             responses.add(ack);
         }
 
+        ResponseStatus applicationResponse = responseInfo.getApplicationResponse();
         if (applicationResponse.getIsEnable()) {
             String ack;
             if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
@@ -74,7 +80,15 @@ public class LISHandler extends HL7Server {
             responses.add(ack);
         }
 
-        // Registrar la respuesta
         messageLogger.addServerMessage("", receivedMessage, responses);
+    }
+
+    //Check better option
+    private ResponseInfo getResponseFromMessage(String receivedMessage) {
+        if (receivedMessage.contains("sendScannedSlideImageLabelId")) {
+            return this.getResponseByType("SCAN_SLIDE");
+        } else {
+            return this.getDefaultResponse();
+        }
     }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
-import { Server, ResponseStatus, CustomResponse } from '../../services/ServerService';
+import { Server, ResponseStatus, ResponseInfo, getApplicationResponse, getCommunicationResponse } from '../../services/ServerService';
 
 interface ServerEditModalProps {
   server: Server | null;
@@ -15,6 +15,13 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   onClose, 
   onSave 
 }) => {
+  // ✨ Estado para manejar múltiples respuestas
+  const [responses, setResponses] = useState<ResponseInfo[]>([]);
+  const [selectedResponseIndex, setSelectedResponseIndex] = useState<number>(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✨ Estado para compatibilidad hacia atrás (calculado)
   const [applicationResponse, setApplicationResponse] = useState<ResponseStatus>({
     isEnable: false,
     isError: false,
@@ -27,8 +34,6 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
     errorText: '',
     customResponse: { enabled: false, text: '' }
   });
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // ✨ Determine if ApplicationResponse can be enabled based on hostType
   const isApplicationResponseAllowed = (hostType?: string): boolean => {
@@ -41,53 +46,113 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   useEffect(() => {
     if (server) {
       console.log('🔍 Initializing modal with server data:', server);
-      console.log('🔍 ApplicationResponse from backend:', server.applicationResponse);
-      console.log('🔍 CommunicationResponse from backend:', server.communicationResponse);
-      // ✨ Usar directamente los datos del servidor, con fallbacks seguros
-      const initialAppResponse = {
-        isEnable: server.applicationResponse?.isEnable || false,
-        isError: server.applicationResponse?.isError || false,
-        errorText: server.applicationResponse?.errorText || '',
-        customResponse: {
-          enabled: server.applicationResponse?.customResponse?.useCustomResponse || false,  // ✨ Backend usa 'useCustomResponse'
-          text: server.applicationResponse?.customResponse?.customResponseText || ''         // ✨ Backend usa 'customResponseText'
-        }
-      };
+      console.log('🔍 Server responses from backend:', server.responses);
       
-      // ✨ If hostType is restricted, force ApplicationResponse to disabled
-      if (!isApplicationResponseAllowed(server.hostType)) {
-        initialAppResponse.isEnable = false;
-        initialAppResponse.isError = false;
-        initialAppResponse.errorText = '';
-        // ✨ Preservar el texto pero deshabilitar customResponse
-        initialAppResponse.customResponse = { 
-          enabled: false, 
-          text: initialAppResponse.customResponse?.text || '' 
+      // Initialize responses array from server.responses
+      if (server.responses && server.responses.length > 0) {
+        const initialResponses = server.responses.map(responseInfo => ({
+          messageType: responseInfo.messageType,
+          isDefault: responseInfo.isDefault,
+          applicationResponse: {
+            isEnable: responseInfo.applicationResponse?.isEnable || false,
+            isError: responseInfo.applicationResponse?.isError || false,
+            errorText: responseInfo.applicationResponse?.errorText || '',
+            customResponse: {
+              enabled: responseInfo.applicationResponse?.customResponse?.useCustomResponse || false,
+              text: responseInfo.applicationResponse?.customResponse?.customResponseText || ''
+            }
+          },
+          communicationResponse: {
+            isEnable: responseInfo.communicationResponse?.isEnable || false,
+            isError: responseInfo.communicationResponse?.isError || false,
+            errorText: responseInfo.communicationResponse?.errorText || '',
+            customResponse: {
+              enabled: responseInfo.communicationResponse?.customResponse?.useCustomResponse || false,
+              text: responseInfo.communicationResponse?.customResponse?.customResponseText || ''
+            }
+          }
+        }));
+        
+        setResponses(initialResponses);
+        setSelectedResponseIndex(0); // Select first response by default
+        
+        // Set individual responses for backward compatibility
+        if (initialResponses.length > 0) {
+          const firstResponse = initialResponses[0];
+          
+          // Apply restrictions for applicationResponse if needed
+          const appResponse = { ...firstResponse.applicationResponse };
+          if (!isApplicationResponseAllowed(server.hostType)) {
+            appResponse.isEnable = false;
+            appResponse.isError = false;
+            appResponse.errorText = '';
+            appResponse.customResponse = { 
+              enabled: false, 
+              text: appResponse.customResponse?.text || '' 
+            };
+          }
+          
+          setApplicationResponse(appResponse);
+          setCommunicationResponse(firstResponse.communicationResponse);
+        }
+      } else {
+        // Fallback to legacy single response mode
+        console.log('🔍 ApplicationResponse from backend:', server.applicationResponse);
+        console.log('🔍 CommunicationResponse from backend:', server.communicationResponse);
+        
+        // ✨ Usar las funciones helper para obtener las respuestas por defecto
+        const serverAppResponse = getApplicationResponse(server);
+        const serverCommResponse = getCommunicationResponse(server);
+        
+        const initialAppResponse = {
+          isEnable: serverAppResponse.isEnable || false,
+          isError: serverAppResponse.isError || false,
+          errorText: serverAppResponse.errorText || '',
+          customResponse: {
+            enabled: serverAppResponse.customResponse?.useCustomResponse || false,
+            text: serverAppResponse.customResponse?.customResponseText || ''
+          }
         };
+        
+        // ✨ If hostType is restricted, force ApplicationResponse to disabled
+        if (!isApplicationResponseAllowed(server.hostType)) {
+          initialAppResponse.isEnable = false;
+          initialAppResponse.isError = false;
+          initialAppResponse.errorText = '';
+          // ✨ Preservar el texto pero deshabilitar customResponse
+          initialAppResponse.customResponse = { 
+            enabled: false, 
+            text: initialAppResponse.customResponse?.text || '' 
+          };
+        }
+        
+        setApplicationResponse(initialAppResponse);
+        
+        // ✨ Usar la función helper para communicationResponse
+        const initialCommResponse = {
+          isEnable: serverCommResponse.isEnable || false,
+          isError: serverCommResponse.isError || false,
+          errorText: serverCommResponse.errorText || '',
+          customResponse: {
+            enabled: serverCommResponse.customResponse?.useCustomResponse || false,
+            text: serverCommResponse.customResponse?.customResponseText || ''
+          }
+        };
+
+        setCommunicationResponse(initialCommResponse);
+        
+        // Create a single response entry for compatibility
+        setResponses([{
+          messageType: 'Default',
+          isDefault: true,
+          applicationResponse: initialAppResponse,
+          communicationResponse: initialCommResponse
+        }]);
+        setSelectedResponseIndex(0);
       }
       
-      setApplicationResponse(initialAppResponse);
-      
-      // ✨ Usar directamente los datos del servidor para comunicationResponse
-      const initialCommResponse = {
-        isEnable: server.communicationResponse?.isEnable || false,
-        isError: server.communicationResponse?.isError || false,
-        errorText: server.communicationResponse?.errorText || '',
-        customResponse: {
-          enabled: server.communicationResponse?.customResponse?.useCustomResponse || false,  // ✨ Backend usa 'useCustomResponse'
-          text: server.communicationResponse?.customResponse?.customResponseText || ''         // ✨ Backend usa 'customResponseText'
-        }
-      };
-
-      setCommunicationResponse(initialCommResponse);
       setError(null);
-
-      console.log('✅ Initialized ApplicationResponse:', initialAppResponse);
-      console.log('✅ Initialized CommunicationResponse:', initialCommResponse);
-      console.log('🔍 Backend customResponse mapping:', {
-        appCustomResponse: server.applicationResponse?.customResponse,
-        commCustomResponse: server.communicationResponse?.customResponse
-      });
+      console.log('✅ Modal initialization complete');
     }
   }, [server]);
 
@@ -98,13 +163,48 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
     setError(null);
     
     try {
+      // Update the selected response with current form values
+      const updatedResponses = [...responses];
+      if (updatedResponses[selectedResponseIndex]) {
+        updatedResponses[selectedResponseIndex] = {
+          ...updatedResponses[selectedResponseIndex],
+          applicationResponse: {
+            isEnable: applicationResponse.isEnable,
+            isError: applicationResponse.isError,
+            errorText: applicationResponse.errorText,
+            customResponse: applicationResponse.customResponse?.enabled ? {
+              useCustomResponse: true,
+              customResponseText: applicationResponse.customResponse?.text || ''
+            } : {
+              useCustomResponse: false,
+              customResponseText: applicationResponse.customResponse?.text || ''
+            }
+          },
+          communicationResponse: {
+            isEnable: communicationResponse.isEnable,
+            isError: communicationResponse.isError,
+            errorText: communicationResponse.errorText,
+            customResponse: communicationResponse.customResponse?.enabled ? {
+              useCustomResponse: true,
+              customResponseText: communicationResponse.customResponse?.text || ''
+            } : {
+              useCustomResponse: false,
+              customResponseText: communicationResponse.customResponse?.text || ''
+            }
+          }
+        };
+      }
+
       const serverData: Partial<Server> = {
         serverName: server.serverName,
         isRunning: server.isRunning,
+        responses: updatedResponses,
+        // Keep backward compatibility for legacy servers
         applicationResponse,
         communicationResponse
       };
       
+      console.log('🚀 Saving server data:', serverData);
       await onSave(serverData);
       onClose();
     } catch (err) {
@@ -268,6 +368,52 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Response Selector */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Response to Edit:
+            </label>
+              <select
+                value={selectedResponseIndex}
+                onChange={(e) => {
+                  const newIndex = parseInt(e.target.value);
+                  setSelectedResponseIndex(newIndex);
+                  
+                  // Update individual response states when selection changes
+                  const selectedResponse = responses[newIndex];
+                  if (selectedResponse) {
+                    // Apply restrictions for applicationResponse if needed
+                    const appResponse = { ...selectedResponse.applicationResponse };
+                    if (!isApplicationResponseAllowed(server.hostType)) {
+                      appResponse.isEnable = false;
+                      appResponse.isError = false;
+                      appResponse.errorText = '';
+                      appResponse.customResponse = { 
+                        enabled: false, 
+                        text: appResponse.customResponse?.text || '' 
+                      };
+                    }
+                    
+                    setApplicationResponse(appResponse);
+                    setCommunicationResponse(selectedResponse.communicationResponse);
+                  }
+                }}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {responses.map((response, index) => (
+                  <option key={index} value={index}>
+                    {response.messageType} {response.isDefault ? '(Default)' : ''}
+                  </option>
+                ))}
+              </select>
+              {responses[selectedResponseIndex] && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Editing: <span className="font-medium">{responses[selectedResponseIndex].messageType}</span>
+                  {responses[selectedResponseIndex].isDefault && <span className="text-blue-600 font-medium"> (Default Response)</span>}
+                </p>
+              )}
+            </div>
+
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center space-x-2">

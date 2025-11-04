@@ -11,24 +11,54 @@ export interface ResponseStatus {
   isEnable?: boolean;
   isError?: boolean;
   errorText?: string;
-  customResponse?: CustomResponse; // ✨ Ahora es un objeto con enabled y text
+  customResponse?: CustomResponse;
+}
+
+// ✨ Nueva interfaz para ResponseInfo
+export interface ResponseInfo {
+  messageType: string;
+  isDefault: boolean;
+  applicationResponse: ResponseStatus;
+  communicationResponse: ResponseStatus;
 }
 
 export interface Server {
   serverName?: string;
-  applicationResponse?: ResponseStatus; // ✨ Corregido para coincidir con backend
-  communicationResponse?: ResponseStatus;
+  isRunning?: boolean;
+  responses?: ResponseInfo[]; // ✨ Nueva estructura principal
   hostType?: string;
   location?: string;
+  // ✨ Propiedades de compatibilidad hacia atrás (calculadas)
+  applicationResponse?: ResponseStatus;
+  communicationResponse?: ResponseStatus;
   // Fallback properties for display
   name?: string;
   hostName?: string;
   id?: string;
-  isRunning?: boolean;
   status?: 'running' | 'stopped' | 'unknown';
   port?: number;
-  [key: string]: any; // Para otras propiedades que puedan existir
+  [key: string]: any;
 }
+
+// ✨ Helper functions para trabajar con la nueva estructura
+export const getDefaultResponse = (server: Server): ResponseInfo | null => {
+  return server.responses?.find(response => response.isDefault) || null;
+};
+
+export const getResponseByType = (server: Server, messageType: string): ResponseInfo | null => {
+  return server.responses?.find(response => response.messageType === messageType) || null;
+};
+
+// ✨ Funciones de compatibilidad hacia atrás
+export const getApplicationResponse = (server: Server): ResponseStatus => {
+  const defaultResponse = getDefaultResponse(server);
+  return defaultResponse?.applicationResponse || { isEnable: false, isError: false, errorText: '', customResponse: { enabled: false, text: '' } };
+};
+
+export const getCommunicationResponse = (server: Server): ResponseStatus => {
+  const defaultResponse = getDefaultResponse(server);
+  return defaultResponse?.communicationResponse || { isEnable: false, isError: false, errorText: '', customResponse: { enabled: false, text: '' } };
+};
 
 // Base URL for backend API calls
 const API_HOST_URL = 'http://localhost:8085/api/hosts';
@@ -67,10 +97,18 @@ class ServerService {
       const servers: Server[] = await response.json();
       console.log('Received servers from backend:', servers);
       
-      // Cache the servers
-      this.cachedServers = servers;
+      // ✨ Procesar servidores para agregar propiedades de compatibilidad
+      const processedServers = servers.map(server => ({
+        ...server,
+        // ✨ Agregar propiedades de compatibilidad hacia atrás
+        applicationResponse: getApplicationResponse(server),
+        communicationResponse: getCommunicationResponse(server)
+      }));
       
-      return servers;
+      // Cache the servers
+      this.cachedServers = processedServers;
+      
+      return processedServers;
     } catch (error) {
       console.error('Error fetching servers:', error);
       
@@ -124,30 +162,42 @@ class ServerService {
    */
   async modifyServer(serverData: Partial<Server>): Promise<Server> {
     try {
-      // ✨ Convertir datos del frontend al formato del backend
+      // ✨ Convertir datos del frontend a la nueva estructura del backend
+      let responses: ResponseInfo[] = [];
+      
+      if (serverData.responses) {
+        // Si ya tiene la nueva estructura, usarla directamente
+        responses = serverData.responses;
+      } else if (serverData.applicationResponse || serverData.communicationResponse) {
+        // Compatibilidad hacia atrás: convertir de la estructura antigua
+        responses = [{
+          messageType: "ACK",
+          isDefault: true,
+          applicationResponse: {
+            isEnable: serverData.applicationResponse?.isEnable || false,
+            isError: serverData.applicationResponse?.isError || false,
+            errorText: serverData.applicationResponse?.errorText || '',
+            customResponse: {
+              useCustomResponse: serverData.applicationResponse?.customResponse?.enabled || false,
+              customResponseText: serverData.applicationResponse?.customResponse?.text || ''
+            }
+          },
+          communicationResponse: {
+            isEnable: serverData.communicationResponse?.isEnable || false,
+            isError: serverData.communicationResponse?.isError || false,
+            errorText: serverData.communicationResponse?.errorText || '',
+            customResponse: {
+              useCustomResponse: serverData.communicationResponse?.customResponse?.enabled || false,
+              customResponseText: serverData.communicationResponse?.customResponse?.text || ''
+            }
+          }
+        }];
+      }
+
       const completeServerData = {
         serverName: serverData.serverName,
         isRunning: serverData.isRunning || false,
-        applicationResponse: {
-          isEnable: serverData.applicationResponse?.isEnable || false,
-          isError: serverData.applicationResponse?.isError || false,
-          errorText: serverData.applicationResponse?.errorText || '',
-          customResponse: {
-            // ✨ Convertir propiedades del frontend al formato del backend
-            useCustomResponse: serverData.applicationResponse?.customResponse?.enabled || false,
-            customResponseText: serverData.applicationResponse?.customResponse?.text || ''
-          }
-        },
-        communicationResponse: {
-          isEnable: serverData.communicationResponse?.isEnable || false,
-          isError: serverData.communicationResponse?.isError || false,
-          errorText: serverData.communicationResponse?.errorText || '',
-          customResponse: {
-            // ✨ Convertir propiedades del frontend al formato del backend
-            useCustomResponse: serverData.communicationResponse?.customResponse?.enabled || false,
-            customResponseText: serverData.communicationResponse?.customResponse?.text || ''
-          }
-        },
+        responses: responses,
         hostType: serverData.hostType || '',
         location: serverData.location || ''
       };
@@ -169,15 +219,22 @@ class ServerService {
       const updatedServer = await response.json();
       console.log('Server modified successfully:', updatedServer);
 
+      // ✨ Procesar el servidor actualizado para agregar propiedades de compatibilidad
+      const processedServer = {
+        ...updatedServer,
+        applicationResponse: getApplicationResponse(updatedServer),
+        communicationResponse: getCommunicationResponse(updatedServer)
+      };
+
       // Update cached servers
       const serverIndex = this.cachedServers.findIndex(s => 
         (s.serverName || s.name || s.hostName) === serverData.serverName
       );
       if (serverIndex >= 0) {
-        this.cachedServers[serverIndex] = updatedServer;
+        this.cachedServers[serverIndex] = processedServer;
       }
       
-      return updatedServer;
+      return processedServer;
     } catch (error) {
       console.error('Error modifying server:', error);
       throw error;

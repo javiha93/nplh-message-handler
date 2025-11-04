@@ -28,7 +28,7 @@ public class VSSHandler extends SoapHandler {
     protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
         List<String> responses = new ArrayList<>();
 
-        ResponseStatus communicationStatus = server.getCommunicationResponse();
+        ResponseStatus communicationStatus = server.getDefaultResponse().getCommunicationResponse();
         if (communicationStatus.getIsEnable()) {
 
             String soapResponse = "";

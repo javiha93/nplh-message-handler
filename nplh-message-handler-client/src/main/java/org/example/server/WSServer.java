@@ -1,9 +1,12 @@
 package org.example.server;
 import com.sun.net.httpserver.HttpServer;
+import org.apache.catalina.util.ServerInfo;
 import org.example.client.Clients;
 import org.example.client.WSClient;
+import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
 import org.example.domain.host.host.Connection;
+import org.example.domain.server.ServerStatus;
 import org.example.server.impl.*;
 import org.example.service.IrisService;
 import org.example.utils.MessageLogger;
@@ -32,11 +35,14 @@ public class WSServer extends Server {
         this.hostType = hostType;
         this.connection = connection;
         this.serverName = serverName;
-        this.communicationResponse = ResponseStatus.enabled();
-        this.applicationResponse = ResponseStatus.disabled();
+
+        ResponseStatus communicationResponse = ResponseStatus.enabled();
+        ResponseStatus applicationResponse = ResponseStatus.disabled();
         if (hostType.equals("VTG")) {
-            this.applicationResponse = ResponseStatus.enabled();
+            applicationResponse = ResponseStatus.enabled();
         }
+
+        setDefaultResponse(ResponseInfo.createDefault(applicationResponse, communicationResponse));
 
         this.isRunning = false;
 

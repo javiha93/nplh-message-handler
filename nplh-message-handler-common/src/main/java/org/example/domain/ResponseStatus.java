@@ -36,7 +36,19 @@ public class ResponseStatus {
     }
 
     public static ResponseStatus enabledWithCustomResponse(String customResponse) {
-        return new ResponseStatus(true, true, "", CustomResponse.enabled(customResponse));
+        return new ResponseStatus(true, false, "", CustomResponse.enabled(customResponse));
+    }
+
+    public static ResponseStatus enabledWithCustomResponse(CustomResponse customResponse) {
+        return new ResponseStatus(true, false, "", customResponse);
+    }
+
+    public static ResponseStatus disabledWithCustomResponse(String customResponse) {
+        return new ResponseStatus(false, false, "", CustomResponse.enabled(customResponse));
+    }
+
+    public static ResponseStatus disabledWithCustomResponse(CustomResponse customResponse) {
+        return new ResponseStatus(false, false, "", customResponse);
     }
 
     public Boolean hasErrorText() { return !errorText.isEmpty();}
