@@ -70,7 +70,7 @@ public class VTGWSHandler extends SoapHandler {
             if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
                 soapResponse = applicationResponse.getCustomResponse().getCustomResponseText();
                 soapResponse = soapResponse.replace("*originalControlId*", getTransactionId(messageReceived));
-                soapResponse = soapResponse.replace("*originalControlId*", UUID.randomUUID().toString());
+                soapResponse = soapResponse.replace("*controlId*", UUID.randomUUID().toString());
             } else if (applicationResponse.getIsError()) {
                 ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdError(getTransactionId(messageReceived), applicationResponse.getErrorText());
                 soapResponse = processApplicationACK.toString();

@@ -228,11 +228,12 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   const renderHighlightedText = (text: string) => {
     if (!text) return text;
     
-    const parts = text.split(/(\*originalControlId\*)/g);
+    // ✨ Buscar tanto *originalControlId* como *controlId*
+    const parts = text.split(/(\*originalControlId\*|\*controlId\*)/g);
     return (
       <>
         {parts.map((part, index) => (
-          part === '*originalControlId*' ? (
+          (part === '*originalControlId*' || part === '*controlId*') ? (
             <span key={index} className="bg-yellow-200 text-yellow-800 font-semibold px-1 rounded">
               {part}
             </span>
@@ -242,6 +243,11 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
         ))}
       </>
     );
+  };
+
+  // ✨ Helper function para verificar si el texto contiene control IDs
+  const hasControlId = (text: string): boolean => {
+    return Boolean(text && (text.includes('*originalControlId*') || text.includes('*controlId*')));
   };
 
   if (!isOpen || !server) return null;
@@ -333,19 +339,21 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
                       rows={4}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono resize-vertical min-h-[100px]"
                       style={{
-                        background: (applicationResponse.customResponse?.text || '').includes('*originalControlId*') 
+                        background: hasControlId(applicationResponse.customResponse?.text || '') 
                           ? 'linear-gradient(90deg, rgba(254, 249, 195, 0.3) 0%, rgba(254, 249, 195, 0.1) 100%)'
                           : 'white'
                       }}
                     />
-                    {(applicationResponse.customResponse?.text || '').includes('*originalControlId*') && (
-                      <div className="absolute top-1 right-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded font-semibold">
-                        ⚡ Dynamic ID
-                      </div>
-                    )}
                   </div>
+                  {hasControlId(applicationResponse.customResponse?.text || '') && (
+                    <div className="flex items-center justify-end mt-1">
+                      <div className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium border border-yellow-200">
+                        ⚡ Dynamic ID detected
+                      </div>
+                    </div>
+                  )}
                   <div className="text-xs text-gray-400 mt-1">
-                    Tip: Use <code className="bg-yellow-100 px-1 rounded">*originalControlId*</code> as placeholder for dynamic message ID replacement
+                    Tip: Use <code className="bg-yellow-100 px-1 rounded">*originalControlId*</code> and <code className="bg-yellow-100 px-1 rounded">*controlId*</code> as placeholders for dynamic message ID replacement
                   </div>
                 </div>
               )}
@@ -409,19 +417,21 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
                       rows={4}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono resize-vertical min-h-[100px]"
                       style={{
-                        background: (communicationResponse.customResponse?.text || '').includes('*originalControlId*') 
+                        background: hasControlId(communicationResponse.customResponse?.text || '') 
                           ? 'linear-gradient(90deg, rgba(254, 249, 195, 0.3) 0%, rgba(254, 249, 195, 0.1) 100%)'
                           : 'white'
                       }}
                     />
-                    {(communicationResponse.customResponse?.text || '').includes('*originalControlId*') && (
-                      <div className="absolute top-1 right-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded font-semibold">
-                        ⚡ Dynamic ID
-                      </div>
-                    )}
                   </div>
+                  {hasControlId(communicationResponse.customResponse?.text || '') && (
+                    <div className="flex items-center justify-end mt-1">
+                      <div className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium border border-yellow-200">
+                        ⚡ Dynamic ID detected
+                      </div>
+                    </div>
+                  )}
                   <div className="text-xs text-gray-400 mt-1">
-                    Tip: Use <code className="bg-yellow-100 px-1 rounded">*originalControlId*</code> as placeholder for dynamic message ID replacement
+                    Tip: Use <code className="bg-yellow-100 px-1 rounded">*originalControlId*</code> and <code className="bg-yellow-100 px-1 rounded">*controlId*</code> as placeholders for dynamic message ID replacement
                   </div>
                 </div>
               )}
