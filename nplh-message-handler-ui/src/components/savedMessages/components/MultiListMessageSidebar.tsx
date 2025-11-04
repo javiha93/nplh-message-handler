@@ -79,7 +79,6 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   const [ackTimeout, setAckTimeout] = useState<number | null>(null);
   const [ackWaitTime, setAckWaitTime] = useState<number>(3); // Default 3 seconds
   const [showAckConfig, setShowAckConfig] = useState<boolean>(false);
-
   const [width, setWidth] = useState<number>(384);
   const [isResizing, setIsResizing] = useState(false);
   const isResizingRef = useRef(false);
@@ -151,8 +150,12 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
       document.removeEventListener('mousemove', resize);
       document.removeEventListener('mouseup', stopResizing);
       document.body.style.cursor = '';
+      // Cleanup timeout on unmount
+      if (ackTimeout) {
+        clearTimeout(ackTimeout);
+      }
     };
-  }, []);
+  }, [ackTimeout]);
 
   if (!isOpen) return null;
   
@@ -314,14 +317,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     }
   };
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (ackTimeout) {
-        clearTimeout(ackTimeout);
-      }
-    };
-  }, [ackTimeout]);  const handleClearAllResponses = async () => {
+  const handleClearAllResponses = async () => {
     try {
       // Call backend to delete all messages
       await messageService.deleteAllMessages();
@@ -745,7 +741,10 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                     step="0.5"
                     value={ackWaitTime}
                     onChange={(e) => setAckWaitTime(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((ackWaitTime - 0.5) / 6.5) * 100}%, #E5E7EB ${((ackWaitTime - 0.5) / 6.5) * 100}%, #E5E7EB 100%)`
+                    }}
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
                     <span>0.5s</span>
@@ -766,36 +765,5 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     </div>
   );
 };
-
-// Inline styles for the custom slider
-const sliderStyles = `
-  .slider::-webkit-slider-thumb {
-    appearance: none;
-    height: 16px;
-    width: 16px;
-    border-radius: 50%;
-    background: #3B82F6;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  }
-  
-  .slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #3B82F6;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  }
-`;
-
-// Add the styles to the document head if not already added
-if (typeof window !== 'undefined' && !document.getElementById('slider-styles')) {
-  const style = document.createElement('style');
-  style.id = 'slider-styles';
-  style.textContent = sliderStyles;
-  document.head.appendChild(style);
-}
 
 export default MessageSidebar;
