@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +34,7 @@ public class VTGWSHandler extends SoapHandler {
         CustomResponse customResponse = CustomResponse.disabled(buildSoapEnvelope(CommunicationResponse.FromSoapActionOk("soapAction").toString(), "VANTAGE WS"));
         server.getCommunicationResponse().setCustomResponse(customResponse);
 
-        customResponse = CustomResponse.disabled(ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*").toString());
+        customResponse = CustomResponse.disabled(ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*", "*controlId*").toString());
         server.getApplicationResponse().setCustomResponse(customResponse);
     }
 
@@ -68,7 +69,8 @@ public class VTGWSHandler extends SoapHandler {
             String transactionId = "";
             if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
                 soapResponse = applicationResponse.getCustomResponse().getCustomResponseText();
-                soapResponse = soapResponse.replace("*originalControlId*",getTransactionId(messageReceived));
+                soapResponse = soapResponse.replace("*originalControlId*", getTransactionId(messageReceived));
+                soapResponse = soapResponse.replace("*originalControlId*", UUID.randomUUID().toString());
             } else if (applicationResponse.getIsError()) {
                 ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdError(getTransactionId(messageReceived), applicationResponse.getErrorText());
                 soapResponse = processApplicationACK.toString();

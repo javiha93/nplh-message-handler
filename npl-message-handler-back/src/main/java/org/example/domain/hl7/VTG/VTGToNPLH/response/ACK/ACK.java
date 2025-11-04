@@ -16,6 +16,15 @@ public class ACK extends HL7Segment {
         return ack;
     }
 
+    public static ACK CommunicationOK(String originalControlId, String controlId){
+        ACK ack = new ACK();
+
+        ack.msh = MSH.Default(controlId);
+        ack.msa = MSA.CommunicationOK(originalControlId);
+
+        return ack;
+    }
+
     public static ACK CommunicationError(String originalControlId, String error){
         ACK ack = new ACK();
 
@@ -30,6 +39,15 @@ public class ACK extends HL7Segment {
         ACK ack = new ACK();
 
         ack.msh = MSH.Default();
+        ack.msa = MSA.ApplicationOK(originalControlId);
+
+        return ack;
+    }
+
+    public static ACK ApplicationOK(String originalControlId, String controlId){
+        ACK ack = new ACK();
+
+        ack.msh = MSH.Default(controlId);
         ack.msa = MSA.ApplicationOK(originalControlId);
 
         return ack;

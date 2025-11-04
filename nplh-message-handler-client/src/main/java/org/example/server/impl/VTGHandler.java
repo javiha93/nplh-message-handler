@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class VTGHandler extends HL7Server {
     private final MessageLogger messageLogger;
@@ -23,11 +24,11 @@ public class VTGHandler extends HL7Server {
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         this.applicationResponse = ResponseStatus.enabled();
-        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*").toString());
+        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
         applicationResponse.setCustomResponse(customResponse);
 
         this.communicationResponse = ResponseStatus.disabled();
-        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*").toString());
+        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
         communicationResponse.setCustomResponse(customResponse);
     }
 
@@ -41,6 +42,7 @@ public class VTGHandler extends HL7Server {
             if (communicationResponse.getCustomResponse().getUseCustomResponse()) {
                 ack = communicationResponse.getCustomResponse().getCustomResponseText();
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
+                ack = ack.replace("*controlId*", UUID.randomUUID().toString());
             } else if (communicationResponse.getIsError()) {
                 ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
             } else {
@@ -55,6 +57,7 @@ public class VTGHandler extends HL7Server {
             if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
                 ack = applicationResponse.getCustomResponse().getCustomResponseText();
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
+                ack = ack.replace("*controlId*", UUID.randomUUID().toString());
             } else if (applicationResponse.getIsError()) {
                 ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
             } else {

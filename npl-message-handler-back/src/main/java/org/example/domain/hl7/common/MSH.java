@@ -57,6 +57,14 @@ public class MSH extends HL7Segment {
         return msh;
     }
 
+    public static MSH Default(String controlId)
+    {
+        MSH msh = MSH.Default();
+        msh.setMessageControlID(controlId);
+
+        return msh;
+    }
+
     public static MSH Default(MSH msh)
     {
         msh.sendingApplication = "LIS";

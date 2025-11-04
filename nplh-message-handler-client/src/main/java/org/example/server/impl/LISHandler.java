@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class LISHandler extends HL7Server {
 
@@ -27,11 +28,11 @@ public class LISHandler extends HL7Server {
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         this.applicationResponse = ResponseStatus.enabled();
-        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*").toString());
+        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
         applicationResponse.setCustomResponse(customResponse);
 
         this.communicationResponse = ResponseStatus.enabled();
-        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*").toString());
+        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
         communicationResponse.setCustomResponse(customResponse);
     }
 
@@ -39,27 +40,38 @@ public class LISHandler extends HL7Server {
     protected void response(OutputStream outputStream, String receivedMessage) {
         List<String> responses = new ArrayList<>();
 
+
         if (communicationResponse.getIsEnable()) {
-            ACK ack;
-            if (communicationResponse.getIsError()) {
-                ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText());
-            } else {
-                ack = ACK.CommunicationOK(extractUUID(receivedMessage));
-            }
-            sendResponse(outputStream, formatHL7Response(ack.toString()));
+            String ack;
 
-            responses.add(ack.toString());
+            if (communicationResponse.getCustomResponse().getUseCustomResponse()) {
+                ack = communicationResponse.getCustomResponse().getCustomResponseText();
+                ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
+                ack = ack.replace("*controlId*", UUID.randomUUID().toString());
+            } else if (communicationResponse.getIsError()) {
+                ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
+            } else {
+                ack = ACK.CommunicationOK(extractUUID(receivedMessage)).toString();
+            }
+            sendResponse(outputStream, formatHL7Response(ack));
+
+            responses.add(ack);
         }
-        if (applicationResponse.getIsEnable()) {
-            ACK ack;
-            if (applicationResponse.getIsError()) {
-                ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText());
-            } else {
-                ack = ACK.ApplicationOK(extractUUID(receivedMessage));
-            }
-            sendResponse(outputStream, formatHL7Response(ack.toString()));
 
-            responses.add(ack.toString());
+        if (applicationResponse.getIsEnable()) {
+            String ack;
+            if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
+                ack = applicationResponse.getCustomResponse().getCustomResponseText();
+                ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
+                ack = ack.replace("*controlId*", UUID.randomUUID().toString());
+            } else if (applicationResponse.getIsError()) {
+                ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
+            } else {
+                ack = ACK.ApplicationOK(extractUUID(receivedMessage)).toString();
+            }
+            sendResponse(outputStream, formatHL7Response(ack));
+
+            responses.add(ack);
         }
 
         // Registrar la respuesta

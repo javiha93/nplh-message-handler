@@ -25,6 +25,16 @@ public class ProcessApplicationACK extends WSSegment {
         return processApplicationACK;
     }
 
+    public static ProcessApplicationACK FromOriginalTransactionIdOk(String originalTransactionId, String controlId) {
+        ProcessApplicationACK processApplicationACK = new ProcessApplicationACK();
+
+        processApplicationACK.setOriginalTransactionId(originalTransactionId);
+        processApplicationACK.setTransactionId(controlId);
+        processApplicationACK.setStatus(true);
+
+        return processApplicationACK;
+    }
+
     public static ProcessApplicationACK FromOriginalTransactionIdError(String originalTransactionId, String errorCode, String errorDescription) {
         ProcessApplicationACK processApplicationACK = FromOriginalTransactionIdError(originalTransactionId, errorDescription);
         processApplicationACK.setErrorCode(errorCode);

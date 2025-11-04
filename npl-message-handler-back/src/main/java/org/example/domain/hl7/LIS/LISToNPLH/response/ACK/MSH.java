@@ -20,6 +20,14 @@ public class MSH extends org.example.domain.hl7.common.MSH {
         return msh;
     }
 
+    public static MSH Default(String controlID)
+    {
+        MSH msh = MSH.Default();
+        msh.setMessageControlID(controlID);
+
+        return msh;
+    }
+
     @Override
     public String toString() {
         String value = "MSH|^~\\&|" +
