@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit, MessageCircle } from 'lucide-react';
+import { X, Send, Trash, ChevronDown, ChevronRight, RotateCcw, GripVertical, Edit, MessageCircle, MoreHorizontal } from 'lucide-react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 import { SavedMessage, MessageList, messageListsService } from '../services/MessageListsService';
 import { parseResponse, isErrorResponse as utilIsErrorResponse } from '../../../utils/responseFormatUtils';
@@ -74,6 +74,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   const [lists, setLists] = useState<MessageList[]>([]);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [isSendingAll, setIsSendingAll] = useState(false);
+  const [isSendingWithACK, setIsSendingWithACK] = useState(false);
+  const [currentSendingIndex, setCurrentSendingIndex] = useState<number>(-1);
+  const [ackTimeout, setAckTimeout] = useState<number | null>(null);
+  const [ackWaitTime, setAckWaitTime] = useState<number>(3); // Default 3 seconds
+  const [showAckConfig, setShowAckConfig] = useState<boolean>(false);
 
   const [width, setWidth] = useState<number>(384);
   const [isResizing, setIsResizing] = useState(false);
@@ -214,7 +219,109 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
     } finally {
       setIsSendingAll(false);
     }
-  };  const handleClearAllResponses = async () => {
+  };
+
+  const handleSendWithWaitingACK = async () => {
+    if (savedMessages.length === 0) return;
+    
+    setIsSendingWithACK(true);
+    setCurrentSendingIndex(0);
+    
+    const sendNextMessage = async (index: number): Promise<void> => {
+      if (index >= savedMessages.length) {
+        // Finished sending all messages
+        setIsSendingWithACK(false);
+        setCurrentSendingIndex(-1);
+        return;
+      }
+
+      const message = savedMessages[index];
+      setCurrentSendingIndex(index);
+      
+      try {
+        console.log(`🚀 Sending message ${index + 1}/${savedMessages.length}: ${message.messageType}`);
+        const responses = await messageListsService.sendMessage(message);
+        
+        // Debug: log all responses
+        console.log(`📨 Received ${responses.length} response(s) for message ${index + 1}:`);
+        responses.forEach((response, i) => {
+          console.log(`  Response ${i + 1}:`, response.message);
+        });
+        
+        // Check if we received any ACK response (HL7, SOAP/XML, or other success indicators)
+        const hasACK = responses && responses.length > 0 && responses.some(response => {
+          if (!response.message) return false;
+          
+          const message = response.message.toLowerCase();
+          
+          // HL7 ACK patterns
+          if (message.includes('ack') || message.includes('msa') || message.includes('acknowledgment')) {
+            return true;
+          }
+          
+          // SOAP/XML success patterns
+          if (message.includes('<issuccessful>')) {
+            return true;
+          }
+          if (message.includes('<succeed>')) {
+            return true;
+          }
+          
+          // Other success patterns
+          if (message.includes('success') && !message.includes('false')) {
+            return true;
+          }
+          
+          // HTTP success status codes in text responses
+          if (message.includes('200 ok') || message.includes('status: 200')) {
+            return true;
+          }
+          
+          return false;
+        });
+        
+        if (hasACK) {
+          console.log(`✅ ACK received for message ${index + 1}, sending next immediately`);
+          // ACK received, send next message immediately
+          setTimeout(() => sendNextMessage(index + 1), 100); // Small delay for UI update
+        } else {
+          console.log(`⏳ No ACK received for message ${index + 1}, waiting ${ackWaitTime} seconds`);
+          // No ACK received, wait configured time before sending next message
+          const timeoutId = window.setTimeout(() => {
+            console.log(`⏰ ${ackWaitTime} seconds elapsed, sending next message ${index + 2}`);
+            sendNextMessage(index + 1);
+          }, ackWaitTime * 1000);
+          setAckTimeout(timeoutId);
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error sending message ${index + 1}:`, error);
+        // On error, wait configured time and continue
+        const timeoutId = window.setTimeout(() => {
+          console.log(`🔄 Retrying after error, sending message ${index + 2}`);
+          sendNextMessage(index + 1);
+        }, ackWaitTime * 1000);
+        setAckTimeout(timeoutId);
+      }
+    };
+    
+    try {
+      await sendNextMessage(0);
+    } catch (error) {
+      console.error('Error in send with waiting ACK process:', error);
+      setIsSendingWithACK(false);
+      setCurrentSendingIndex(-1);
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (ackTimeout) {
+        clearTimeout(ackTimeout);
+      }
+    };
+  }, [ackTimeout]);  const handleClearAllResponses = async () => {
     try {
       // Call backend to delete all messages
       await messageService.deleteAllMessages();
@@ -577,24 +684,118 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
         )}
       </div>
 
-      {/* Footer con botón de enviar todos */}
+      {/* Footer con botones de envío */}
       {savedMessages.length > 0 && (
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-gray-200 space-y-2">
+          {/* Send All button */}
           <button
             onClick={handleSendAllMessages}
-            disabled={isSendingAll}
+            disabled={isSendingAll || isSendingWithACK}
             className={`w-full py-2 px-3 rounded-lg text-white font-medium transition-colors text-sm ${
-              isSendingAll
+              isSendingAll || isSendingWithACK
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-green-600 hover:bg-green-700'
             }`}
           >
-            {isSendingAll ? 'Enviando...' : `Enviar Todos (${savedMessages.length})`}
+            {isSendingAll ? 'Sending...' : `Send All (${savedMessages.length})`}
           </button>
+          
+          {/* Send Waiting ACK button with configuration */}
+          <div className="relative">
+            <div className="flex">
+              <button
+                onClick={handleSendWithWaitingACK}
+                disabled={isSendingAll || isSendingWithACK}
+                className={`flex-1 py-2 px-3 rounded-l-lg text-white font-medium transition-colors text-sm ${
+                  isSendingAll || isSendingWithACK
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isSendingWithACK 
+                  ? `Sending ${currentSendingIndex + 1}/${savedMessages.length} (Waiting ACK)` 
+                  : `Send Waiting ACK (${savedMessages.length})`
+                }
+              </button>
+              <button
+                onClick={() => setShowAckConfig(!showAckConfig)}
+                disabled={isSendingAll || isSendingWithACK}
+                className={`px-2 py-2 rounded-r-lg text-white transition-colors ${
+                  isSendingAll || isSendingWithACK
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 border-l border-blue-500'
+                }`}
+                title="Configure ACK timeout"
+              >
+                <MoreHorizontal size={16} />
+              </button>
+            </div>
+            
+            {/* ACK Configuration Panel */}
+            {showAckConfig && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50">
+                <div className="mb-2">
+                  <label className="block text-xs text-gray-700 font-medium mb-1">
+                    ACK Timeout: {ackWaitTime}s
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="7"
+                    step="0.5"
+                    value={ackWaitTime}
+                    onChange={(e) => setAckWaitTime(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0.5s</span>
+                    <span>7s</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAckConfig(false)}
+                  className="w-full text-xs py-1 px-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-600"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 };
+
+// Inline styles for the custom slider
+const sliderStyles = `
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3B82F6;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3B82F6;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+`;
+
+// Add the styles to the document head if not already added
+if (typeof window !== 'undefined' && !document.getElementById('slider-styles')) {
+  const style = document.createElement('style');
+  style.id = 'slider-styles';
+  style.textContent = sliderStyles;
+  document.head.appendChild(style);
+}
 
 export default MessageSidebar;
