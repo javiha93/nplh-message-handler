@@ -1,13 +1,14 @@
 package org.example.server;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+@Data
 public class Server {
 
     @JsonProperty("serverName")
@@ -19,31 +20,9 @@ public class Server {
     @JsonProperty("responses")
     protected List<ResponseInfo> responses = new ArrayList<>();
 
-    // Getters públicos para Jackson
-    public String getServerName() {
-        return serverName;
-    }
+    @JsonProperty("messages")
+    protected List<String> messages = new ArrayList<>();
 
-    public Boolean getIsRunning() {
-        return isRunning;
-    }
-
-    public List<ResponseInfo> getResponses() {
-        return responses;
-    }
-
-    // Setters para completar el JavaBean pattern
-    public void setServerName(String serverName) {
-        this.serverName = serverName;
-    }
-
-    public void setIsRunning(Boolean isRunning) {
-        this.isRunning = isRunning;
-    }
-
-    public void setResponses(List<ResponseInfo> responses) {
-        this.responses = responses != null ? responses : new ArrayList<>();
-    }
 
     public void setDefaultResponse(ResponseInfo response) {
         this.responses = new ArrayList<>();

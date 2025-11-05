@@ -48,6 +48,7 @@ public class SoapHandler implements HttpHandler {
         List<String> responses = response(exchange, soapAction);
 
         messageLogger.addServerMessage(getCaseId(messageReceived), messageReceived, responses);
+        server.getMessages().add(messageReceived);
     }
 
     private String getSoapAction(HttpExchange exchange) {

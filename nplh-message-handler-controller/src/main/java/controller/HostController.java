@@ -67,8 +67,8 @@ public class HostController {
         dto.serverName = server.getServerName();
         dto.responses = server.getResponses();
         dto.isRunning = server.getIsRunning();
-        
-        // Check if it's a WSServer using reflection to get additional properties
+        dto.messages = server.getMessages();
+
         try {
             if (server.getClass().getSimpleName().equals("WSServer")) {
                 // Use reflection to get hostType and location
@@ -243,9 +243,10 @@ public class HostController {
         public String serverName;
         public Boolean isRunning;
         public List<ResponseInfo> responses;
-        public ResponseStatus communicationResponse;
         public String hostType;
         public String location;
+        public List<String> messages;
+
 
         public ResponseInfo getDefaultResponse() {
             return responses.stream()

@@ -128,6 +128,7 @@ public class HL7Server extends Server implements Runnable {
 
             MDC.put("serverLogger", this.serverName);
             messageLogger.addServerMessage("", cleanTextMessage);
+            messages.add(cleanTextMessage);
             response(outputStream, cleanTextMessage);
 
         } catch (SocketTimeoutException e) {
