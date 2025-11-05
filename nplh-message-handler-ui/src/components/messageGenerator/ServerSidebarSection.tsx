@@ -240,13 +240,16 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                         </div>
                         <div className="flex items-center space-x-2">
                           {/* Blue circular icon with message count */}
+                          {server.messages && Array.isArray(server.messages) && server.messages.length > 0 && (
                           <button
                             onClick={(e) => handleOpenMessageModal(server, e)}
                             className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
-                            title={`Messages: ${(server.messages && Array.isArray(server.messages) ? server.messages.length : 0)}`}
+                            title={`Messages: ${server.messages.length}`}
                           >
-                            {server.messages && Array.isArray(server.messages) && server.messages.length > 0 ? server.messages.length : 0}
+
+                            {server.messages.length}
                           </button>
+                        )}
                           <button
                             onClick={() => toggleServer(serverName)}
                             disabled={isToggling}

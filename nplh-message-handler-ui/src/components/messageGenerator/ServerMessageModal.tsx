@@ -14,9 +14,81 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
   const messages = server.messages || [];
   const serverName = server.serverName || server.name || server.hostName || 'Unknown Server';
 
+  // Función para formatear mensajes XML y HL7
+  const formatMessage = (message: string): string => {
+    // Detectar si es XML
+    if (message.trim().startsWith('<')) {
+      // Formatear XML con indentación
+      try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(message, 'text/xml');
+        
+        // Si es un SOAP envelope, extraer solo el contenido del Body
+        const soapBody = xmlDoc.querySelector('Body') || xmlDoc.querySelector('SOAP-ENV\\:Body');
+        if (soapBody && soapBody.children.length > 0) {
+          // Extraer el primer hijo del Body (el mensaje real)
+          return formatXml(soapBody.children[0]);
+        }
+        
+        return formatXml(xmlDoc.documentElement);
+      } catch (e) {
+        return message;
+      }
+    }
+    
+    // Detectar si es HL7 (empieza con MSH)
+    if (message.trim().startsWith('MSH|')) {
+      // Separar por saltos de línea si existen, o por los segmentos HL7
+      if (message.includes('\n')) {
+        return message;
+      }
+      // Si no tiene saltos de línea, agregar uno después de cada segmento
+      return message.split(/(?=[A-Z]{3}\|)/g).join('\n');
+    }
+    
+    return message;
+  };
+
+  // Función para formatear XML con indentación
+  const formatXml = (node: Element, indent: string = ''): string => {
+    let result = indent + '<' + node.nodeName;
+    
+    // Agregar atributos si existen
+    if (node.attributes.length > 0) {
+      for (let i = 0; i < node.attributes.length; i++) {
+        const attr = node.attributes[i];
+        result += ` ${attr.name}="${attr.value}"`;
+      }
+    }
+    
+    result += '>';
+    
+    // Si solo tiene texto, ponerlo en la misma línea
+    if (node.childNodes.length === 1 && node.childNodes[0].nodeType === 3) {
+      const textContent = node.textContent?.trim() || '';
+      result += textContent + '</' + node.nodeName + '>';
+      return result;
+    }
+    
+    // Si tiene hijos, formatear con indentación
+    if (node.children.length > 0) {
+      result += '\n';
+      for (let i = 0; i < node.children.length; i++) {
+        result += formatXml(node.children[i], indent + '     ') + '\n';
+      }
+      result += indent + '</' + node.nodeName + '>';
+    } else if (node.textContent?.trim()) {
+      result += node.textContent.trim() + '</' + node.nodeName + '>';
+    } else {
+      result += '</' + node.nodeName + '>';
+    }
+    
+    return result;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div>
@@ -39,22 +111,28 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
               <p>No hay mensajes para este servidor</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {messages.map((message: string, index: number) => (
-                <div
-                  key={index}
-                  className="p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-start space-x-3">
-                    <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                      {index + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 break-words">{message}</p>
-                    </div>
+            <div className="space-y-3">
+              {messages.map((message: string, index: number) => {
+                const formattedMessage = formatMessage(message);
+                
+                return (
+                  <div
+                    key={index}
+                    className="p-4 rounded-lg border bg-blue-50 border-blue-200"
+                  >
+                    {messages.length > 1 && (
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="text-xs font-semibold text-blue-600">
+                          Mensaje #{index + 1}
+                        </div>
+                      </div>
+                    )}
+                    <pre className="text-xs font-mono whitespace-pre-wrap text-blue-800">
+                      {formattedMessage}
+                    </pre>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
