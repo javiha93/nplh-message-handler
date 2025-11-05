@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, RefreshCw, XCircle, Edit } from 'lucide-react';
 import { serverService, Server } from '../../services/ServerService';
 import { ServerEditModal } from './ServerEditModal';
+import ServerMessageModal from './ServerMessageModal';
 
 interface ServerSidebarSectionProps {
   // Sidebar state
@@ -21,8 +22,10 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   const [togglingServers, setTogglingServers] = useState<Set<string>>(new Set());
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [messageModalServer, setMessageModalServer] = useState<Server | null>(null);
 
-  // Función para cargar servidores
+  // Funci├│n para cargar servidores
   const loadServers = async () => {
     setIsLoading(true);
     setError(null);
@@ -38,7 +41,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     }
   };
 
-  // Función para toggle del servidor
+  // Funci├│n para toggle del servidor
   const toggleServer = async (serverName: string) => {
     setTogglingServers(prev => new Set(prev).add(serverName));
     try {
@@ -71,7 +74,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     }
   }, [isServerSidebarOpen]);
 
-  // Funciones para el modal de edición
+  // Funciones para el modal de edici├│n
   const handleEditServer = (server: Server) => {
     setSelectedServer(server);
     setEditModalOpen(true);
@@ -107,28 +110,34 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     return server.serverName || server.name || server.hostName || server.id || 'Unknown Server';
   };
 
+  const handleOpenMessageModal = (server: Server, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMessageModalServer(server);
+    setMessageModalOpen(true);
+  };
+
   // Helper functions para manejar ResponseStatus
   const getResponseStatusDisplay = (responseStatus: any) => {
     if (!responseStatus) {
-      return <span className="text-red-500 font-semibold">✗</span>;
+      return <span className="text-red-500 font-semibold">Ô£ù</span>;
     }
     if (typeof responseStatus === 'boolean') {
-      // Compatibilidad hacia atrás con Boolean
+      // Compatibilidad hacia atr├ís con Boolean
       return responseStatus ? 
-        <span className="text-green-500 font-semibold">✓</span> : 
-        <span className="text-red-500 font-semibold">✗</span>;
+        <span className="text-green-500 font-semibold">Ô£ô</span> : 
+        <span className="text-red-500 font-semibold">Ô£ù</span>;
     }
     if (responseStatus.isError) {
-      return <span className="text-yellow-500 font-semibold">⚠</span>;
+      return <span className="text-yellow-500 font-semibold">ÔÜá</span>;
     }
     if (responseStatus.isEnable) {
-      // ✨ Si tiene customResponse habilitado, mostrar ícono especial
+      // Ô£¿ Si tiene customResponse habilitado, mostrar ├¡cono especial
       if (responseStatus.customResponse?.enabled && responseStatus.customResponse?.text) {
-        return <span className="text-blue-500 font-semibold" title={`Custom: ${responseStatus.customResponse.text}`}>🔧</span>;
+        return <span className="text-blue-500 font-semibold" title={`Custom: ${responseStatus.customResponse.text}`}>­ƒöº</span>;
       }
-      return <span className="text-green-500 font-semibold">✓</span>;
+      return <span className="text-green-500 font-semibold">Ô£ô</span>;
     }
-    return <span className="text-red-500 font-semibold">✗</span>;
+    return <span className="text-red-500 font-semibold">Ô£ù</span>;
   };
 
   const hasResponseStatus = (server: Server) => {
@@ -155,7 +164,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
       
       <div className="p-6">
         <div className="space-y-4">
-          {/* Header con botón de refresh */}
+          {/* Header con bot├│n de refresh */}
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-700">Server Status</h3>
             <button
@@ -230,6 +239,14 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
+                          {/* Blue circular icon with message count */}
+                          <button
+                            onClick={(e) => handleOpenMessageModal(server, e)}
+                            className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+                            title={`Messages: ${(server.messages && Array.isArray(server.messages) ? server.messages.length : 0)}`}
+                          >
+                            {server.messages && Array.isArray(server.messages) && server.messages.length > 0 ? server.messages.length : 0}
+                          </button>
                           <button
                             onClick={() => toggleServer(serverName)}
                             disabled={isToggling}
@@ -262,12 +279,19 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
         </div>
       </div>
       
-      {/* Modal de edición */}
+      {/* Modal de edici├│n */}
       <ServerEditModal
         server={selectedServer}
         isOpen={editModalOpen}
         onClose={handleCloseEditModal}
         onSave={handleSaveServer}
+      />
+
+      {/* Modal de mensajes */}
+      <ServerMessageModal
+        server={messageModalServer}
+        isOpen={messageModalOpen}
+        onClose={() => setMessageModalOpen(false)}
       />
     </div>
   );
