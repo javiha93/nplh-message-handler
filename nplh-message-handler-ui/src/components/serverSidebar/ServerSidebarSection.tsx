@@ -32,7 +32,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   const [newMessageCounts, setNewMessageCounts] = useState<Map<string, number>>(new Map());
   // Track which message indices are new for each server (serverName -> Set of indices)
   const [newMessageIndices, setNewMessageIndices] = useState<Map<string, Set<number>>>(new Map());
-  // Track timers for auto-clearing badges after 30 seconds
+  // Track timers for auto-clearing badges after 5 seconds
   const badgeTimersRef = useRef<Map<string, number>>(new Map());
 
   // Función para cargar servidores
@@ -146,9 +146,9 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
         });
       });
       
-      // Set a timer to clear the badge after 30 seconds
+      // Set a timer to clear the badge after 5 seconds
       const timer = setTimeout(() => {
-        console.log(`⏰ 30 seconds elapsed - clearing badge for server '${serverName}'`);
+        console.log(`⏰ 5 seconds elapsed - clearing badge for server '${serverName}'`);
         setServersWithNewMessages(prev => {
           const newSet = new Set(prev);
           newSet.delete(serverName);
@@ -165,7 +165,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
           return newMap;
         });
         badgeTimersRef.current.delete(serverName);
-      }, 15000); // 30 seconds
+      }, 5000); // 5 seconds
       
       badgeTimersRef.current.set(serverName, timer);
     };
