@@ -74,11 +74,15 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
         }));
         
         setResponses(initialResponses);
-        setSelectedResponseIndex(0); // Select first response by default
+        
+        // Find and select the default response
+        const defaultIndex = initialResponses.findIndex(r => r.isDefault);
+        const selectedIndex = defaultIndex !== -1 ? defaultIndex : 0;
+        setSelectedResponseIndex(selectedIndex);
         
         // Set individual responses for backward compatibility
         if (initialResponses.length > 0) {
-          const firstResponse = initialResponses[0];
+          const firstResponse = initialResponses[selectedIndex];
           
           // Apply restrictions for applicationResponse if needed
           const appResponse = { ...firstResponse.applicationResponse };
@@ -382,8 +386,30 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
                   // Update individual response states when selection changes
                   const selectedResponse = responses[newIndex];
                   if (selectedResponse) {
+                    // Si la respuesta seleccionada NO es default, usar los valores de la default response
+                    let appResponse = { ...selectedResponse.applicationResponse };
+                    let commResponse = { ...selectedResponse.communicationResponse };
+                    
+                    if (!selectedResponse.isDefault) {
+                      // Buscar la respuesta default
+                      const defaultResponse = responses.find(r => r.isDefault);
+                      if (defaultResponse) {
+                        // Usar los valores de la default response
+                        appResponse = { ...defaultResponse.applicationResponse };
+                        commResponse = { ...defaultResponse.communicationResponse };
+                        
+                        // Actualizar la respuesta seleccionada con los valores default
+                        const updatedResponses = [...responses];
+                        updatedResponses[newIndex] = {
+                          ...updatedResponses[newIndex],
+                          applicationResponse: appResponse,
+                          communicationResponse: commResponse
+                        };
+                        setResponses(updatedResponses);
+                      }
+                    }
+                    
                     // Apply restrictions for applicationResponse if needed
-                    const appResponse = { ...selectedResponse.applicationResponse };
                     if (!isApplicationResponseAllowed(server.hostType)) {
                       appResponse.isEnable = false;
                       appResponse.isError = false;
@@ -395,7 +421,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
                     }
                     
                     setApplicationResponse(appResponse);
-                    setCommunicationResponse(selectedResponse.communicationResponse);
+                    setCommunicationResponse(commResponse);
                   }
                 }}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

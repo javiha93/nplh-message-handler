@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
+import { X, RefreshCw, XCircle, Edit } from 'lucide-react';
 import { serverService, Server } from '../../services/ServerService';
 import { ServerEditModal } from './ServerEditModal';
 import ServerMessageModal from './ServerMessageModal';
@@ -119,23 +119,25 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   // Helper functions para manejar ResponseStatus
   const getResponseStatusDisplay = (responseStatus: any) => {
     if (!responseStatus) {
-      return <XCircle className="w-3 h-3 text-red-500" />;
+      return <span className="text-red-500 font-semibold">Ô£ù</span>;
     }
     if (typeof responseStatus === 'boolean') {
+      // Compatibilidad hacia atr├ís con Boolean
       return responseStatus ? 
-        <CheckCircle className="w-3 h-3 text-green-500" /> : 
-        <XCircle className="w-3 h-3 text-red-500" />;
+        <span className="text-green-500 font-semibold">Ô£ô</span> : 
+        <span className="text-red-500 font-semibold">Ô£ù</span>;
     }
     if (responseStatus.isError) {
-      return <AlertTriangle className="w-3 h-3 text-yellow-500" />;
+      return <span className="text-yellow-500 font-semibold">ÔÜá</span>;
     }
     if (responseStatus.isEnable) {
+      // Ô£¿ Si tiene customResponse habilitado, mostrar ├¡cono especial
       if (responseStatus.customResponse?.enabled && responseStatus.customResponse?.text) {
-        return <span title={`Custom: ${responseStatus.customResponse.text}`}><Settings className="w-3 h-3 text-blue-500" /></span>;
+        return <span className="text-blue-500 font-semibold" title={`Custom: ${responseStatus.customResponse.text}`}>­ƒöº</span>;
       }
-      return <CheckCircle className="w-3 h-3 text-green-500" />;
+      return <span className="text-green-500 font-semibold">Ô£ô</span>;
     }
-    return <XCircle className="w-3 h-3 text-red-500" />;
+    return <span className="text-red-500 font-semibold">Ô£ù</span>;
   };
 
   const hasResponseStatus = (server: Server) => {
