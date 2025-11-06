@@ -4,32 +4,65 @@ import react from '@vitejs/plugin-react'
 
 // Custom plugin to handle message update endpoint
 const messageUpdatePlugin = () => {
+  // Store message updates in memory with delivery tracking
+  const messageUpdates: { [controlId: string]: { responses: any[], delivered: boolean, timestamp: number } } = {};
+  
+  // Clean up delivered messages after 5 seconds
+  setInterval(() => {
+    const now = Date.now();
+    Object.keys(messageUpdates).forEach(key => {
+      const update = messageUpdates[key];
+      if (update.delivered && (now - update.timestamp) > 5000) {
+        delete messageUpdates[key];
+      }
+    });
+  }, 1000);
+  
   return {
     name: 'message-update',
     configureServer(server: any) {
-      server.middlewares.use('/api/ui/messages/update-responses', (req: any, res: any) => {
-        console.log('🌐 Endpoint called:', req.method, req.url);
+      server.middlewares.use((req: any, res: any, next: any) => {
+        // Handle GET requests for updates
+        if (req.url === '/api/ui/messages/get-updates' && req.method === 'GET') {
+          const undeliveredUpdates: { [controlId: string]: any[] } = {};
+          
+          Object.keys(messageUpdates).forEach(key => {
+            if (!messageUpdates[key].delivered) {
+              undeliveredUpdates[key] = messageUpdates[key].responses;
+              messageUpdates[key].delivered = true;
+            }
+          });
+          
+          if (Object.keys(undeliveredUpdates).length > 0) {
+            console.log('� Delivering updates for:', Object.keys(undeliveredUpdates));
+          }
+          
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ updates: undeliveredUpdates }));
+          return;
+        }
         
-        if (req.method === 'POST') {
-          console.log('📥 Processing POST request...');
+        // Handle POST requests for update-responses
+        if (req.url === '/api/ui/messages/update-responses' && req.method === 'POST') {
+          console.log('📥 POST: Receiving message update...');
           let body = '';
           req.on('data', (chunk: any) => {
             body += chunk.toString();
-            console.log('📦 Received chunk, total length:', body.length);
           });
           req.on('end', () => {
-            console.log('🏁 Request complete, body:', body);
             try {
               const { controlId, responses } = JSON.parse(body);
-              console.log('📋 Parsed data - controlId:', controlId, 'responses:', responses);
               
               if (!controlId || !responses || !Array.isArray(responses)) {
-                console.error('❌ Invalid request body:', { controlId, responses });
+                console.error('❌ Invalid request body');
                 res.statusCode = 400;
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({ error: 'Invalid request body. Expected controlId and responses array.' }));
                 return;
-              }              // Validate that responses are in ClientMessageResponse format
+              }
+              
+              // Validate that responses are in ClientMessageResponse format
               const validResponses = responses.every(response => 
                 response && 
                 typeof response === 'object' && 
@@ -39,7 +72,6 @@ const messageUpdatePlugin = () => {
 
               let finalResponses = responses;
               if (!validResponses) {
-                console.warn('Received responses in unexpected format, attempting to convert...', responses);
                 // Convert legacy string responses to ClientMessageResponse format if needed
                 finalResponses = responses.map(response => {
                   if (typeof response === 'string') {
@@ -52,37 +84,14 @@ const messageUpdatePlugin = () => {
                 });
               }
 
-              console.log(`🔥 RECEIVED MESSAGE UPDATE for controlId: ${controlId}`, finalResponses);
+              console.log(`✅ Message update stored for controlId: ${controlId}`);
               
-              // Store the update so it can be retrieved by the frontend
-              try {
-                // Store in a simple object instead of Map to avoid TypeScript issues
-                if (typeof globalThis !== 'undefined') {
-                  if (!(globalThis as any).messageUpdates) {
-                    (globalThis as any).messageUpdates = {};
-                  }
-                  (globalThis as any).messageUpdates[controlId] = finalResponses;
-                  console.log('✅ Message update stored globally for controlId:', controlId);
-                  console.log('📦 Current globalThis.messageUpdates:', (globalThis as any).messageUpdates);
-                }
-              } catch (e) {
-                console.warn('❌ Could not store message update globally:', e);
-              }
-              
-              // Also dispatch a global event for immediate processing
-              try {
-                if (typeof global !== 'undefined' && global.process) {
-                  // Node.js environment - dispatch to global
-                  process.nextTick(() => {
-                    if ((global as any).updateMessageResponses) {
-                      console.log('📢 Calling global.updateMessageResponses for controlId:', controlId);
-                      (global as any).updateMessageResponses(controlId, finalResponses);
-                    }
-                  });
-                }
-              } catch (e) {
-                console.warn('Could not dispatch global event:', e);
-              }
+              // Store the update in memory with metadata
+              messageUpdates[controlId] = {
+                responses: finalResponses,
+                delivered: false,
+                timestamp: Date.now()
+              };
               
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
@@ -101,11 +110,11 @@ const messageUpdatePlugin = () => {
               res.end(JSON.stringify({ error: 'Invalid JSON body' }));
             }
           });
-        } else {
-          res.statusCode = 405;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Method not allowed' }));
+          return;
         }
+        
+        // Pass to next middleware if not our endpoint
+        next();
       });
     }
   }
@@ -114,6 +123,7 @@ const messageUpdatePlugin = () => {
 export default defineConfig({
   plugins: [react(), messageUpdatePlugin()],
   server: {
+    host: '0.0.0.0', // Listen on all interfaces (IPv4 and IPv6)
     port: 8084,
     proxy: {
       '/api': {

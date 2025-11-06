@@ -98,7 +98,11 @@ public class HL7Client extends Client {
                                 clientMessage.addResponse(responseText);
                                 MDC.put("clientLogger", this.clientName);
                                 notifyUIMessageUpdate(uuid, clientMessage.getResponses());
-                                messageLogger.addResponse(uuid, responseText);
+                                try {
+                                    messageLogger.addResponse(uuid, responseText);
+                                } catch (Exception e) {
+
+                                }
                                 //messageLogger.injectReceive(uuid, responseText);
 
                                 logger.info("Asynchronously received: \n{}\nand matched response for {}", responseText, uuid);

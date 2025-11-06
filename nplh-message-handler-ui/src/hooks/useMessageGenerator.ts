@@ -27,7 +27,7 @@ export const useMessageGenerator = () => {
     const unsubscribeSaved = savedMessagesService.subscribe(setSavedMessages);
     const unsubscribeSnackbar = snackbarService.subscribe(setSnackbarState);    // Register for real-time message updates
     const handleMessageUpdate = (controlId: string, responses: ClientMessageResponse[]) => {
-      console.log(`handleMessageUpdate called with controlId: ${controlId}`, responses);
+      console.log(`✅ Message update received for controlId: ${controlId}`);
       
       // Update both services to maintain consistency
       savedMessagesService.updateMessageResponses(controlId, responses);
@@ -36,12 +36,10 @@ export const useMessageGenerator = () => {
       // Also update the main form state if this is the current message
       const currentControlId = formStateService.getState().currentMessageControlId;
       if (currentControlId === controlId) {
-        console.log('Updating main form sendResponse because controlId matches current message');
         formStateService.setSendResponse(responses);
       }
     };
 
-    console.log('Registering message update callback');
     messageUpdateService.registerUpdateCallback(handleMessageUpdate);
 
     return () => {
@@ -49,7 +47,6 @@ export const useMessageGenerator = () => {
       unsubscribeForm();
       unsubscribeSaved();
       unsubscribeSnackbar();
-      console.log('Unregistering message update callback');
       messageUpdateService.unregisterUpdateCallback(handleMessageUpdate);
     };
   }, []);

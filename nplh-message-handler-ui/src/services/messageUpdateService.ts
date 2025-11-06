@@ -6,6 +6,7 @@ export class MessageUpdateService {
   private updateCallbacks: ((controlId: string, responses: ClientMessageResponse[]) => void)[] = [];
 
   private constructor() {
+    console.log('🚀 MessageUpdateService initialized');
     this.setupPollingForUpdates();
     this.setupGlobalUpdateListener();
   }
@@ -18,36 +19,25 @@ export class MessageUpdateService {
   }
   registerUpdateCallback(callback: (controlId: string, responses: ClientMessageResponse[]) => void) {
     this.updateCallbacks.push(callback);
-    console.log('✅ Registered update callback. Total callbacks:', this.updateCallbacks.length);
   }
 
   unregisterUpdateCallback(callback: (controlId: string, responses: ClientMessageResponse[]) => void) {
     this.updateCallbacks = this.updateCallbacks.filter(cb => cb !== callback);
-    console.log('❌ Unregistered update callback. Total callbacks:', this.updateCallbacks.length);
   }
 
   private notifyCallbacks(controlId: string, responses: ClientMessageResponse[]) {
-    console.log(`📢 Notifying ${this.updateCallbacks.length} callbacks for controlId: ${controlId}`, responses);
+    console.log(`📢 Notifying callbacks for controlId: ${controlId}`);
     
-    if (this.updateCallbacks.length === 0) {
-      console.warn('⚠️  No callbacks registered to receive updates!');
-      return;
-    }
-    
-    this.updateCallbacks.forEach((callback, index) => {
+    this.updateCallbacks.forEach((callback) => {
       try {
-        console.log(`📨 Calling callback ${index + 1}/${this.updateCallbacks.length} for controlId: ${controlId}`);
         callback(controlId, responses);
-        console.log(`✅ Callback ${index + 1} executed successfully`);
       } catch (error) {
-        console.error(`❌ Error calling callback ${index + 1}:`, error);
+        console.error(`❌ Error calling callback:`, error);
       }
     });
   }
   // Method to manually update message responses (can be called from console or other services)
   updateResponses(controlId: string, responses: string[] | ClientMessageResponse[]) {
-    console.log('🔄 updateResponses called for controlId:', controlId, 'with', responses.length, 'responses');
-    
     // Convert string responses to ClientMessageResponse format if needed
     const clientResponses: ClientMessageResponse[] = responses.map((resp: any) => {
       if (typeof resp === 'string') {
@@ -56,19 +46,22 @@ export class MessageUpdateService {
       return resp;
     });
     
-    console.log('📤 Notifying callbacks for controlId:', controlId, 'with converted responses:', clientResponses);
     this.notifyCallbacks(controlId, clientResponses);
   }
 
   // Setup polling to check for global updates (fallback mechanism)
   private setupPollingForUpdates() {
     console.log('🔄 Setting up polling for message updates...');
+    console.log('🚀 MessageUpdateService initialized and polling started');
     
-    setInterval(() => {
+    setInterval(async () => {
       try {
-        // Check globalThis.messageUpdates
-        if (typeof globalThis !== 'undefined' && (globalThis as any).messageUpdates) {
-          const updates = (globalThis as any).messageUpdates;
+        // Poll the GET endpoint for updates
+        const response = await fetch('/api/ui/messages/get-updates');
+        
+        if (response.ok) {
+          const data = await response.json();
+          const updates = data.updates || {};
           const controlIds = Object.keys(updates);
           
           if (controlIds.length > 0) {
@@ -77,30 +70,8 @@ export class MessageUpdateService {
             controlIds.forEach(controlId => {
               const responses = updates[controlId];
               if (responses && Array.isArray(responses)) {
-                console.log('📨 Processing polled update for controlId:', controlId, responses);
+                console.log('📨 Processing update for controlId:', controlId);
                 this.updateResponses(controlId, responses);
-                // Clear the update after processing
-                delete updates[controlId];
-              }
-            });
-          }
-        }
-        
-        // Also check window.messageUpdates if available
-        if (typeof window !== 'undefined' && (window as any).messageUpdates) {
-          const updates = (window as any).messageUpdates;
-          const controlIds = Object.keys(updates);
-          
-          if (controlIds.length > 0) {
-            console.log('🔍 Polling found window updates for controlIds:', controlIds);
-            
-            controlIds.forEach(controlId => {
-              const responses = updates[controlId];
-              if (responses && Array.isArray(responses)) {
-                console.log('📨 Processing window update for controlId:', controlId, responses);
-                this.updateResponses(controlId, responses);
-                // Clear the update after processing
-                delete updates[controlId];
               }
             });
           }
@@ -113,11 +84,9 @@ export class MessageUpdateService {
 
   // Setup listener for global updates (direct mechanism)
   private setupGlobalUpdateListener() {
-    console.log('🌍 Setting up global update listeners...');
-    
     // Expose a global function that can be called directly
     (window as any).updateMessageResponses = (controlId: string, responses: any[]) => {
-      console.log('📞 Global update function called for controlId:', controlId, responses);
+      console.log('📞 Global update function called for controlId:', controlId);
       this.updateResponses(controlId, responses);
     };
 
@@ -125,12 +94,10 @@ export class MessageUpdateService {
     window.addEventListener('messageUpdate', (event: any) => {
       const { controlId, responses } = event.detail;
       if (controlId && responses) {
-        console.log('🎯 Received messageUpdate event for controlId:', controlId, responses);
+        console.log('🎯 Received messageUpdate event for controlId:', controlId);
         this.updateResponses(controlId, responses);
       }
     });
-    
-    console.log('✅ Global update listeners set up successfully');
   }
 }
 
