@@ -3,6 +3,7 @@ package org.example.server.impl;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.example.server.WSServer;
+import org.example.service.UINotificationService;
 import org.example.utils.MessageLogger;
 import org.slf4j.MDC;
 
@@ -46,6 +47,7 @@ public class SoapHandler implements HttpHandler {
         //messageLogger.info("[RECEIVE]: \n\n{} \n", messageReceived);
         String soapAction = getSoapAction(exchange);
         List<String> responses = response(exchange, soapAction);
+        UINotificationService.addServerMessage(serverName, Collections.singletonList(messageReceived));
 
         messageLogger.addServerMessage(getCaseId(messageReceived), messageReceived, responses);
         server.getMessages().add(messageReceived);

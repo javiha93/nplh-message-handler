@@ -2,6 +2,7 @@ package org.example.server;
 
 import org.example.domain.host.host.Connection;
 import org.example.service.IrisService;
+import org.example.service.UINotificationService;
 import org.example.utils.HL7LLPCharacters;
 import org.example.utils.MessageLogger;
 import org.example.utils.MockType;
@@ -15,6 +16,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Collections;
 
 import static org.example.utils.MessageHandler.llpToText;
 
@@ -129,9 +131,9 @@ public class HL7Server extends Server implements Runnable {
             MDC.put("serverLogger", this.serverName);
             messageLogger.addServerMessage("", cleanTextMessage);
             messages.add(cleanTextMessage);
+            UINotificationService.addServerMessage(serverName, Collections.singletonList(cleanTextMessage));
             response(outputStream, cleanTextMessage);
 
-        } catch (SocketTimeoutException e) {
         } catch (Exception e) {
             logger.error("[{}] Error procesando conexión HL7", serverName, e);
         }

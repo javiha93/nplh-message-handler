@@ -210,6 +210,44 @@ public class HostController {
         }
     }
 
+    @PostMapping("servers/addMessage")
+    public ResponseEntity<ServerDTO> addMessageToServer(@RequestBody AddMessageRequest request) {
+        try {
+            logger.info("📬 Adding messages to server '{}'", request.serverName);
+            
+            Server server = servers.getServerByName(request.serverName);
+            
+            if (server == null) {
+                logger.error("❌ Server not found: {}", request.serverName);
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Get current messages list
+            List<String> currentMessages = server.getMessages();
+            if (currentMessages == null) {
+                currentMessages = new ArrayList<>();
+                server.setMessages(currentMessages);
+            }
+            
+            // Add new messages from responses
+            if (request.responses != null && !request.responses.isEmpty()) {
+                for (String response : request.responses) {
+                    currentMessages.add(response);
+                    logger.debug("  ➕ Added response message");
+                }
+                logger.info("✅ Added {} messages to server '{}'", request.responses.size(), request.serverName);
+            }
+            
+            // Convert to DTO and return
+            ServerDTO dto = convertToDTO(server);
+            return ResponseEntity.ok(dto);
+            
+        } catch (Exception e) {
+            logger.error("❌ Error adding message to server: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
     /*
     // DEPRECATED: Ahora se usa modifyServer para toggle functionality
     @PostMapping("/servers/toggle")
@@ -239,6 +277,12 @@ public class HostController {
         public String serverName;
     }
     */
+    
+    @Data
+    public static class AddMessageRequest {
+        public String serverName;
+        public List<String> responses;
+    }
     
     @Data
     public static class ServerDTO {

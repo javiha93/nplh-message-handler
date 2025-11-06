@@ -3,6 +3,7 @@ import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings, Mail
 import { serverService, Server } from '../../services/ServerService';
 import { ServerEditModal } from './ServerEditModal';
 import ServerMessageModal from './ServerMessageModal';
+import { serverUpdateService } from '../../services/ServerUpdateService';
 
 interface ServerSidebarSectionProps {
   // Sidebar state
@@ -74,7 +75,34 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     }
   }, [isServerSidebarOpen]);
 
-  // Funciones para el modal de edici├│n
+  // Setup real-time server updates
+  useEffect(() => {
+    const handleServerUpdate = (serverName: string, newMessages: string[]) => {
+      console.log(`🔔 Received update for server '${serverName}' with ${newMessages.length} new messages`);
+      
+      setServers(prevServers => 
+        prevServers.map(server => {
+          const currentServerName = server.serverName || server.name;
+          if (currentServerName === serverName) {
+            const currentMessages = server.messages || [];
+            return {
+              ...server,
+              messages: [...currentMessages, ...newMessages]
+            };
+          }
+          return server;
+        })
+      );
+    };
+
+    serverUpdateService.registerUpdateCallback(handleServerUpdate);
+
+    return () => {
+      serverUpdateService.unregisterUpdateCallback(handleServerUpdate);
+    };
+  }, []);
+
+  // Funciones para el modal de edición
   const handleEditServer = (server: Server) => {
     setSelectedServer(server);
     setEditModalOpen(true);

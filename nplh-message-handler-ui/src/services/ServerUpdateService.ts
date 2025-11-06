@@ -1,0 +1,86 @@
+// Service to handle real-time server message updates via HTTP polling
+export class ServerUpdateService {
+  private static instance: ServerUpdateService;
+  private updateCallbacks: ((serverName: string, messages: string[]) => void)[] = [];
+  private pollingInterval: number | null = null;
+
+  private constructor() {
+    console.log('🚀 ServerUpdateService initialized');
+    this.startPolling();
+  }
+
+  static getInstance(): ServerUpdateService {
+    if (!ServerUpdateService.instance) {
+      ServerUpdateService.instance = new ServerUpdateService();
+    }
+    return ServerUpdateService.instance;
+  }
+
+  registerUpdateCallback(callback: (serverName: string, messages: string[]) => void) {
+    console.log('📝 Registering server update callback');
+    this.updateCallbacks.push(callback);
+  }
+
+  unregisterUpdateCallback(callback: (serverName: string, messages: string[]) => void) {
+    this.updateCallbacks = this.updateCallbacks.filter(cb => cb !== callback);
+  }
+
+  private notifyCallbacks(serverName: string, messages: string[]) {
+    console.log(`📢 Notifying callbacks for server: ${serverName} with ${messages.length} messages`);
+    
+    this.updateCallbacks.forEach((callback) => {
+      try {
+        callback(serverName, messages);
+      } catch (error) {
+        console.error(`❌ Error calling callback:`, error);
+      }
+    });
+  }
+
+  // Start polling for server updates
+  startPolling(intervalMs: number = 2000) {
+    if (this.pollingInterval) {
+      console.log('⚠️ Polling already started');
+      return;
+    }
+
+    console.log(`🔄 Starting server update polling (every ${intervalMs}ms)...`);
+    
+    this.pollingInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/ui/servers/get-updates');
+        
+        if (response.ok) {
+          const data = await response.json();
+          const serverUpdates = data.serverUpdates || {};
+          const serverNames = Object.keys(serverUpdates);
+          
+          if (serverNames.length > 0) {
+            console.log('🔍 Polling found server updates for:', serverNames);
+            
+            serverNames.forEach(serverName => {
+              const messages = serverUpdates[serverName];
+              if (messages && Array.isArray(messages) && messages.length > 0) {
+                console.log(`📨 Processing ${messages.length} messages for server '${serverName}'`);
+                this.notifyCallbacks(serverName, messages);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error('❌ Error polling for server updates:', e);
+      }
+    }, intervalMs);
+  }
+
+  stopPolling() {
+    if (this.pollingInterval) {
+      console.log('⏹️ Stopping server update polling');
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  }
+}
+
+// Initialize the service and export the instance
+export const serverUpdateService = ServerUpdateService.getInstance();

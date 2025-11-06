@@ -7,6 +7,9 @@ const messageUpdatePlugin = () => {
   // Store message updates in memory with delivery tracking
   const messageUpdates: { [controlId: string]: { responses: any[], delivered: boolean, timestamp: number } } = {};
   
+  // Store server message updates (for real-time UI updates)
+  const serverMessageUpdates: { [serverName: string]: { messages: string[], delivered: boolean, timestamp: number } } = {};
+  
   // Clean up delivered messages after 5 seconds
   setInterval(() => {
     const now = Date.now();
@@ -16,12 +19,23 @@ const messageUpdatePlugin = () => {
         delete messageUpdates[key];
       }
     });
+    Object.keys(serverMessageUpdates).forEach(key => {
+      const update = serverMessageUpdates[key];
+      if (update.delivered && (now - update.timestamp) > 5000) {
+        delete serverMessageUpdates[key];
+      }
+    });
   }, 1000);
   
   return {
     name: 'message-update',
     configureServer(server: any) {
       server.middlewares.use((req: any, res: any, next: any) => {
+        // Log all API requests for debugging
+        if (req.url && req.url.startsWith('/api/ui/')) {
+          console.log(`🔍 [${new Date().toISOString()}] ${req.method} ${req.url}`);
+        }
+        
         // Handle GET requests for updates
         if (req.url === '/api/ui/messages/get-updates' && req.method === 'GET') {
           const undeliveredUpdates: { [controlId: string]: any[] } = {};
@@ -40,6 +54,27 @@ const messageUpdatePlugin = () => {
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ updates: undeliveredUpdates }));
+          return;
+        }
+        
+        // Handle GET requests for server message updates (real-time server updates)
+        if (req.url === '/api/ui/servers/get-updates' && req.method === 'GET') {
+          const undeliveredServerUpdates: { [serverName: string]: string[] } = {};
+          
+          Object.keys(serverMessageUpdates).forEach(key => {
+            if (!serverMessageUpdates[key].delivered) {
+              undeliveredServerUpdates[key] = serverMessageUpdates[key].messages;
+              serverMessageUpdates[key].delivered = true;
+            }
+          });
+          
+          if (Object.keys(undeliveredServerUpdates).length > 0) {
+            console.log('📨 Delivering server updates for:', Object.keys(undeliveredServerUpdates));
+          }
+          
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ serverUpdates: undeliveredServerUpdates }));
           return;
         }
         
@@ -105,6 +140,64 @@ const messageUpdatePlugin = () => {
               }));
             } catch (error) {
               console.error('Error processing message update:', error);
+              res.statusCode = 400;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+            }
+          });
+          return;
+        }
+        
+        // Handle POST requests to add messages to servers
+        if (req.url === '/api/ui/servers/addServerMessage' && req.method === 'POST') {
+          console.log('📬 POST: Receiving server message...');
+          let body = '';
+          req.on('data', (chunk: any) => {
+            body += chunk.toString();
+            console.log(`📥 Received chunk of ${chunk.length} bytes`);
+          });
+          req.on('end', () => {
+            console.log(`📦 Full body received (${body.length} bytes)`);
+            try {
+              const { serverName, responses } = JSON.parse(body);
+              
+              if (!serverName || !responses || !Array.isArray(responses)) {
+                console.error('❌ Invalid request body');
+                res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: 'Invalid request body. Expected serverName and responses array.' }));
+                return;
+              }
+              
+              console.log(`📦 Storing ${responses.length} messages for server '${serverName}'`);
+              
+              // Store in memory for UI polling to pick up
+              if (!serverMessageUpdates[serverName]) {
+                serverMessageUpdates[serverName] = {
+                  messages: [],
+                  delivered: false,
+                  timestamp: Date.now()
+                };
+              }
+              
+              // Add new messages to existing ones
+              serverMessageUpdates[serverName].messages.push(...responses);
+              serverMessageUpdates[serverName].delivered = false;
+              serverMessageUpdates[serverName].timestamp = Date.now();
+              
+              console.log(`✅ Stored messages for server '${serverName}'. Total pending: ${serverMessageUpdates[serverName].messages.length}`);
+              
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({
+                success: true,
+                message: 'Server messages stored successfully',
+                serverName,
+                responsesCount: responses.length
+              }));
+              
+            } catch (error) {
+              console.error('Error processing server message:', error);
               res.statusCode = 400;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: 'Invalid JSON body' }));
