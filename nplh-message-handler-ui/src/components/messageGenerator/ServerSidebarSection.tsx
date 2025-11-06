@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings } from 'lucide-react';
+import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings, MailX } from 'lucide-react';
 import { serverService, Server } from '../../services/ServerService';
 import { ServerEditModal } from './ServerEditModal';
 import ServerMessageModal from './ServerMessageModal';
@@ -239,15 +239,20 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                         <div className="flex items-center space-x-2">
                           {/* Blue circular icon with message count */}
                           {server.messages && Array.isArray(server.messages) && server.messages.length > 0 && (
+                          <div className="flex items-end">
                           <button
                             onClick={(e) => handleOpenMessageModal(server, e)}
                             className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
                             title={`Messages: ${server.messages.length}`}
                           >
-
                             {server.messages.length}
                           </button>
-                        )}
+                          {/* MailX icon when there are multiple messages */}
+                          {server.messages && Array.isArray(server.messages) && server.messages.length > 1 && (
+                            <MailX className="w-3 h-3 text-red-500 ml-1" self-end title="Multiple messages" />
+                          )}
+                          </div>
+                          )}
                           <button
                             onClick={() => toggleServer(serverName)}
                             disabled={isToggling}
@@ -299,3 +304,8 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
 };
 
 export default ServerSidebarSection;
+
+
+
+
+
