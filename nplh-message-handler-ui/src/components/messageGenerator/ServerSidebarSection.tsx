@@ -85,7 +85,19 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     setSelectedServer(null);
   };
 
-  const handleSaveServer = async (serverData: Partial<Server>) => {
+    const handleClearMessages = async (server: Server, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await serverService.modifyServer({
+        ...server,
+        messages: []
+      });
+      await loadServers();
+    } catch (err) {
+      console.error('Error clearing messages:', err);
+    }
+  };
+const handleSaveServer = async (serverData: Partial<Server>) => {
     try {
       const updatedServer = await serverService.modifyServer(serverData);
       
@@ -239,17 +251,21 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
                         <div className="flex items-center space-x-2">
                           {/* Blue circular icon with message count */}
                           {server.messages && Array.isArray(server.messages) && server.messages.length > 0 && (
-                          <div className="flex items-end">
+                          <div className="flex items-end mr-3">
                           <button
                             onClick={(e) => handleOpenMessageModal(server, e)}
                             className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
-                            title={`Messages: ${server.messages.length}`}
+                            title={`Received Messages`}
                           >
                             {server.messages.length}
                           </button>
                           {/* MailX icon when there are multiple messages */}
-                          {server.messages && Array.isArray(server.messages) && server.messages.length > 1 && (
-                            <MailX className="w-3 h-3 text-red-500 ml-1" self-end title="Multiple messages" />
+                          {server.messages && Array.isArray(server.messages) && server.messages.length > 0 && (
+                            <MailX
+                                onClick={(e) => handleClearMessages(server, e)}
+                                className="w-3 h-3 text-gray-600 cursor-pointer hover:text-red-700" self-end
+                                title="Clear all messages"
+                            />
                           )}
                           </div>
                           )}
@@ -304,6 +320,9 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
 };
 
 export default ServerSidebarSection;
+
+
+
 
 
 

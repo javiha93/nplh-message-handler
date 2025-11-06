@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,6 +109,7 @@ public class HostController {
 
             // ✨ Actualizar el estado de ejecución del servidor
             server.setIsRunning(serverInfo.getIsRunning());
+            server.setMessages(serverInfo.getMessages());
 
             // ✨ Actualizar todas las respuestas, no solo la default
             if (serverInfo.getResponses() != null && !serverInfo.getResponses().isEmpty()) {
@@ -245,7 +247,7 @@ public class HostController {
         public List<ResponseInfo> responses;
         public String hostType;
         public String location;
-        public List<String> messages;
+        public List<String> messages = new ArrayList<>();
 
 
         public ResponseInfo getDefaultResponse() {
