@@ -1,6 +1,7 @@
 package org.example.server;
 
 import org.example.domain.host.host.Connection;
+import org.example.domain.server.ServerMessage;
 import org.example.service.IrisService;
 import org.example.service.UINotificationService;
 import org.example.utils.HL7LLPCharacters;
@@ -17,6 +18,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
+import java.util.List;
 
 import static org.example.utils.MessageHandler.llpToText;
 
@@ -130,9 +132,20 @@ public class HL7Server extends Server implements Runnable {
 
             MDC.put("serverLogger", this.serverName);
             messageLogger.addServerMessage("", cleanTextMessage);
-            messages.add(cleanTextMessage);
-            UINotificationService.addServerMessage(serverName, Collections.singletonList(cleanTextMessage));
-            response(outputStream, cleanTextMessage);
+
+            try {
+                List<String> responses = response(outputStream, cleanTextMessage);
+                ServerMessage serverMessage = new ServerMessage(cleanTextMessage, responses);
+
+                messages.add(serverMessage);
+                UINotificationService.addServerMessage(serverName, serverMessage);
+            } catch (Exception e) {
+                ServerMessage serverMessage = new ServerMessage(cleanTextMessage);
+
+                messages.add(serverMessage);
+                UINotificationService.addServerMessage(serverName, serverMessage);
+            }
+
 
         } catch (Exception e) {
             logger.error("[{}] Error procesando conexión HL7", serverName, e);
@@ -140,7 +153,8 @@ public class HL7Server extends Server implements Runnable {
 
     }
 
-    protected void response(OutputStream outputStream, String receivedMessage) {
+    protected List<String> response(OutputStream outputStream, String receivedMessage) {
+        return null;
     }
 
     protected String formatHL7Response(String ack) {

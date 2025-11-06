@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { Server } from '../../services/ServerService';
+import { Server, ServerMessage } from '../../services/ServerService';
 
 interface ServerMessageModalProps {
   server: Server | null;
@@ -14,9 +14,20 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
 
   const messages = server.messages || [];
   const serverName = server.serverName || server.name || server.hostName || 'Unknown Server';
+  
+  // Debug: Log messages to see what we're receiving
+  console.log('📧 Modal opened - Server:', serverName);
+  console.log('📧 Messages array:', messages);
+  console.log('📧 Messages length:', messages.length);
+  console.log('📧 New message indices:', newMessageIndices);
 
   // Función para formatear mensajes XML y HL7
-  const formatMessage = (message: string): string => {
+  const formatMessage = (message: string | undefined): string => {
+    // Handle undefined or empty messages
+    if (!message || message.trim() === '') {
+      return '';
+    }
+    
     // Detectar si es XML
     if (message.trim().startsWith('<')) {
       // Formatear XML con indentación
@@ -113,8 +124,8 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
             </div>
           ) : (
             <div className="space-y-3">
-              {messages.map((message: string, index: number) => {
-                const formattedMessage = formatMessage(message);
+              {messages.map((serverMessage: ServerMessage, index: number) => {
+                const formattedMessage = formatMessage(serverMessage.message);
                 const isNewMessage = newMessageIndices.has(index);
                 
                 return (
@@ -141,9 +152,42 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
                         </span>
                       </div>
                     )}
-                    <pre className="text-xs font-mono whitespace-pre-wrap text-blue-800">
-                      {formattedMessage}
-                    </pre>
+                    
+                    {/* Mensaje recibido - solo mostrar si hay mensaje */}
+                    {formattedMessage && (
+                      <div className="mb-3">
+                        <div className="text-[10px] font-semibold text-blue-700 mb-1">Mensaje Recibido:</div>
+                        <pre className="text-xs font-mono whitespace-pre-wrap text-blue-800 bg-white p-2 rounded border border-blue-300">
+                          {formattedMessage}
+                        </pre>
+                      </div>
+                    )}
+                    
+                    {/* Respuestas enviadas */}
+                    {serverMessage.responses && serverMessage.responses.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-semibold text-green-700 mb-1">
+                          Respuesta{serverMessage.responses.length > 1 ? 's' : ''} Enviada{serverMessage.responses.length > 1 ? 's' : ''}:
+                        </div>
+                        <div className="space-y-2">
+                          {serverMessage.responses.map((response: string, responseIndex: number) => {
+                            const formattedResponse = formatMessage(response);
+                            return (
+                              <div key={responseIndex}>
+                                {serverMessage.responses.length > 1 && (
+                                  <div className="text-[9px] text-green-600 font-medium mb-0.5">
+                                    Respuesta #{responseIndex + 1}
+                                  </div>
+                                )}
+                                <pre className="text-xs font-mono whitespace-pre-wrap text-green-800 bg-green-50 p-2 rounded border border-green-300">
+                                  {formattedResponse}
+                                </pre>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

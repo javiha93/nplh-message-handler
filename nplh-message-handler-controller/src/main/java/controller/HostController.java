@@ -7,6 +7,7 @@ import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
 import org.example.domain.host.host.HostInfo;
 import org.example.domain.host.host.HostInfoList;
+import org.example.domain.server.ServerMessage;
 import org.example.server.Server;
 import org.example.server.Servers;
 import org.example.service.IrisService;
@@ -223,7 +224,7 @@ public class HostController {
             }
             
             // Get current messages list
-            List<String> currentMessages = server.getMessages();
+            List<ServerMessage> currentMessages = server.getMessages();
             if (currentMessages == null) {
                 currentMessages = new ArrayList<>();
                 server.setMessages(currentMessages);
@@ -231,7 +232,7 @@ public class HostController {
             
             // Add new messages from responses
             if (request.responses != null && !request.responses.isEmpty()) {
-                for (String response : request.responses) {
+                for (ServerMessage response : request.responses) {
                     currentMessages.add(response);
                     logger.debug("  ➕ Added response message");
                 }
@@ -281,7 +282,7 @@ public class HostController {
     @Data
     public static class AddMessageRequest {
         public String serverName;
-        public List<String> responses;
+        public List<ServerMessage> responses;
     }
     
     @Data
@@ -291,7 +292,7 @@ public class HostController {
         public List<ResponseInfo> responses;
         public String hostType;
         public String location;
-        public List<String> messages = new ArrayList<>();
+        public List<ServerMessage> messages = new ArrayList<>();
 
 
         public ResponseInfo getDefaultResponse() {

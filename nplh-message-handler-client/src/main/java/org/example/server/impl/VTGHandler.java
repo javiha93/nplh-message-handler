@@ -35,7 +35,7 @@ public class VTGHandler extends HL7Server {
     }
 
     @Override
-    protected void response(OutputStream outputStream, String receivedMessage) {
+    protected List<String> response(OutputStream outputStream, String receivedMessage) {
         List<String> responses = new ArrayList<>();
 
         ResponseStatus communicationResponse = this.getDefaultResponse().getCommunicationResponse();
@@ -74,6 +74,7 @@ public class VTGHandler extends HL7Server {
         }
 
         messageLogger.addServerMessage("", receivedMessage, responses);
+        return responses;
     }
 
 }

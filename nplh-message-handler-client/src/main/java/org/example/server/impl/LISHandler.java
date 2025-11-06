@@ -42,7 +42,7 @@ public class LISHandler extends HL7Server {
     }
 
     @Override
-    protected void response(OutputStream outputStream, String receivedMessage) {
+    protected List<String> response(OutputStream outputStream, String receivedMessage) {
         List<String> responses = new ArrayList<>();
         ResponseInfo responseInfo = getResponseFromMessage(receivedMessage);
 
@@ -83,6 +83,7 @@ public class LISHandler extends HL7Server {
         }
 
         messageLogger.addServerMessage("", receivedMessage, responses);
+        return responses;
     }
 
     //Check better option

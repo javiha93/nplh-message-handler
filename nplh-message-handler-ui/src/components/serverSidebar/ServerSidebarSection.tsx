@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings, MailX } from 'lucide-react';
-import { serverService, Server } from '../../services/ServerService';
+import { serverService, Server, ServerMessage } from '../../services/ServerService';
 import { ServerEditModal } from './ServerEditModal';
 import ServerMessageModal from './ServerMessageModal';
 import { serverUpdateService } from '../../services/ServerUpdateService';
@@ -93,7 +93,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
 
   // Setup real-time server updates
   useEffect(() => {
-    const handleServerUpdate = (serverName: string, newMessages: string[]) => {
+    const handleServerUpdate = (serverName: string, newMessages: ServerMessage[]) => {
       console.log(`🔔 Received update for server '${serverName}' with ${newMessages.length} new messages`);
       
       // Clear any existing timer for this server
@@ -132,6 +132,9 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
           return newMap;
         });
         
+        // Use ServerMessage[] directly from backend - no conversion needed
+        const newServerMessages: ServerMessage[] = newMessages;
+        
         // Update the server's messages
         return prevServers.map(s => {
           const currentServerName = s.serverName || s.name;
@@ -139,7 +142,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
             const currentMessages = s.messages || [];
             return {
               ...s,
-              messages: [...currentMessages, ...newMessages]
+              messages: [...currentMessages, ...newServerMessages]
             };
           }
           return s;

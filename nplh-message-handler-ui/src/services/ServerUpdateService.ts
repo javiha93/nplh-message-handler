@@ -1,7 +1,9 @@
+import { ServerMessage } from './ServerService';
+
 // Service to handle real-time server message updates via HTTP polling
 export class ServerUpdateService {
   private static instance: ServerUpdateService;
-  private updateCallbacks: ((serverName: string, messages: string[]) => void)[] = [];
+  private updateCallbacks: ((serverName: string, messages: ServerMessage[]) => void)[] = [];
   private pollingInterval: number | null = null;
 
   private constructor() {
@@ -16,16 +18,16 @@ export class ServerUpdateService {
     return ServerUpdateService.instance;
   }
 
-  registerUpdateCallback(callback: (serverName: string, messages: string[]) => void) {
+  registerUpdateCallback(callback: (serverName: string, messages: ServerMessage[]) => void) {
     console.log('📝 Registering server update callback');
     this.updateCallbacks.push(callback);
   }
 
-  unregisterUpdateCallback(callback: (serverName: string, messages: string[]) => void) {
+  unregisterUpdateCallback(callback: (serverName: string, messages: ServerMessage[]) => void) {
     this.updateCallbacks = this.updateCallbacks.filter(cb => cb !== callback);
   }
 
-  private notifyCallbacks(serverName: string, messages: string[]) {
+  private notifyCallbacks(serverName: string, messages: ServerMessage[]) {
     console.log(`📢 Notifying callbacks for server: ${serverName} with ${messages.length} messages`);
     
     this.updateCallbacks.forEach((callback) => {
@@ -62,7 +64,21 @@ export class ServerUpdateService {
               const messages = serverUpdates[serverName];
               if (messages && Array.isArray(messages) && messages.length > 0) {
                 console.log(`📨 Processing ${messages.length} messages for server '${serverName}'`);
-                this.notifyCallbacks(serverName, messages);
+                
+                // Convert to ServerMessage[] if needed (backward compatibility)
+                const serverMessages: ServerMessage[] = messages.map(msg => {
+                  // Check if already in ServerMessage format
+                  if (typeof msg === 'object' && msg !== null && 'message' in msg && 'responses' in msg) {
+                    return msg as ServerMessage;
+                  }
+                  // Legacy format: convert string to ServerMessage
+                  return {
+                    message: '',
+                    responses: [msg as string]
+                  };
+                });
+                
+                this.notifyCallbacks(serverName, serverMessages);
               }
             });
           }

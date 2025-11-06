@@ -2,13 +2,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// ServerMessage interface to match backend
+interface ServerMessage {
+  message: string;
+  responses: string[];
+}
+
 // Custom plugin to handle message update endpoint
 const messageUpdatePlugin = () => {
   // Store message updates in memory with delivery tracking
   const messageUpdates: { [controlId: string]: { responses: any[], delivered: boolean, timestamp: number } } = {};
   
-  // Store server message updates (for real-time UI updates)
-  const serverMessageUpdates: { [serverName: string]: { messages: string[], delivered: boolean, timestamp: number } } = {};
+  // Store server message updates (for real-time UI updates) - now stores ServerMessage objects
+  const serverMessageUpdates: { [serverName: string]: { messages: ServerMessage[], delivered: boolean, timestamp: number } } = {};
   
   // Clean up delivered messages after 5 seconds
   setInterval(() => {
@@ -59,7 +65,7 @@ const messageUpdatePlugin = () => {
         
         // Handle GET requests for server message updates (real-time server updates)
         if (req.url === '/api/ui/servers/get-updates' && req.method === 'GET') {
-          const undeliveredServerUpdates: { [serverName: string]: string[] } = {};
+          const undeliveredServerUpdates: { [serverName: string]: ServerMessage[] } = {};
           
           Object.keys(serverMessageUpdates).forEach(key => {
             if (!serverMessageUpdates[key].delivered) {
@@ -159,17 +165,17 @@ const messageUpdatePlugin = () => {
           req.on('end', () => {
             console.log(`📦 Full body received (${body.length} bytes)`);
             try {
-              const { serverName, responses } = JSON.parse(body);
+              const { serverName, serverMessage } = JSON.parse(body);
               
-              if (!serverName || !responses || !Array.isArray(responses)) {
+              if (!serverName || !serverMessage) {
                 console.error('❌ Invalid request body');
                 res.statusCode = 400;
                 res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify({ error: 'Invalid request body. Expected serverName and responses array.' }));
+                res.end(JSON.stringify({ error: 'Invalid request body. Expected serverName and serverMessage object.' }));
                 return;
               }
               
-              console.log(`📦 Storing ${responses.length} messages for server '${serverName}'`);
+              console.log(`📦 Storing ServerMessage for server '${serverName}':`, serverMessage);
               
               // Store in memory for UI polling to pick up
               if (!serverMessageUpdates[serverName]) {
@@ -180,20 +186,21 @@ const messageUpdatePlugin = () => {
                 };
               }
               
-              // Add new messages to existing ones
-              serverMessageUpdates[serverName].messages.push(...responses);
+              // Add the ServerMessage object to the array
+              serverMessageUpdates[serverName].messages.push(serverMessage);
               serverMessageUpdates[serverName].delivered = false;
               serverMessageUpdates[serverName].timestamp = Date.now();
               
-              console.log(`✅ Stored messages for server '${serverName}'. Total pending: ${serverMessageUpdates[serverName].messages.length}`);
+              console.log(`✅ Stored ServerMessage for server '${serverName}'. Total pending: ${serverMessageUpdates[serverName].messages.length}`);
               
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({
                 success: true,
-                message: 'Server messages stored successfully',
+                message: 'Server message stored successfully',
                 serverName,
-                responsesCount: responses.length
+                messageCount: 1,
+                serverMessage
               }));
               
             } catch (error) {

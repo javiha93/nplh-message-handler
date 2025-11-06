@@ -1,6 +1,7 @@
 package org.example.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.domain.server.ServerMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,20 +34,19 @@ public class UINotificationService {
      * The UI will then forward the request to the backend
      * 
      * @param serverName The name of the server that received messages
-     * @param responses List of response messages
+     * @param serverMessage List of response messages
      */
-    public static void addServerMessage(String serverName, List<String> responses) {
+    public static void addServerMessage(String serverName, ServerMessage serverMessage) {
         // Execute asynchronously to avoid blocking the main thread
         CompletableFuture.runAsync(() -> {
             try {
                 // Create request body
                 Map<String, Object> requestBody = new HashMap<>();
                 requestBody.put("serverName", serverName);
-                requestBody.put("responses", responses);
+                requestBody.put("serverMessage", serverMessage);
                 
                 String jsonBody = objectMapper.writeValueAsString(requestBody);
-                
-                logger.info("📤 Sending {} messages to UI for server '{}'", responses.size(), serverName);
+
                 logger.info("📤 Request URL: {}", UI_ENDPOINT);
                 logger.debug("Request body: {}", jsonBody);
                 

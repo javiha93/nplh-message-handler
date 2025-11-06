@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.example.domain.ResponseInfo;
 import org.example.domain.ResponseStatus;
+import org.example.domain.server.ServerMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ public class Server {
     protected List<ResponseInfo> responses = new ArrayList<>();
 
     @JsonProperty("messages")
-    protected List<String> messages = new ArrayList<>();
+    protected List<ServerMessage> messages = new ArrayList<>();
 
 
     public void setDefaultResponse(ResponseInfo response) {
