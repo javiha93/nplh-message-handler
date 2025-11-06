@@ -6,9 +6,10 @@ interface ServerMessageModalProps {
   server: Server | null;
   isOpen: boolean;
   onClose: () => void;
+  newMessageIndices?: Set<number>;
 }
 
-const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen, onClose }) => {
+const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen, onClose, newMessageIndices = new Set() }) => {
   if (!isOpen || !server) return null;
 
   const messages = server.messages || [];
@@ -114,17 +115,30 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
             <div className="space-y-3">
               {messages.map((message: string, index: number) => {
                 const formattedMessage = formatMessage(message);
+                const isNewMessage = newMessageIndices.has(index);
                 
                 return (
                   <div
                     key={index}
-                    className="p-4 rounded-lg border bg-blue-50 border-blue-200"
+                    className="p-4 rounded-lg border bg-blue-50 border-blue-200 relative"
                   >
                     {messages.length > 1 && (
                       <div className="flex justify-between items-start mb-2">
                         <div className="text-xs font-semibold text-blue-600">
                           Mensaje #{index + 1}
                         </div>
+                        {isNewMessage && (
+                          <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-full">
+                            NEW
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {messages.length === 1 && isNewMessage && (
+                      <div className="absolute top-2 right-2">
+                        <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-full">
+                          NEW
+                        </span>
                       </div>
                     )}
                     <pre className="text-xs font-mono whitespace-pre-wrap text-blue-800">

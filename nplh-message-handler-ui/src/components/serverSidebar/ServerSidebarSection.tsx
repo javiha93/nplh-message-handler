@@ -30,6 +30,8 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   const [serversWithNewMessages, setServersWithNewMessages] = useState<Set<string>>(new Set());
   // Track the count of new messages per server
   const [newMessageCounts, setNewMessageCounts] = useState<Map<string, number>>(new Map());
+  // Track which message indices are new for each server (serverName -> Set of indices)
+  const [newMessageIndices, setNewMessageIndices] = useState<Map<string, Set<number>>>(new Map());
   // Track timers for auto-clearing badges after 30 seconds
   const badgeTimersRef = useRef<Map<string, number>>(new Map());
 
@@ -43,6 +45,7 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
       // Clear new message badges when refreshing
       setServersWithNewMessages(new Set());
       setNewMessageCounts(new Map());
+      setNewMessageIndices(new Map());
       // Clear all badge timers
       badgeTimersRef.current.forEach(timer => clearTimeout(timer));
       badgeTimersRef.current.clear();
@@ -110,6 +113,39 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
         return newMap;
       });
       
+      // Update servers and track new message indices
+      setServers(prevServers => {
+        const server = prevServers.find(s => (s.serverName || s.name) === serverName);
+        const currentMessageCount = server?.messages?.length || 0;
+        
+        // Track indices of new messages
+        setNewMessageIndices(prev => {
+          const newMap = new Map(prev);
+          const currentIndices = newMap.get(serverName) || new Set<number>();
+          
+          // Add indices for the new messages
+          for (let i = 0; i < newMessages.length; i++) {
+            currentIndices.add(currentMessageCount + i);
+          }
+          
+          newMap.set(serverName, new Set(currentIndices));
+          return newMap;
+        });
+        
+        // Update the server's messages
+        return prevServers.map(s => {
+          const currentServerName = s.serverName || s.name;
+          if (currentServerName === serverName) {
+            const currentMessages = s.messages || [];
+            return {
+              ...s,
+              messages: [...currentMessages, ...newMessages]
+            };
+          }
+          return s;
+        });
+      });
+      
       // Set a timer to clear the badge after 30 seconds
       const timer = setTimeout(() => {
         console.log(`⏰ 30 seconds elapsed - clearing badge for server '${serverName}'`);
@@ -123,24 +159,15 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
           newMap.delete(serverName);
           return newMap;
         });
+        setNewMessageIndices(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(serverName);
+          return newMap;
+        });
         badgeTimersRef.current.delete(serverName);
-      }, 30000); // 30 seconds
+      }, 15000); // 30 seconds
       
       badgeTimersRef.current.set(serverName, timer);
-      
-      setServers(prevServers => 
-        prevServers.map(server => {
-          const currentServerName = server.serverName || server.name;
-          if (currentServerName === serverName) {
-            const currentMessages = server.messages || [];
-            return {
-              ...server,
-              messages: [...currentMessages, ...newMessages]
-            };
-          }
-          return server;
-        })
-      );
     };
 
     serverUpdateService.registerUpdateCallback(handleServerUpdate);
@@ -228,7 +255,7 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
     setMessageModalServer(server);
     setMessageModalOpen(true);
     
-    // Clear new message badge for this server when opening modal
+    // Clear new message badge counters for this server when opening modal
     const serverName = server.serverName || server.name;
     if (serverName) {
       // Clear the timer for this server
@@ -248,7 +275,21 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
         newMap.delete(serverName);
         return newMap;
       });
+      // Note: newMessageIndices is NOT cleared here - badges will show in modal
     }
+  };
+
+  const handleCloseMessageModal = () => {
+    // Clear new message indices when closing modal
+    const serverName = messageModalServer?.serverName || messageModalServer?.name;
+    if (serverName) {
+      setNewMessageIndices(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(serverName);
+        return newMap;
+      });
+    }
+    setMessageModalOpen(false);
   };
 
   // Helper functions para manejar ResponseStatus
@@ -455,7 +496,8 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
       <ServerMessageModal
         server={messageModalServer}
         isOpen={messageModalOpen}
-        onClose={() => setMessageModalOpen(false)}
+        onClose={handleCloseMessageModal}
+        newMessageIndices={messageModalServer ? (newMessageIndices.get(messageModalServer.serverName || messageModalServer.name || '') || new Set()) : new Set()}
       />
     </div>
   );
