@@ -77,7 +77,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   const [isSendingWithACK, setIsSendingWithACK] = useState(false);
   const [currentSendingIndex, setCurrentSendingIndex] = useState<number>(-1);
   const [ackTimeout, setAckTimeout] = useState<number | null>(null);
-  const [ackWaitTime, setAckWaitTime] = useState<number>(3); // Default 3 seconds
+  const [ackWaitTime, setAckWaitTime] = useState<number>(7); // Default 3 seconds
   const [showAckConfig, setShowAckConfig] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(384);
   const [isResizing, setIsResizing] = useState(false);
@@ -737,18 +737,18 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
                   <input
                     type="range"
                     min="0.5"
-                    max="7"
+                    max="13"
                     step="0.5"
                     value={ackWaitTime}
                     onChange={(e) => setAckWaitTime(Number(e.target.value))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     style={{
-                      background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((ackWaitTime - 0.5) / 6.5) * 100}%, #E5E7EB ${((ackWaitTime - 0.5) / 6.5) * 100}%, #E5E7EB 100%)`
+                      background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((ackWaitTime - 0.5) / 12.5) * 100}%, #E5E7EB ${((ackWaitTime - 0.5) / 12.5) * 100}%, #E5E7EB 100%)`
                     }}
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
                     <span>0.5s</span>
-                    <span>7s</span>
+                    <span>13s</span>
                   </div>
                 </div>
                 <button

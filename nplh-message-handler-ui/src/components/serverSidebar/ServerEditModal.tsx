@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
-import { Server, ResponseStatus, ResponseInfo, getApplicationResponse, getCommunicationResponse } from '../../services/ServerService';
+import { Server } from '../../services/ServerService';
+import { useServerEditState } from './useServerEditState';
+import {
+  toggleResponseStatus,
+  updateErrorText,
+  toggleCustomResponse,
+  updateCustomResponseText,
+  hasControlId,
+  handleResponseSelection as handleResponseSelectionUtil
+} from './serverEditHandlers';
+import { ResponseSelector } from './ResponseSelector';
+import { ResponseConfiguration } from './ResponseConfiguration';
 
 interface ServerEditModalProps {
   server: Server | null;
@@ -15,150 +26,21 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   onClose, 
   onSave 
 }) => {
-  // ✨ Estado para manejar múltiples respuestas
-  const [responses, setResponses] = useState<ResponseInfo[]>([]);
-  const [selectedResponseIndex, setSelectedResponseIndex] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✨ Estado para compatibilidad hacia atrás (calculado)
-  const [applicationResponse, setApplicationResponse] = useState<ResponseStatus>({
-    isEnable: false,
-    isError: false,
-    errorText: '',
-    customResponse: { enabled: false, text: '' }
-  });
-  const [communicationResponse, setCommunicationResponse] = useState<ResponseStatus>({
-    isEnable: false,
-    isError: false,
-    errorText: '',
-    customResponse: { enabled: false, text: '' }
-  });
-
-  // ✨ Determine if ApplicationResponse can be enabled based on hostType
-  const isApplicationResponseAllowed = (hostType?: string): boolean => {
-    if (!hostType) return true;
-    const restrictedTypes = ['VSS', 'VIRTUOSO', 'DP'];
-    return !restrictedTypes.includes(hostType.toUpperCase());
-  };
-
-  // Initialize form when server changes
-  useEffect(() => {
-    if (server) {
-      console.log('🔍 Initializing modal with server data:', server);
-      console.log('🔍 Server responses from backend:', server.responses);
-      
-      // Initialize responses array from server.responses
-      if (server.responses && server.responses.length > 0) {
-        const initialResponses = server.responses.map(responseInfo => ({
-          messageType: responseInfo.messageType,
-          isDefault: responseInfo.isDefault,
-          applicationResponse: {
-            isEnable: responseInfo.applicationResponse?.isEnable || false,
-            isError: responseInfo.applicationResponse?.isError || false,
-            errorText: responseInfo.applicationResponse?.errorText || '',
-            customResponse: {
-              enabled: responseInfo.applicationResponse?.customResponse?.useCustomResponse || false,
-              text: responseInfo.applicationResponse?.customResponse?.customResponseText || ''
-            }
-          },
-          communicationResponse: {
-            isEnable: responseInfo.communicationResponse?.isEnable || false,
-            isError: responseInfo.communicationResponse?.isError || false,
-            errorText: responseInfo.communicationResponse?.errorText || '',
-            customResponse: {
-              enabled: responseInfo.communicationResponse?.customResponse?.useCustomResponse || false,
-              text: responseInfo.communicationResponse?.customResponse?.customResponseText || ''
-            }
-          }
-        }));
-        
-        setResponses(initialResponses);
-        
-        // Find and select the default response
-        const defaultIndex = initialResponses.findIndex(r => r.isDefault);
-        const selectedIndex = defaultIndex !== -1 ? defaultIndex : 0;
-        setSelectedResponseIndex(selectedIndex);
-        
-        // Set individual responses for backward compatibility
-        if (initialResponses.length > 0) {
-          const firstResponse = initialResponses[selectedIndex];
-          
-          // Apply restrictions for applicationResponse if needed
-          const appResponse = { ...firstResponse.applicationResponse };
-          if (!isApplicationResponseAllowed(server.hostType)) {
-            appResponse.isEnable = false;
-            appResponse.isError = false;
-            appResponse.errorText = '';
-            appResponse.customResponse = { 
-              enabled: false, 
-              text: appResponse.customResponse?.text || '' 
-            };
-          }
-          
-          setApplicationResponse(appResponse);
-          setCommunicationResponse(firstResponse.communicationResponse);
-        }
-      } else {
-        // Fallback to legacy single response mode
-        console.log('🔍 ApplicationResponse from backend:', server.applicationResponse);
-        console.log('🔍 CommunicationResponse from backend:', server.communicationResponse);
-        
-        // ✨ Usar las funciones helper para obtener las respuestas por defecto
-        const serverAppResponse = getApplicationResponse(server);
-        const serverCommResponse = getCommunicationResponse(server);
-        
-        const initialAppResponse = {
-          isEnable: serverAppResponse.isEnable || false,
-          isError: serverAppResponse.isError || false,
-          errorText: serverAppResponse.errorText || '',
-          customResponse: {
-            enabled: serverAppResponse.customResponse?.useCustomResponse || false,
-            text: serverAppResponse.customResponse?.customResponseText || ''
-          }
-        };
-        
-        // ✨ If hostType is restricted, force ApplicationResponse to disabled
-        if (!isApplicationResponseAllowed(server.hostType)) {
-          initialAppResponse.isEnable = false;
-          initialAppResponse.isError = false;
-          initialAppResponse.errorText = '';
-          // ✨ Preservar el texto pero deshabilitar customResponse
-          initialAppResponse.customResponse = { 
-            enabled: false, 
-            text: initialAppResponse.customResponse?.text || '' 
-          };
-        }
-        
-        setApplicationResponse(initialAppResponse);
-        
-        // ✨ Usar la función helper para communicationResponse
-        const initialCommResponse = {
-          isEnable: serverCommResponse.isEnable || false,
-          isError: serverCommResponse.isError || false,
-          errorText: serverCommResponse.errorText || '',
-          customResponse: {
-            enabled: serverCommResponse.customResponse?.useCustomResponse || false,
-            text: serverCommResponse.customResponse?.customResponseText || ''
-          }
-        };
-
-        setCommunicationResponse(initialCommResponse);
-        
-        // Create a single response entry for compatibility
-        setResponses([{
-          messageType: 'Default',
-          isDefault: true,
-          applicationResponse: initialAppResponse,
-          communicationResponse: initialCommResponse
-        }]);
-        setSelectedResponseIndex(0);
-      }
-      
-      setError(null);
-      console.log('✅ Modal initialization complete');
-    }
-  }, [server]);
+  // Use custom hook for state management
+  const {
+    responses,
+    setResponses,
+    selectedResponseIndex,
+    setSelectedResponseIndex,
+    applicationResponse,
+    setApplicationResponse,
+    communicationResponse,
+    setCommunicationResponse,
+    isApplicationResponseAllowed
+  } = useServerEditState(server);
 
   const handleSave = async () => {
     if (!server) return;
@@ -167,7 +49,6 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
     setError(null);
     
     try {
-      // Update the selected response with current form values
       const updatedResponses = [...responses];
       if (updatedResponses[selectedResponseIndex]) {
         updatedResponses[selectedResponseIndex] = {
@@ -203,7 +84,6 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
         serverName: server.serverName,
         isRunning: server.isRunning,
         responses: updatedResponses,
-        // Keep backward compatibility for legacy servers
         applicationResponse,
         communicationResponse
       };
@@ -218,140 +98,44 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
     }
   };
 
-  const toggleResponseStatus = (
-    currentStatus: ResponseStatus, 
-    setter: React.Dispatch<React.SetStateAction<ResponseStatus>>,
-    field: 'isEnable' | 'isError',
-    isApplicationResponse: boolean = false
-  ) => {
-    // ✨ Check if ApplicationResponse can be enabled for this hostType
-    if (isApplicationResponse && field === 'isEnable' && !currentStatus[field] && !isApplicationResponseAllowed(server?.hostType)) {
-      // Prevent enabling ApplicationResponse for restricted hostTypes
-      return;
-    }
-
-    if (field === 'isEnable' && !currentStatus[field]) {
-      // Si estamos habilitando, asegurar que isError se ponga false, limpiar errorText 
-      setter({
-        ...currentStatus,
-        isEnable: true,
-        isError: false,
-        errorText: '',
-        customResponse: currentStatus.customResponse || { enabled: false, text: '' }
-      });
-    } else if (field === 'isEnable' && currentStatus[field]) {
-      // Si estamos deshabilitando, limpiar todo excepto el texto guardado
-      setter({
-        ...currentStatus,
-        isEnable: false,
-        isError: false,
-        errorText: '',
-        customResponse: { 
-          enabled: false, 
-          text: currentStatus.customResponse?.text || '' 
-        }
-      });
-    } else if (field === 'isError') {
-      // Solo permitir cambiar isError si isEnable está activado
-      if (currentStatus.isEnable) {
-        const newErrorValue = !currentStatus[field];
-        setter({
-          ...currentStatus,
-          isError: newErrorValue,
-          errorText: newErrorValue ? (currentStatus.errorText || '') : '',
-          // ✨ Si habilitamos error, deshabilitar customResponse pero mantener el texto
-          customResponse: newErrorValue 
-            ? { enabled: false, text: currentStatus.customResponse?.text || '' }
-            : currentStatus.customResponse || { enabled: false, text: '' }
-        });
-      }
-    }
-  };
-
-  const updateErrorText = (
-    currentStatus: ResponseStatus,
-    setter: React.Dispatch<React.SetStateAction<ResponseStatus>>,
-    newErrorText: string
-  ) => {
-    setter({
-      ...currentStatus,
-      errorText: newErrorText
-    });
-  };
-
-  // ✨ Nueva función para toggle Custom Response
-  const toggleCustomResponse = (
-    currentStatus: ResponseStatus,
-    setter: React.Dispatch<React.SetStateAction<ResponseStatus>>
-  ) => {
-    if (currentStatus.isEnable && !currentStatus.isError) {
-      const isCurrentlyEnabled = currentStatus.customResponse?.enabled || false;
-      const currentText = currentStatus.customResponse?.text || '';
-      
-      console.log('🔄 Toggling customResponse:', {
-        isCurrentlyEnabled,
-        currentText,
-        willBeEnabled: !isCurrentlyEnabled
-      });
-
-      setter({
-        ...currentStatus,
-        customResponse: {
-          enabled: !isCurrentlyEnabled,
-          text: currentText // ✨ Preservar el texto actual
-        },
-        // Si habilitamos customResponse, asegurar que isError esté deshabilitado
-        isError: !isCurrentlyEnabled ? false : currentStatus.isError,
-        errorText: !isCurrentlyEnabled ? '' : currentStatus.errorText
-      });
-    }
-  };
-
-  // ✨ Nueva función para actualizar Custom Response text
-  const updateCustomResponse = (
-    currentStatus: ResponseStatus,
-    setter: React.Dispatch<React.SetStateAction<ResponseStatus>>,
-    newText: string
-  ) => {
-    console.log('📝 Updating customResponse text:', {
-      currentEnabled: currentStatus.customResponse?.enabled,
-      currentText: currentStatus.customResponse?.text,
-      newText: newText
-    });
-
-    setter({
-      ...currentStatus,
-      customResponse: {
-        enabled: currentStatus.customResponse?.enabled || false,
-        text: newText
-      }
-    });
-  };
-
-  // ✨ Función para renderizar texto con *originalControlId* resaltado
-  const renderHighlightedText = (text: string) => {
-    if (!text) return text;
-    
-    // ✨ Buscar tanto *originalControlId* como *controlId*
-    const parts = text.split(/(\*originalControlId\*|\*controlId\*)/g);
-    return (
-      <>
-        {parts.map((part, index) => (
-          (part === '*originalControlId*' || part === '*controlId*') ? (
-            <span key={index} className="bg-yellow-200 text-yellow-800 font-semibold px-1 rounded">
-              {part}
-            </span>
-          ) : (
-            <span key={index}>{part}</span>
-          )
-        ))}
-      </>
+  const handleResponseChange = (index: number) => {
+    handleResponseSelectionUtil(
+      index,
+      responses,
+      setSelectedResponseIndex,
+      setApplicationResponse,
+      setCommunicationResponse,
+      server?.hostType
     );
+    
+    // Apply default response values for non-default responses
+    const selectedResponse = responses[index];
+    if (selectedResponse && !selectedResponse.isDefault) {
+      const defaultResponse = responses.find(r => r.isDefault);
+      if (defaultResponse) {
+        const updatedResponses = [...responses];
+        updatedResponses[index] = {
+          ...updatedResponses[index],
+          applicationResponse: { ...defaultResponse.applicationResponse },
+          communicationResponse: { ...defaultResponse.communicationResponse }
+        };
+        setResponses(updatedResponses);
+      }
+    }
   };
 
-  // ✨ Helper function para verificar si el texto contiene control IDs
-  const hasControlId = (text: string): boolean => {
-    return Boolean(text && (text.includes('*originalControlId*') || text.includes('*controlId*')));
+  const renderHighlightedText = (text: string) => {
+    const parts = text.split(/(\*originalControlId\*|\*controlId\*)/g);
+    return parts.map((part, index) => {
+      if (part === '*originalControlId*' || part === '*controlId*') {
+        return (
+          <span key={index} className="bg-yellow-200 text-yellow-900 px-1 rounded font-bold">
+            {part}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
   };
 
   if (!isOpen || !server) return null;
@@ -359,6 +143,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">
             Edit Server: {server.serverName || server.name || 'Unknown'}
@@ -373,72 +158,11 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
 
         <div className="p-6 space-y-6">
           {/* Response Selector */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Response to Edit:
-            </label>
-              <select
-                value={selectedResponseIndex}
-                onChange={(e) => {
-                  const newIndex = parseInt(e.target.value);
-                  setSelectedResponseIndex(newIndex);
-                  
-                  // Update individual response states when selection changes
-                  const selectedResponse = responses[newIndex];
-                  if (selectedResponse) {
-                    // Si la respuesta seleccionada NO es default, usar los valores de la default response
-                    let appResponse = { ...selectedResponse.applicationResponse };
-                    let commResponse = { ...selectedResponse.communicationResponse };
-                    
-                    if (!selectedResponse.isDefault) {
-                      // Buscar la respuesta default
-                      const defaultResponse = responses.find(r => r.isDefault);
-                      if (defaultResponse) {
-                        // Usar los valores de la default response
-                        appResponse = { ...defaultResponse.applicationResponse };
-                        commResponse = { ...defaultResponse.communicationResponse };
-                        
-                        // Actualizar la respuesta seleccionada con los valores default
-                        const updatedResponses = [...responses];
-                        updatedResponses[newIndex] = {
-                          ...updatedResponses[newIndex],
-                          applicationResponse: appResponse,
-                          communicationResponse: commResponse
-                        };
-                        setResponses(updatedResponses);
-                      }
-                    }
-                    
-                    // Apply restrictions for applicationResponse if needed
-                    if (!isApplicationResponseAllowed(server.hostType)) {
-                      appResponse.isEnable = false;
-                      appResponse.isError = false;
-                      appResponse.errorText = '';
-                      appResponse.customResponse = { 
-                        enabled: false, 
-                        text: appResponse.customResponse?.text || '' 
-                      };
-                    }
-                    
-                    setApplicationResponse(appResponse);
-                    setCommunicationResponse(commResponse);
-                  }
-                }}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {responses.map((response, index) => (
-                  <option key={index} value={index}>
-                    {response.messageType} {response.isDefault ? '(Default)' : ''}
-                  </option>
-                ))}
-              </select>
-              {responses[selectedResponseIndex] && (
-                <p className="mt-2 text-sm text-gray-600">
-                  Editing: <span className="font-medium">{responses[selectedResponseIndex].messageType}</span>
-                  {responses[selectedResponseIndex].isDefault && <span className="text-blue-600 font-medium"> (Default Response)</span>}
-                </p>
-              )}
-            </div>
+          <ResponseSelector
+            responses={responses}
+            selectedIndex={selectedResponseIndex}
+            onSelectResponse={handleResponseChange}
+          />
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -449,180 +173,73 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
             </div>
           )}
 
-          {/* Application Response */}
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-700">Application Response</h3>
-            <div className="space-y-2">
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={applicationResponse.isEnable || false}
-                  disabled={!isApplicationResponseAllowed(server?.hostType)} // ✨ Disable for restricted hostTypes
-                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isEnable', true)} // ✨ Pass isApplicationResponse flag
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <span className={`text-sm ${isApplicationResponseAllowed(server?.hostType) ? 'text-gray-600' : 'text-gray-400'}`}>
-                  Enabled {!isApplicationResponseAllowed(server?.hostType) && 
-                    <span className="text-xs text-red-500">(Restricted for WS Host with {server?.hostType} type)</span>
-                  }
-                </span>
-              </label>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={applicationResponse.isError || false}
-                  disabled={!applicationResponse.isEnable}
-                  onChange={() => toggleResponseStatus(applicationResponse, setApplicationResponse, 'isError', true)}
-                  className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <span className={`text-sm ${applicationResponse.isEnable ? 'text-gray-600' : 'text-gray-400'}`}>Has Error</span>
-              </label>
-              {applicationResponse.isError && applicationResponse.isEnable && (
-                <div className="ml-7 mt-2">
-                  <input
-                    type="text"
-                    placeholder="Enter error description..."
-                    value={applicationResponse.errorText || ''}
-                    onChange={(e) => updateErrorText(applicationResponse, setApplicationResponse, e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  />
-                </div>
-              )}
+          {/* Application Response Configuration */}
+          <ResponseConfiguration
+            title="Application Response"
+            response={applicationResponse}
+            onToggleEnable={() => toggleResponseStatus(
+              applicationResponse,
+              setApplicationResponse,
+              'isEnable',
+              !isApplicationResponseAllowed(server.hostType)
+            )}
+            onToggleError={() => toggleResponseStatus(
+              applicationResponse,
+              setApplicationResponse,
+              'isError',
+              false
+            )}
+            onToggleCustomResponse={() => toggleCustomResponse(setApplicationResponse)}
+            onUpdateErrorText={(text) => updateErrorText(setApplicationResponse, text)}
+            onUpdateCustomText={(text) => updateCustomResponseText(setApplicationResponse, text)}
+            hasControlId={hasControlId}
+            disabled={!isApplicationResponseAllowed(server.hostType)}
+            restrictionMessage={
+              !isApplicationResponseAllowed(server.hostType)
+                ? `Restricted for WS Host with ${server.hostType} type`
+                : undefined
+            }
+          />
 
-              {/* ✨ Custom Response Control */}
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={applicationResponse.customResponse?.enabled || false}
-                  disabled={!applicationResponse.isEnable || applicationResponse.isError}
-                  onChange={() => toggleCustomResponse(applicationResponse, setApplicationResponse)}
-                  className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <span className={`text-sm ${applicationResponse.isEnable && !applicationResponse.isError ? 'text-gray-600' : 'text-gray-400'}`}>Custom Response</span>
-              </label>
-              {applicationResponse.customResponse?.enabled && applicationResponse.isEnable && !applicationResponse.isError && (
-                <div className="ml-7 mt-2">
-                  <label className="block text-xs text-gray-500 mb-1">Custom Response Message:</label>
-                  <div className="relative">
-                    <textarea
-                      placeholder="Enter custom response (e.g., HL7 ACK message)..."
-                      value={applicationResponse.customResponse?.text || ''}
-                      onChange={(e) => updateCustomResponse(applicationResponse, setApplicationResponse, e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono resize-vertical min-h-[100px]"
-                      style={{
-                        background: hasControlId(applicationResponse.customResponse?.text || '') 
-                          ? 'linear-gradient(90deg, rgba(254, 249, 195, 0.3) 0%, rgba(254, 249, 195, 0.1) 100%)'
-                          : 'white'
-                      }}
-                    />
-                  </div>
-                  {hasControlId(applicationResponse.customResponse?.text || '') && (
-                    <div className="flex items-center justify-end mt-1">
-                      <div className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium border border-yellow-200">
-                        ⚡ Dynamic ID detected
-                      </div>
-                    </div>
-                  )}
-                  <div className="text-xs text-gray-400 mt-1">
-                    Tip: Use <code className="bg-yellow-100 px-1 rounded">*originalControlId*</code> and <code className="bg-yellow-100 px-1 rounded">*controlId*</code> as placeholders for dynamic message ID replacement
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Communication Response Configuration */}
+          <ResponseConfiguration
+            title="Communication Response"
+            response={communicationResponse}
+            onToggleEnable={() => toggleResponseStatus(
+              communicationResponse,
+              setCommunicationResponse,
+              'isEnable',
+              false
+            )}
+            onToggleError={() => toggleResponseStatus(
+              communicationResponse,
+              setCommunicationResponse,
+              'isError',
+              false
+            )}
+            onToggleCustomResponse={() => toggleCustomResponse(setCommunicationResponse)}
+            onUpdateErrorText={(text) => updateErrorText(setCommunicationResponse, text)}
+            onUpdateCustomText={(text) => updateCustomResponseText(setCommunicationResponse, text)}
+            hasControlId={hasControlId}
+          />
 
-          {/* Communication Response */}
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-700">Communication Response</h3>
-            <div className="space-y-2">
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={communicationResponse.isEnable || false}
-                  onChange={() => toggleResponseStatus(communicationResponse, setCommunicationResponse, 'isEnable', false)}
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-600">Enabled</span>
-              </label>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={communicationResponse.isError || false}
-                  disabled={!communicationResponse.isEnable}
-                  onChange={() => toggleResponseStatus(communicationResponse, setCommunicationResponse, 'isError', false)}
-                  className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <span className={`text-sm ${communicationResponse.isEnable ? 'text-gray-600' : 'text-gray-400'}`}>Has Error</span>
-              </label>
-              {communicationResponse.isError && communicationResponse.isEnable && (
-                <div className="ml-7 mt-2">
-                  <input
-                    type="text"
-                    placeholder="Enter error description..."
-                    value={communicationResponse.errorText || ''}
-                    onChange={(e) => updateErrorText(communicationResponse, setCommunicationResponse, e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  />
-                </div>
-              )}
-
-              {/* ✨ Custom Response Control */}
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={communicationResponse.customResponse?.enabled || false}
-                  disabled={!communicationResponse.isEnable || communicationResponse.isError}
-                  onChange={() => toggleCustomResponse(communicationResponse, setCommunicationResponse)}
-                  className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <span className={`text-sm ${communicationResponse.isEnable && !communicationResponse.isError ? 'text-gray-600' : 'text-gray-400'}`}>Custom Response</span>
-              </label>
-              {communicationResponse.customResponse?.enabled && communicationResponse.isEnable && !communicationResponse.isError && (
-                <div className="ml-7 mt-2">
-                  <label className="block text-xs text-gray-500 mb-1">Custom Response Message:</label>
-                  <div className="relative">
-                    <textarea
-                      placeholder="Enter custom response (e.g., HL7 ACK message)..."
-                      value={communicationResponse.customResponse?.text || ''}
-                      onChange={(e) => updateCustomResponse(communicationResponse, setCommunicationResponse, e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono resize-vertical min-h-[100px]"
-                      style={{
-                        background: hasControlId(communicationResponse.customResponse?.text || '') 
-                          ? 'linear-gradient(90deg, rgba(254, 249, 195, 0.3) 0%, rgba(254, 249, 195, 0.1) 100%)'
-                          : 'white'
-                      }}
-                    />
-                  </div>
-                  {hasControlId(communicationResponse.customResponse?.text || '') && (
-                    <div className="flex items-center justify-end mt-1">
-                      <div className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-medium border border-yellow-200">
-                        ⚡ Dynamic ID detected
-                      </div>
-                    </div>
-                  )}
-                  <div className="text-xs text-gray-400 mt-1">
-                    Tip: Use <code className="bg-yellow-100 px-1 rounded">*originalControlId*</code> and <code className="bg-yellow-100 px-1 rounded">*controlId*</code> as placeholders for dynamic message ID replacement
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Preview */}
+          {/* Preview Section */}
           <div className="bg-gray-50 rounded-lg p-3 space-y-3">
             <h4 className="text-sm font-medium text-gray-700">Preview:</h4>
             <div className="space-y-3">
               {/* Application Response Preview */}
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-medium">App: {applicationResponse.isError ? '⚠' : applicationResponse.isEnable ? '✓' : '✗'}</span>
+                  <span className="text-xs font-medium">
+                    App: {applicationResponse.isError ? '⚠' : applicationResponse.isEnable ? '✓' : '✗'}
+                  </span>
                   {applicationResponse.isError && applicationResponse.errorText && (
                     <span className="text-red-600 italic text-xs">({applicationResponse.errorText})</span>
                   )}
                 </div>
-                {applicationResponse.customResponse?.enabled && applicationResponse.customResponse?.text && !applicationResponse.isError && (
+                {applicationResponse.customResponse?.enabled && 
+                 applicationResponse.customResponse?.text && 
+                 !applicationResponse.isError && (
                   <div className="mt-1 p-2 bg-green-50 border border-green-200 rounded text-xs">
                     <div className="text-green-700 font-medium mb-1">Custom Response:</div>
                     <div className="font-mono text-green-600 break-all whitespace-pre-wrap max-h-20 overflow-y-auto">
@@ -635,12 +252,16 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
               {/* Communication Response Preview */}
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-medium">Comm: {communicationResponse.isError ? '⚠' : communicationResponse.isEnable ? '✓' : '✗'}</span>
+                  <span className="text-xs font-medium">
+                    Comm: {communicationResponse.isError ? '⚠' : communicationResponse.isEnable ? '✓' : '✗'}
+                  </span>
                   {communicationResponse.isError && communicationResponse.errorText && (
                     <span className="text-red-600 italic text-xs">({communicationResponse.errorText})</span>
                   )}
                 </div>
-                {communicationResponse.customResponse?.enabled && communicationResponse.customResponse?.text && !communicationResponse.isError && (
+                {communicationResponse.customResponse?.enabled && 
+                 communicationResponse.customResponse?.text && 
+                 !communicationResponse.isError && (
                   <div className="mt-1 p-2 bg-green-50 border border-green-200 rounded text-xs">
                     <div className="text-green-700 font-medium mb-1">Custom Response:</div>
                     <div className="font-mono text-green-600 break-all whitespace-pre-wrap max-h-20 overflow-y-auto">
@@ -653,6 +274,7 @@ export const ServerEditModal: React.FC<ServerEditModalProps> = ({
           </div>
         </div>
 
+        {/* Footer Buttons */}
         <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
           <button
             onClick={onClose}
