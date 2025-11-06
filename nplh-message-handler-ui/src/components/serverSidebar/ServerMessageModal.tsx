@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Server, ServerMessage } from '../../services/ServerService';
+import { isErrorResponse } from '../../utils/responseFormatUtils';
 
 interface ServerMessageModalProps {
   server: Server | null;
@@ -136,7 +137,7 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
                     {messages.length > 1 && (
                       <div className="flex justify-between items-start mb-2">
                         <div className="text-xs font-semibold text-blue-600">
-                          Mensaje #{index + 1}
+                          Message #{index + 1}
                         </div>
                         {isNewMessage && (
                           <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-full">
@@ -156,7 +157,7 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
                     {/* Mensaje recibido - solo mostrar si hay mensaje */}
                     {formattedMessage && (
                       <div className="mb-3">
-                        <div className="text-[10px] font-semibold text-blue-700 mb-1">Mensaje Recibido:</div>
+                        <div className="text-[10px] font-semibold text-blue-700 mb-1">Message Received:</div>
                         <pre className="text-xs font-mono whitespace-pre-wrap text-blue-800 bg-white p-2 rounded border border-blue-300">
                           {formattedMessage}
                         </pre>
@@ -166,20 +167,34 @@ const ServerMessageModal: React.FC<ServerMessageModalProps> = ({ server, isOpen,
                     {/* Respuestas enviadas */}
                     {serverMessage.responses && serverMessage.responses.length > 0 && (
                       <div>
-                        <div className="text-[10px] font-semibold text-green-700 mb-1">
-                          Respuesta{serverMessage.responses.length > 1 ? 's' : ''} Enviada{serverMessage.responses.length > 1 ? 's' : ''}:
-                        </div>
+                        {(() => {
+                          const hasAnyError = serverMessage.responses.some((response: string) => isErrorResponse(response));
+                          const headerColor = hasAnyError ? 'text-red-700' : 'text-green-700';
+                          
+                          return (
+                            <div className={`text-[10px] font-semibold ${headerColor} mb-1`}>
+                              Response{serverMessage.responses.length > 1 ? 's' : ''} Sent{serverMessage.responses.length > 1 ? 's' : ''}:
+                            </div>
+                          );
+                        })()}
                         <div className="space-y-2">
                           {serverMessage.responses.map((response: string, responseIndex: number) => {
                             const formattedResponse = formatMessage(response);
+                            const hasError = isErrorResponse(response);
+                            const bgColor = hasError ? 'bg-red-50' : 'bg-green-50';
+                            const textColor = hasError ? 'text-red-800' : 'text-green-800';
+                            const borderColor = hasError ? 'border-red-300' : 'border-green-300';
+                            const headerColor = hasError ? 'text-red-600' : 'text-green-600';
+                            
                             return (
                               <div key={responseIndex}>
                                 {serverMessage.responses.length > 1 && (
-                                  <div className="text-[9px] text-green-600 font-medium mb-0.5">
-                                    Respuesta #{responseIndex + 1}
+                                  <div className={`text-[9px] ${headerColor} font-medium mb-0.5`}>
+                                    Response #{responseIndex + 1}
+                                    {hasError && <span className="ml-2 text-red-700 font-bold">⚠ ERROR</span>}
                                   </div>
                                 )}
-                                <pre className="text-xs font-mono whitespace-pre-wrap text-green-800 bg-green-50 p-2 rounded border border-green-300">
+                                <pre className={`text-xs font-mono whitespace-pre-wrap ${textColor} ${bgColor} p-2 rounded border ${borderColor}`}>
                                   {formattedResponse}
                                 </pre>
                               </div>
