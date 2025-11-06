@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings, MailX } from 'lucide-react';
 import { serverService, Server } from '../../services/ServerService';
 import { ServerEditModal } from './ServerEditModal';
@@ -25,14 +25,27 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [messageModalServer, setMessageModalServer] = useState<Server | null>(null);
+  
+  // Track servers with new real-time messages
+  const [serversWithNewMessages, setServersWithNewMessages] = useState<Set<string>>(new Set());
+  // Track the count of new messages per server
+  const [newMessageCounts, setNewMessageCounts] = useState<Map<string, number>>(new Map());
+  // Track timers for auto-clearing badges after 30 seconds
+  const badgeTimersRef = useRef<Map<string, number>>(new Map());
 
-  // Funci├│n para cargar servidores
+  // Función para cargar servidores
   const loadServers = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const serverList = await serverService.getServers();
       setServers(serverList);
+      // Clear new message badges when refreshing
+      setServersWithNewMessages(new Set());
+      setNewMessageCounts(new Map());
+      // Clear all badge timers
+      badgeTimersRef.current.forEach(timer => clearTimeout(timer));
+      badgeTimersRef.current.clear();
     } catch (err) {
       const errorMessage = `Error loading servers: ${err instanceof Error ? err.message : 'Unknown error'}`;
       setError(errorMessage);
@@ -80,6 +93,41 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     const handleServerUpdate = (serverName: string, newMessages: string[]) => {
       console.log(`🔔 Received update for server '${serverName}' with ${newMessages.length} new messages`);
       
+      // Clear any existing timer for this server
+      const existingTimer = badgeTimersRef.current.get(serverName);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+      
+      // Mark this server as having new messages
+      setServersWithNewMessages(prev => new Set(prev).add(serverName));
+      
+      // Update the count of new messages for this server
+      setNewMessageCounts(prev => {
+        const newMap = new Map(prev);
+        const currentCount = newMap.get(serverName) || 0;
+        newMap.set(serverName, currentCount + newMessages.length);
+        return newMap;
+      });
+      
+      // Set a timer to clear the badge after 30 seconds
+      const timer = setTimeout(() => {
+        console.log(`⏰ 30 seconds elapsed - clearing badge for server '${serverName}'`);
+        setServersWithNewMessages(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(serverName);
+          return newSet;
+        });
+        setNewMessageCounts(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(serverName);
+          return newMap;
+        });
+        badgeTimersRef.current.delete(serverName);
+      }, 30000); // 30 seconds
+      
+      badgeTimersRef.current.set(serverName, timer);
+      
       setServers(prevServers => 
         prevServers.map(server => {
           const currentServerName = server.serverName || server.name;
@@ -99,6 +147,9 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
 
     return () => {
       serverUpdateService.unregisterUpdateCallback(handleServerUpdate);
+      // Clean up all timers when component unmounts
+      badgeTimersRef.current.forEach(timer => clearTimeout(timer));
+      badgeTimersRef.current.clear();
     };
   }, []);
 
@@ -176,6 +227,28 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
     e.stopPropagation();
     setMessageModalServer(server);
     setMessageModalOpen(true);
+    
+    // Clear new message badge for this server when opening modal
+    const serverName = server.serverName || server.name;
+    if (serverName) {
+      // Clear the timer for this server
+      const existingTimer = badgeTimersRef.current.get(serverName);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        badgeTimersRef.current.delete(serverName);
+      }
+      
+      setServersWithNewMessages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(serverName);
+        return newSet;
+      });
+      setNewMessageCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(serverName);
+        return newMap;
+      });
+    }
   };
 
   // Helper functions para manejar ResponseStatus
@@ -312,6 +385,7 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
                           {/* Blue circular icon with message count */}
                           {server.messages && Array.isArray(server.messages) && server.messages.length > 0 && (
                           <div className="flex items-end mr-3">
+                          <div className="relative">
                           <button
                             onClick={(e) => handleOpenMessageModal(server, e)}
                             className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
@@ -319,13 +393,21 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
                           >
                             {server.messages.length}
                           </button>
+                          {/* Badge showing count of new real-time messages */}
+                          {serversWithNewMessages.has(server.serverName || server.name || '') && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-md">
+                              {newMessageCounts.get(server.serverName || server.name || '') || 0}
+                            </span>
+                          )}
+                          </div>
                           {/* MailX icon when there are multiple messages */}
                           {server.messages && Array.isArray(server.messages) && server.messages.length > 0 && (
-                            <MailX
-                                onClick={(e) => handleClearMessages(server, e)}
-                                className="w-3 h-3 text-gray-600 cursor-pointer hover:text-red-700" self-end
-                                title="Clear all messages"
-                            />
+                            <div title="Clear all messages">
+                              <MailX
+                                  onClick={(e) => handleClearMessages(server, e)}
+                                  className="w-3 h-3 text-gray-600 cursor-pointer hover:text-red-700"
+                              />
+                            </div>
                           )}
                           </div>
                           )}
