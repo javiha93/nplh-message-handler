@@ -85,7 +85,29 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
     setSelectedServer(null);
   };
 
-    const handleClearMessages = async (server: Server, e: React.MouseEvent) => {
+    const handleClearAllMessages = async () => {
+    try {
+      console.log(' Clearing all messages from all servers');
+      // Actualizar todos los servidores sin mensajes
+      const updatePromises = servers
+        .filter(s => s.messages && s.messages.length > 0)
+        .map(server => 
+          serverService.modifyServer({
+            ...server,
+            messages: []
+          })
+        );
+      
+      await Promise.all(updatePromises);
+      
+      // Actualizar el estado local
+      setServers(prev => prev.map(s => ({ ...s, messages: [] })));
+      console.log(' All messages cleared');
+    } catch (err) {
+      console.error('Error clearing all messages:', err);
+    }
+  };
+  const handleClearMessages = async (server: Server, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       await serverService.modifyServer({
@@ -177,14 +199,24 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
           {/* Header con bot├│n de refresh */}
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-700">Server Status</h3>
-            <button
-              onClick={loadServers}
-              disabled={isLoading}
-              className="p-1 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-              title="Refresh servers"
-            >
-              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            </button>
+            <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleClearAllMessages}
+                  className="p-1 rounded-lg text-gray-500 hover:text-red-700 hover:bg-red-100"
+                  title="Borrar todos los mensajes"
+                >
+                  <MailX size={16} />
+                </button>
+
+                <button
+                  onClick={loadServers}
+                  disabled={isLoading}
+                  className="p-1 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                  title="Refresh servers"
+                >
+                  <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+                </button>
+              </div>
           </div>
 
           {/* Loading state */}
@@ -320,6 +352,9 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
 };
 
 export default ServerSidebarSection;
+
+
+
 
 
 
