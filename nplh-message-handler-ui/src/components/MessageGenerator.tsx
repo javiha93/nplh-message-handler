@@ -5,7 +5,7 @@ import MessageFormSection from './messageGenerator/MessageFormSection';
 import EditModalsContainer from './editModals/EditModalsContainer';
 import SelectorModalsContainer from './messageGenerator/SelectorModalsContainer';
 import MessageSidebarSection from './messageGenerator/MessageSidebarSection';
-import ServerSidebarSection from './messageGenerator/ServerSidebarSection';
+import ServerSidebarSection from './serverSidebar/ServerSidebarSection';
 
 const MessageGenerator: React.FC = () => {
   // Get all state and handlers from the main hook
