@@ -1,4 +1,4 @@
-package org.example.domain.server;
+package org.example.server;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

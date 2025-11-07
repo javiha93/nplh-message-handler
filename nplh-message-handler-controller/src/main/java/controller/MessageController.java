@@ -1,14 +1,10 @@
 package controller;
 
+import domain.UnifiedConvertRequest;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.client.Client;
-import org.example.client.Clients;
-import org.example.client.HL7Client;
-import org.example.client.WSClient;
-import org.example.client.message.ClientMessageResponse;
-import org.example.domain.host.host.HostInfo;
-import org.example.domain.host.host.HostInfoList;
+import org.example.client.*;
+import org.example.domain.client.message.ClientMessageResponse;
 import org.example.domain.message.Message;
 import org.example.server.Servers;
 import org.example.service.IrisService;
@@ -30,13 +26,11 @@ public class MessageController {
     private final MessageService messageService;
     private final IrisService irisService;
     private final Clients clients;
-    private final Servers servers;
 
     @Autowired
     public MessageController(MessageService messageService, IrisService irisService, Clients clients, Servers servers) {
         this.messageService = messageService;
         this.irisService = irisService;
-        this.servers = servers;
         this.clients = clients;
     }
 
@@ -54,13 +48,15 @@ public class MessageController {
         Client client = clients.getClient(request.hostName);
 
         if (client instanceof HL7Client) {
-            client.send(request.message, request.controlId);
+            ((HL7Client) client).send(request.message, request.controlId);
        } else if (client instanceof WSClient) {
-            String result = client.send(request.messageType, request.message, request.controlId);
+            String result = ((WSClient) client).send(request.messageType, request.message, request.controlId);
+            response = Collections.singletonList(new ClientMessageResponse(result));
+        } else if (client instanceof RestClient) {
+            String result = ((RestClient) client).send(request.messageType, request.message, request.controlId);
             response = Collections.singletonList(new ClientMessageResponse(result));
         } else {
-            String result = client.send(request.messageType, request.message, request.controlId);
-            response = Collections.singletonList(new ClientMessageResponse(result));
+            throw new RuntimeException("Not found client instance");
         }
 
         return ResponseEntity.ok(response);

@@ -2,7 +2,7 @@ package org.example.server;
 
 import lombok.Getter;
 import org.example.client.Clients;
-import org.example.domain.server.Server;
+import org.example.domain.host.HostType;
 import org.example.domain.host.Connection;
 import org.example.domain.host.HostInfo;
 import org.example.domain.host.HostInfoList;
@@ -43,10 +43,10 @@ public class Servers {
             List<Connection> outboundConnections = host.getOutboundConnections();
             for (Connection connection: outboundConnections) {
                 // TO DO enum for hostType
-                 if (host.getHostName().equals("LIS_HL7")) { //   if (connection.getWsName() == null) {
+                 if (host.getHostType().equals(HostType.LIS)) { //   if (connection.getWsName() == null) {
                     serverList.add(new LISHandler(host.getHostName(), connection, irisService));
                 }
-                 if (host.getHostType().equals("VTG") && !connection.getConnectionName().contains("VIP") && !connection.getConnectionName().contains("WS")) {
+                 if (host.getHostType().equals(HostType.VTG) && !connection.getConnectionName().contains("VIP") && !connection.getConnectionName().contains("WS")) {
                      serverList.add(new VTGHandler(host.getHostName(), connection, irisService));
                  }
             }

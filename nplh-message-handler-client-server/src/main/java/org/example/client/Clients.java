@@ -1,7 +1,6 @@
 package org.example.client;
 
 import lombok.Getter;
-import org.example.domain.client.Client;
 import org.example.domain.host.Connection;
 import org.example.domain.host.HostInfo;
 import org.example.domain.host.HostInfoList;

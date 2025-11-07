@@ -2,9 +2,9 @@ package org.example.server;
 import com.sun.net.httpserver.HttpServer;
 import org.example.client.Clients;
 import org.example.client.WSClient;
+import org.example.domain.host.HostType;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
-import org.example.domain.server.Server;
 import org.example.domain.host.Connection;
 import org.example.server.impl.*;
 import org.example.service.IrisService;
@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 public class WSServer extends Server {
 
     private HttpServer server;
-    private String hostType;
+    private HostType hostType;
     private String location;
     private final Connection connection;
     private Clients clients;
@@ -28,7 +28,7 @@ public class WSServer extends Server {
     final MessageLogger messageLogger;
     static final Logger logger = LoggerFactory.getLogger(WSServer.class);
 
-    public WSServer(String serverName, String hostType, Connection connection, IrisService irisService, Clients clients) {
+    public WSServer(String serverName, HostType hostType, Connection connection, IrisService irisService, Clients clients) {
         this.clients = clients;
         this.location = connection.getWsLocation();
         this.hostType = hostType;
@@ -37,7 +37,7 @@ public class WSServer extends Server {
 
         ResponseStatus communicationResponse = ResponseStatus.enabled();
         ResponseStatus applicationResponse = ResponseStatus.disabled();
-        if (hostType.equals("VTG")) {
+        if (hostType.equals(HostType.VTG)) {
             applicationResponse = ResponseStatus.enabled();
         }
 
@@ -58,10 +58,10 @@ public class WSServer extends Server {
 
             //TODO enum hostType
             SoapHandler soapHandler = switch (hostType) {
-                case "VSS" -> new VSSHandler(messageLogger, serverName, this);
-                case "VTG" -> new VTGWSHandler(messageLogger, serverName,  this, (WSClient) clients.getClient(serverName));
-                case "DP" -> new DPHandler(messageLogger, serverName, this);
-                case "VIRTUOSO" -> new UpathCloudHandler(messageLogger, serverName, this);
+                case VSS -> new VSSHandler(messageLogger, serverName, this);
+                case VTG -> new VTGWSHandler(messageLogger, serverName,  this, (WSClient) clients.getClient(serverName));
+                case DP -> new DPHandler(messageLogger, serverName, this);
+                case VIRTUOSO -> new UpathCloudHandler(messageLogger, serverName, this);
                 default    -> new SoapHandler(messageLogger, serverName, this);
             };
 

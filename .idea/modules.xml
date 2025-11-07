@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/nplh-message-handler-iris/nplh-message-handler-iris.iml" filepath="$PROJECT_DIR$/nplh-message-handler-iris/nplh-message-handler-iris.iml" />
+      <module fileurl="file://$PROJECT_DIR$/nplh-message-handler-controller/nplh-message-handler-controller.iml" filepath="$PROJECT_DIR$/nplh-message-handler-controller/nplh-message-handler-controller.iml" />
+      <module fileurl="file://$PROJECT_DIR$/npl-message-handler-back/nplh-message-handler-generator.iml" filepath="$PROJECT_DIR$/npl-message-handler-back/nplh-message-handler-generator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/nplh-message-handler-common/nplh-message-handler-iris.iml" filepath="$PROJECT_DIR$/nplh-message-handler-common/nplh-message-handler-iris.iml" />
     </modules>
   </component>
 </project>

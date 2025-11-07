@@ -9,7 +9,7 @@ import java.util.List;
 public class HostInfo {
     private String hostId;
     private String hostName;
-    private String hostType;
+    private HostType hostType;
     private ConnectionType connectionType;
     private List<Connection> connections;
 

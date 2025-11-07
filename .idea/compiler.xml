@@ -9,12 +9,14 @@
         <module name="npl-message-handler-back" />
         <module name="nplh-message-handler-common" />
         <module name="hl7-message-generator" />
-        <module name="nplh-message-handler-client" />
+        <module name="nplh-message-handler-client-server" />
         <module name="nplh-message-handler-controller" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="monster-parser" target="15" />
+      <module name="nplh-message-handler-generator" target="15" />
+      <module name="nplh-message-handler-iris" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -23,6 +25,7 @@
       <module name="monster-parser" options="-parameters" />
       <module name="npl-message-handler-back" options="-parameters" />
       <module name="nplh-message-handler-controller" options="-parameters" />
+      <module name="nplh-message-handler-generator" options="-parameters" />
     </option>
   </component>
 </project>

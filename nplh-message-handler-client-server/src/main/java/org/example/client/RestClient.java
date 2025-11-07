@@ -2,8 +2,8 @@ package org.example.client;
 
 import org.example.domain.client.message.ClientMessage;
 import org.example.domain.client.message.ClientMessageList;
-import org.example.domain.client.Client;
 import org.example.domain.host.Connection;
+import org.example.domain.host.HostType;
 import org.example.service.IrisService;
 import org.example.utils.MockType;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public class RestClient extends Client {
     private String apikey;
     ClientMessageList clientMessageList;
 
-    public RestClient(String hostName, String hostType, Connection connection, IrisService irisService) {
+    public RestClient(String hostName, HostType hostType, Connection connection, IrisService irisService) {
         this.clientName = hostName;
         this.clientType = hostType;
         this.apikey = connection.getApiKeyValue();
@@ -35,7 +35,6 @@ public class RestClient extends Client {
         MDC.put("clientLogger", this.clientName);
     }
 
-    @Override
     public String send(String messageType, String message, String controlId) {
         String urlString = null;
         if (Objects.equals(messageType, "RETRIEVAL")) {

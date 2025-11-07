@@ -6,7 +6,7 @@
 
     <!-- Información básica del proyecto padre -->
     <groupId>org.example</groupId>
-    <artifactId>message-handler-parent</artifactId>
+    <artifactId>nplh-message-handler</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging> <!-- Importante para proyecto multi-módulo -->
 
@@ -15,9 +15,9 @@
 
     <!-- Módulos que componen el proyecto -->
     <modules>
-        <module>nplh-message-handler-common</module> <!-- Módulo Común -->
-        <module>npl-message-handler-back</module> <!-- Módulo Spring Boot -->
-        <module>nplh-message-handler-client</module>    <!-- Módulo Cliente -->
+        <module>nplh-message-handler-iris</module> <!-- Módulo Común -->
+        <module>nplh-message-handler-generator</module> <!-- Módulo Spring Boot -->
+        <module>nplh-message-handler-client-server</module>    <!-- Módulo Cliente -->
         <module>nplh-message-handler-controller</module> <!-- Módulo Controller -->
     </modules>
 

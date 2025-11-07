@@ -1,13 +1,10 @@
-package org.example.domain.client;
+package org.example.client;
 
 import lombok.Getter;
 import org.example.domain.host.HostType;
 
 @Getter
-public class Client {
+public abstract  class Client {
     protected String clientName;
     protected HostType clientType;
-
-    public void send(String message, String controlId) { /* Always override */}
-    public String send(String messageType, String message, String controlId) { /* Always override */  return  null;}
 }

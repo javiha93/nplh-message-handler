@@ -1,6 +1,5 @@
 package org.example.server;
 
-import org.example.domain.server.Server;
 import org.example.domain.host.Connection;
 import org.example.domain.server.message.ServerMessage;
 import org.example.service.IrisService;

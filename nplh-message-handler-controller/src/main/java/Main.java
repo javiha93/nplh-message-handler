@@ -1,6 +1,6 @@
 import org.example.client.Clients;
-import org.example.domain.host.host.HostInfo;
-import org.example.domain.host.host.HostInfoList;
+import org.example.domain.host.HostInfo;
+import org.example.domain.host.HostInfoList;
 import org.example.server.Servers;
 import org.example.service.IrisService;
 import org.springframework.boot.SpringApplication;
@@ -25,6 +25,7 @@ public class Main {
     public Clients clients(HostInfoList hostInfoList, IrisService irisService) {
         return new Clients(hostInfoList, irisService);
     }
+
 
     @Bean
     public Servers servers(HostInfoList hostInfoList, IrisService irisService, Clients clients) {

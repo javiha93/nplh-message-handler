@@ -1,5 +1,5 @@
 
-package controller;
+package domain;
 
 import lombok.Data;
  import org.example.domain.message.Message;

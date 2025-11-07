@@ -2,7 +2,7 @@ package org.example.client;
 
 import org.example.domain.client.message.ClientMessage;
 import org.example.domain.client.message.ClientMessageList;
-import org.example.domain.client.Client;
+import org.example.domain.host.HostType;
 import org.example.utils.MessageLogger;
 import org.example.domain.host.Connection;
 import org.example.service.IrisService;
@@ -37,7 +37,7 @@ public class WSClient extends Client {
     private Map<String, String> headers = new HashMap<>();
     ClientMessageList clientMessageList;
 
-    public WSClient(String hostName, String hostType, Connection connection, IrisService irisService) {
+    public WSClient(String hostName, HostType hostType, Connection connection, IrisService irisService) {
         this.clientName = hostName;
         this.clientType = hostType;
         this.irisService = irisService;
@@ -54,7 +54,6 @@ public class WSClient extends Client {
         logger.info("Connect Client {} on url {}", clientName, this.baseUrl);
     }
 
-    @Override
     public String send(String soapAction, String messageBody, String controlId) {
         String requestBody = buildSoapEnvelope(messageBody, this.clientName);
 
@@ -118,8 +117,8 @@ public class WSClient extends Client {
         } catch (Exception e) {
 
             logger.error("Error sending message: {} to {}, Error:", messageBody, clientName, e);
-            return e.getMessage();
         }
+        return null;
     }
 
     private String extractSoapResponse(String response) {

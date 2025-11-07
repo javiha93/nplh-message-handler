@@ -3,8 +3,8 @@ package org.example.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.example.domain.client.Client;
 import org.example.domain.host.Connection;
+import org.example.domain.host.HostType;
 import org.example.utils.MessageLogger;
 import org.example.service.IrisService;
 import org.example.utils.HL7LLPCharacters;
@@ -42,7 +42,7 @@ public class HL7Client extends Client {
     Connection connection;
     ClientMessageList clientMessageList;
 
-    public HL7Client(String hostName, String hostType, Connection connection, IrisService irisService) {
+    public HL7Client(String hostName, HostType hostType, Connection connection, IrisService irisService) {
         this.clientName = hostName;
         this.clientType = hostType;
         this.connection = connection;
@@ -55,21 +55,23 @@ public class HL7Client extends Client {
         openSocket();
     }
 
-    @Override
     public void send(String message, String controlId) {
+        send("", message, controlId);
+    }
+
+    public void send(String caseId, String message, String controlId) {
         openSocket();
 
         String llpMessage = textToLlp(message);
         ClientMessage clientMessage = new ClientMessage(message, controlId);
         clientMessageList.add(clientMessage);
         MDC.put("clientLogger", this.clientName);
-        messageLogger.addClientMessage("TEST", controlId, message);
+        messageLogger.addClientMessage(caseId, controlId, message);
 
         //messageLogger.info("[SEND][{}]: \n\n{} \n\n####################################################################\n", controlId, message);
         for (char c : llpMessage.toCharArray()) {
             out.write(c);
         }
-        logger.info("\nSent message: \n{}\nto Host {}", message, clientName);
         out.flush();
     }
 

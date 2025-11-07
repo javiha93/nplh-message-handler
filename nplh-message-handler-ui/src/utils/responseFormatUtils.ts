@@ -160,7 +160,9 @@ export const detectXmlError = (xmlString: string): { hasError: boolean; errorDet
   // Check for common XML error patterns
   if (xmlString.toLowerCase().includes('<error>') || 
       xmlString.toLowerCase().includes('<fault>') ||
-      xmlString.toLowerCase().includes('<exception>')) {
+      xmlString.toLowerCase().includes('<exception>')  ||
+      xmlString.toLowerCase().includes('<IsSuccessful>true</IsSuccessful>')  ||
+      xmlString.toLowerCase().includes('<succeed>false</succeed>')) {
     return { hasError: true, errorDetails: 'XML Error detected' };
   }
   
