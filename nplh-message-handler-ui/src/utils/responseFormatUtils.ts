@@ -178,7 +178,7 @@ export const detectXmlError = (xmlString: string): { hasError: boolean; errorDet
 };
 
 /**
- * Main function to parse and format any response type
+ * org.example.Main function to parse and format any response type
  */
 export const parseResponse = (response: string): ParsedResponse => {
   const trimmed = response.trim();

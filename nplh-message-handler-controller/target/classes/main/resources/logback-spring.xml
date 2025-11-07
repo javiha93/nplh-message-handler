@@ -10,15 +10,15 @@
 
     <!-- Appender simple para archivo -->
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>logs/controller.log</file>
+        <file>logs/src.controller.log</file>
         <append>true</append>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- Logger para el controller -->
-    <logger name="controller" level="DEBUG" additivity="false">
+    <!-- Logger para el src.controller -->
+    <logger name="src.controller" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </logger>

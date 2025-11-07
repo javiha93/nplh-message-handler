@@ -29,7 +29,7 @@ src/components/savedMessages/
 - **State Management**: Centralized message state with immutable updates
 
 ### 3. **Component Structure**
-- **MessageSidebar**: Main sidebar component with drag-and-drop functionality
+- **MessageSidebar**: org.example.Main sidebar component with drag-and-drop functionality
 - **MessageViewModal**: Full-screen modal for detailed message viewing
 - **Responsive Design**: Resizable sidebar with proper constraints
 

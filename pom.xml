@@ -18,12 +18,12 @@
         <module>nplh-message-handler-iris</module> <!-- Módulo Común -->
         <module>nplh-message-handler-generator</module> <!-- Módulo Spring Boot -->
         <module>nplh-message-handler-client-server</module>    <!-- Módulo Cliente -->
-        <module>nplh-message-handler-controller</module> <!-- Módulo Controller -->
+        <module>nplh-message-handler-src.controller</module> <!-- Módulo Controller -->
     </modules>
 
     <!-- Propiedades comunes -->
     <properties>
-        <java.version>17</java.version> <!-- Versión que mencionaste usar -->
+        <java.version>21</java.version> <!-- Versión que mencionaste usar -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -31,19 +31,16 @@
 
     <!-- Build configuration para el proyecto padre -->
     <build>
-        <pluginManagement>
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.13.0</version>
                     <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+                        <release>21</release>
                     </configuration>
                 </plugin>
             </plugins>
-        </pluginManagement>
     </build>
 
     <!-- Dependency Management (opcional para dependencias compartidas) -->

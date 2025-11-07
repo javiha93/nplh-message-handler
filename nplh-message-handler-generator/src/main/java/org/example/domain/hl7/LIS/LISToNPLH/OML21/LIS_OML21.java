@@ -1,0 +1,71 @@
+package org.example.domain.hl7.LIS.LISToNPLH.OML21;
+
+import lombok.Data;
+import org.example.domain.hl7.HL7Segment;
+import org.example.domain.message.Message;
+import org.example.domain.message.entity.Slide;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+public class LIS_OML21 extends HL7Segment {
+    MSH msh;
+    PID pid;
+    PV1 pv1;
+    SAC sac;
+    List<OSegment> oSegments = new ArrayList<>();
+
+    public static LIS_OML21 OneSlide(String sampleId) {
+        LIS_OML21 LISOML21 = new LIS_OML21();
+
+        LISOML21.msh = MSH.Default();
+        LISOML21.pid = PID.Default();
+        LISOML21.pv1 = PV1.Default();
+        LISOML21.sac = SAC.Default();
+
+        LISOML21.oSegments.add(new OSegment(ORC.Default(sampleId),
+                OBR.Default(sampleId, "A", "1", "1", "1"),
+                OBX.Default(sampleId, "A", "1", "1", "1")));
+        return LISOML21;
+    }
+
+    public static LIS_OML21 FromMessage(Message message) {
+        LIS_OML21 LISOML21 = new LIS_OML21();
+
+        LISOML21.msh = MSH.FromMessageHeader(message.getHeader(), "OML^O21");
+        LISOML21.pid = PID.FromPatient(message.getPatient());
+        LISOML21.pv1 = PV1.FromPhysician(message.getPhysician());
+        LISOML21.sac = SAC.FromOrder(message.getOrder());
+
+        int segmentNumber = 0;
+        for (Slide slide : message.getAllSlides()) {
+            segmentNumber ++;
+            OBR obr = OBR.FromMessage(slide, message, segmentNumber);
+            ORC orc = ORC.FromMessage(slide, message);
+            OBX obx = OBX.FromMessage(slide, message, segmentNumber);
+            LISOML21.oSegments.add(new OSegment(orc, obr, obx));
+        }
+
+        return LISOML21;
+    }
+
+    @Override
+    public String toString() {
+        String oml21 = nullSafe(msh) + "\n" +
+                nullSafe(pid) + "\n" +
+                nullSafe(pv1) + "\n" +
+                nullSafe(sac) + "\n";
+
+        String oSegmentsString = "";
+        for (OSegment oSegment : oSegments) {
+            oSegmentsString = oSegmentsString + nullSafe(oSegment.orc.toString()) + "\n" + nullSafe(oSegment.obr.toString()) + "\n" + nullSafe(oSegment.obx.toString()) + "\n";
+        }
+        return cleanMessage(oml21 + oSegmentsString);
+    }
+
+    public String getControlId() {
+        return this.msh.getMessageControlID();
+    }
+
+}

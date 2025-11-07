@@ -235,7 +235,7 @@ const ListSelector: React.FC<ListSelectorProps> = ({
                                 transform: `${provided.draggableProps.style?.transform} rotate(1deg)`,
                               }),
                             }}                          >
-                            {/* Main content area */}
+                            {/* org.example.Main content area */}
                             <div className="flex items-start">
                               {/* Drag Handle */}
                               <div

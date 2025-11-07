@@ -6,7 +6,7 @@ import org.example.domain.server.message.response.CustomResponse;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.CommunicationResponse;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.ProcessApplicationACK;
+import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.VTGWS_ProcessApplicationACK;
 import org.example.server.WSServer;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -37,7 +37,7 @@ public class VTGWSHandler extends SoapHandler {
         CustomResponse customResponse = CustomResponse.disabled(buildSoapEnvelope(CommunicationResponse.FromSoapActionOk("soapAction").toString(), "VANTAGE WS"));
         defaultResponse.getCommunicationResponse().setCustomResponse(customResponse);
 
-        customResponse = CustomResponse.disabled(ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*", "*controlId*").toString());
+        customResponse = CustomResponse.disabled(VTGWS_ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*", "*controlId*").toString());
         defaultResponse.getApplicationResponse().setCustomResponse(customResponse);
     }
 
@@ -75,11 +75,11 @@ public class VTGWSHandler extends SoapHandler {
                 soapResponse = soapResponse.replace("*originalControlId*", getTransactionId(messageReceived));
                 soapResponse = soapResponse.replace("*controlId*", UUID.randomUUID().toString());
             } else if (applicationResponse.getIsError()) {
-                ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdError(getTransactionId(messageReceived), applicationResponse.getErrorText());
+                VTGWS_ProcessApplicationACK processApplicationACK = VTGWS_ProcessApplicationACK.FromOriginalTransactionIdError(getTransactionId(messageReceived), applicationResponse.getErrorText());
                 soapResponse = processApplicationACK.toString();
                 transactionId = processApplicationACK.getTransactionId();
             } else {
-                ProcessApplicationACK processApplicationACK = ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
+                VTGWS_ProcessApplicationACK processApplicationACK = VTGWS_ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
                 soapResponse = processApplicationACK.toString();
                 transactionId = processApplicationACK.getTransactionId();
             }

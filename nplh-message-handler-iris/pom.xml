@@ -25,7 +25,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
+            <version>1.18.34</version>
             <scope>provided</scope>
         </dependency>
         
@@ -53,7 +53,7 @@
         <!-- InterSystems IRIS JDBC -->
         <dependency>
             <groupId>com.intersystems</groupId>
-            <artifactId>intersystems-jdbc</artifactId>
+            <artifactId>iris-jdbc</artifactId>
             <version>3.0.0</version>
             <scope>compile</scope>
         </dependency>

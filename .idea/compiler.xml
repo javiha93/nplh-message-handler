@@ -14,7 +14,9 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="message-handler-parent" target="17" />
       <module name="monster-parser" target="15" />
+      <module name="nplh-message-handler-client" target="17" />
       <module name="nplh-message-handler-generator" target="15" />
       <module name="nplh-message-handler-iris" target="17" />
     </bytecodeTargetLevel>
