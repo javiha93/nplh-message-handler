@@ -5,7 +5,7 @@ import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Specimen;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendReleasedSpecimen.UPATHCLOUD_SendReleasedSpecimen;
 import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendScannedSlide.UPATHCLOUD_SendScannedSlide;
-import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendSlideWSAData.VTGWS_SendSlideWSAData;
+import org.example.domain.ws.UPATHCLOUD.UPATHCLOUDToNPLH.SendSlideWSAData.SendSlideWSAData;
 import org.example.service.MessageService;
 
 public enum UPATHCLOUD implements MessageType {
@@ -23,7 +23,7 @@ public enum UPATHCLOUD implements MessageType {
     },
     sendSlideWSAData {
         public MessageService.MessageResponse convert(Message m, Slide slide, String status) {
-            VTGWS_SendSlideWSAData sendSlideWSAData = VTGWS_SendSlideWSAData.FromMessage(m, slide, status);
+            SendSlideWSAData sendSlideWSAData = SendSlideWSAData.FromMessage(m, slide, status);
             return new MessageService.MessageResponse(sendSlideWSAData.toString(), "");
         }
     }

@@ -4,17 +4,17 @@ import lombok.Data;
 
 @Data
 public class OSegment {
-    ORC orc;
-    OBR obr;
-    OBX obx;
+    ORC_OML21 orc;
+    OBR_OML21 obr;
+    OBX_OML21 obx;
 
-    public OSegment(ORC orc, OBR obr, OBX obx) {
+    public OSegment(ORC_OML21 orc, OBR_OML21 obr, OBX_OML21 obx) {
         this.orc = orc;
         this.obr = obr;
         this.obx = obx;
     }
 
-    public OSegment(ORC orc, OBR obr) {
+    public OSegment(ORC_OML21 orc, OBR_OML21 obr) {
         this.orc = orc;
         this.obr = obr;
     }

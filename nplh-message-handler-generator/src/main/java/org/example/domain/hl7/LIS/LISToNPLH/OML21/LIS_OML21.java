@@ -10,40 +10,40 @@ import java.util.List;
 
 @Data
 public class LIS_OML21 extends HL7Segment {
-    MSH msh;
-    PID pid;
-    PV1 pv1;
-    SAC sac;
+    MSH_OML21 msh;
+    PID_OML21 pid;
+    PV1_OML21 pv1;
+    SAC_OML21 sac;
     List<OSegment> oSegments = new ArrayList<>();
 
     public static LIS_OML21 OneSlide(String sampleId) {
         LIS_OML21 LISOML21 = new LIS_OML21();
 
-        LISOML21.msh = MSH.Default();
-        LISOML21.pid = PID.Default();
-        LISOML21.pv1 = PV1.Default();
-        LISOML21.sac = SAC.Default();
+        LISOML21.msh = MSH_OML21.Default();
+        LISOML21.pid = PID_OML21.Default();
+        LISOML21.pv1 = PV1_OML21.Default();
+        LISOML21.sac = SAC_OML21.Default();
 
-        LISOML21.oSegments.add(new OSegment(ORC.Default(sampleId),
-                OBR.Default(sampleId, "A", "1", "1", "1"),
-                OBX.Default(sampleId, "A", "1", "1", "1")));
+        LISOML21.oSegments.add(new OSegment(ORC_OML21.Default(sampleId),
+                OBR_OML21.Default(sampleId, "A", "1", "1", "1"),
+                OBX_OML21.Default(sampleId, "A", "1", "1", "1")));
         return LISOML21;
     }
 
     public static LIS_OML21 FromMessage(Message message) {
         LIS_OML21 LISOML21 = new LIS_OML21();
 
-        LISOML21.msh = MSH.FromMessageHeader(message.getHeader(), "OML^O21");
-        LISOML21.pid = PID.FromPatient(message.getPatient());
-        LISOML21.pv1 = PV1.FromPhysician(message.getPhysician());
-        LISOML21.sac = SAC.FromOrder(message.getOrder());
+        LISOML21.msh = MSH_OML21.FromMessageHeader(message.getHeader(), "OML^O21");
+        LISOML21.pid = PID_OML21.FromPatient(message.getPatient());
+        LISOML21.pv1 = PV1_OML21.FromPhysician(message.getPhysician());
+        LISOML21.sac = SAC_OML21.FromOrder(message.getOrder());
 
         int segmentNumber = 0;
         for (Slide slide : message.getAllSlides()) {
             segmentNumber ++;
-            OBR obr = OBR.FromMessage(slide, message, segmentNumber);
-            ORC orc = ORC.FromMessage(slide, message);
-            OBX obx = OBX.FromMessage(slide, message, segmentNumber);
+            OBR_OML21 obr = OBR_OML21.FromMessage(slide, message, segmentNumber);
+            ORC_OML21 orc = ORC_OML21.FromMessage(slide, message);
+            OBX_OML21 obx = OBX_OML21.FromMessage(slide, message, segmentNumber);
             LISOML21.oSegments.add(new OSegment(orc, obr, obx));
         }
 
