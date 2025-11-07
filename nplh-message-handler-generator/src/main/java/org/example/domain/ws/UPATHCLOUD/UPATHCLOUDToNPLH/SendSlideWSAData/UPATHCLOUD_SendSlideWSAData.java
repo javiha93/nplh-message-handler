@@ -8,7 +8,7 @@ import org.example.domain.message.Message;
 
 @Data
 @NoArgsConstructor
-public class VTGWS_SendSlideWSAData extends WSSegment {
+public class UPATHCLOUD_SendSlideWSAData extends WSSegment {
     private String accessionNumber;
     private String specimenNumber;
     private String blockNumber;
@@ -16,8 +16,8 @@ public class VTGWS_SendSlideWSAData extends WSSegment {
     private String slideLabelId;
     private String wsaStatus;
 
-    public static VTGWS_SendSlideWSAData FromMessage(Message message, Slide slide, String status) {
-        VTGWS_SendSlideWSAData sendSlideWSAData = new VTGWS_SendSlideWSAData();
+    public static UPATHCLOUD_SendSlideWSAData FromMessage(Message message, Slide slide, String status) {
+        UPATHCLOUD_SendSlideWSAData sendSlideWSAData = new UPATHCLOUD_SendSlideWSAData();
 
         sendSlideWSAData.setAccessionNumber(message.getOrder().getSampleId());
         sendSlideWSAData.setSlideLabelId(slide.getId());

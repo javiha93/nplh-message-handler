@@ -13,7 +13,6 @@ public class VTG_OML21 extends HL7Segment {
     MSH_OML21 msh;
     PID_OML21 pid;
     PV1_OML21 pv1;
-    SAC_OML21 sac;
     List<OSegment> oSegments = new ArrayList<>();
 
     public static VTG_OML21 FromMessage(Message message) {
@@ -22,7 +21,6 @@ public class VTG_OML21 extends HL7Segment {
         oml21.msh = MSH_OML21.FromMessageHeader(message.getHeader(), "OML^O21");
         oml21.pid = PID_OML21.FromPatient(message.getPatient());
         oml21.pv1 = PV1_OML21.FromPhysician(message.getPhysician());
-        oml21.sac = SAC_OML21.FromOrder(message.getOrder());
 
         int segmentNumber = 0;
         for (Slide slide : message.getAllSlides()) {
@@ -39,8 +37,7 @@ public class VTG_OML21 extends HL7Segment {
     public String toString() {
         String oml21 = nullSafe(msh) + "\n" +
                 nullSafe(pid) + "\n" +
-                nullSafe(pv1) + "\n" +
-                nullSafe(sac) + "\n";
+                nullSafe(pv1) + "\n";
 
         String oSegmentsString = "";
         for (OSegment oSegment : oSegments) {

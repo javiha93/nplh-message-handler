@@ -17,189 +17,189 @@ import java.util.List;
 public class OBR extends HL7Segment {
 
     @HL7Position(position = 1)
-    private String segmentNumber;
+    protected String segmentNumber;
 
     @HL7Position(position = 2)
-    private String externalSampleId;
+    protected String externalSampleId;
 
     @HL7Position(position = 2)
-    private String sampleId;
+    protected String sampleId;
 
     @HL7Position(position = 4, subPosition = 1)
-    private String protocolNumber;
+    protected String protocolNumber;
 
     @HL7Position(position = 4, subPosition = 2)
-    private String protocolName;
+    protected String protocolName;
 
     @HL7Position(position = 4, subPosition = 3)
-    private String protocolIdentifier;
+    protected String protocolIdentifier;
 
     @HL7Position(position = 4, subPosition = 5)
-    private String protocolDescription;
+    protected String protocolDescription;
 
     @HL7Position(position = 7, subPosition = 1)
-    private String collectDateTime;
+    protected String collectDateTime;
 
     @HL7Position(position = 14)
-    private String receivedDateTime;
+    protected String receivedDateTime;
 
     @HL7Position(position = 15, subPosition = 1)
-    private String tissueType;
+    protected String tissueType;
 
     @HL7Position(position = 15, subPosition = 2)
-    private String tissueDescription;
+    protected String tissueDescription;
 
     @HL7Position(position = 15, subPosition = 3)
-    private String surgicalName;
+    protected String surgicalName;
 
     @HL7Position(position = 15, subPosition = 4)
-    private String surgicalDescription;
+    protected String surgicalDescription;
 
     @HL7Position(position = 15, subPosition = 5)
-    private String anatomicSite;
+    protected String anatomicSite;
 
     @HL7Position(position = 15, subPosition = 6)
-    private String anatomicDescription;
+    protected String anatomicDescription;
 
     @HL7Position(position = 15, subPosition = 7)
-    private String tissueSubtype;
+    protected String tissueSubtype;
 
     @HL7Position(position = 15, subPosition = 8)
-    private String tissueSubtypeDesc;
+    protected String tissueSubtypeDesc;
 
     @HL7Position(position = 16, subPosition = 1)
-    private String pathologist;
+    protected String pathologist;
 
     @HL7Position(position = 16, subPosition = 2)
-    private String pathologistLN;
+    protected String pathologistLN;
 
     @HL7Position(position = 16, subPosition = 3)
-    private String pathologistFN;
+    protected String pathologistFN;
 
     @HL7Position(position = 16, subPosition = 4)
-    private String pathologistMN;
+    protected String pathologistMN;
 
     @HL7Position(position = 16, subPosition = 5)
-    private String pathologistSuffix;
+    protected String pathologistSuffix;
 
     @HL7Position(position = 16, subPosition = 6)
-    private String pathologistPrefix;
+    protected String pathologistPrefix;
 
     @HL7Position(position = 16, subPosition = 7)
-    private String pathologistAddress1;
+    protected String pathologistAddress1;
 
     @HL7Position(position = 16, subPosition = 9)
-    private String pathologistCity;
+    protected String pathologistCity;
 
     @HL7Position(position = 16, subPosition = 10)
-    private String pathologistCountry;
+    protected String pathologistCountry;
 
     @HL7Position(position = 16, subPosition = 11)
-    private String pathologistState;
+    protected String pathologistState;
 
     @HL7Position(position = 16, subPosition = 12)
-    private String pathologistHomeTel;
+    protected String pathologistHomeTel;
 
     @HL7Position(position = 16, subPosition = 13)
-    private String pathologistMobileTel;
+    protected String pathologistMobileTel;
 
     @HL7Position(position = 16, subPosition = 15)
-    private String pathologistZip;
+    protected String pathologistZip;
 
     @HL7Position(position = 17, subPosition = 1)
-    private String pathologistWorkTel;
+    protected String pathologistWorkTel;
 
     @HL7Position(position = 17, subPosition = 4)
-    private String pathologistMail;
+    protected String pathologistMail;
 
     @HL7Position(position = 18)
-    private String workFlow;
+    protected String workFlow;
 
     @HL7Position(position = 19, subPosition = 1)
-    private String slideID;
+    protected String slideID;
 
     @HL7Position(position = 19, subPosition = 2)
-    private String sequence;
+    protected String sequence;
 
     @HL7Position(position = 19, subPosition = 3)
-    private String extSlideID;
+    protected String extSlideID;
 
     @HL7Position(position = 19, subPosition = 4)
-    private String textComment;
+    protected String textComment;
 
     @HL7Position(position = 20, subPosition = 1)
-    private String blockID;
+    protected String blockID;
 
     @HL7Position(position = 20, subPosition = 2)
-    private String sequenceBlock;
+    protected String sequenceBlock;
 
     @HL7Position(position = 20, subPosition = 3)
-    private String extBlockID;
+    protected String extBlockID;
 
     @HL7Position(position = 20, subPosition = 4)
-    private String parentBlockID;
+    protected String parentBlockID;
 
     @HL7Position(position = 21, subPosition = 1)
-    private String specimenID;
+    protected String specimenID;
 
     @HL7Position(position = 21, subPosition = 2)
-    private String sequenceSpecimen;
+    protected String sequenceSpecimen;
 
     @HL7Position(position = 21, subPosition = 3)
-    private String extSpecimenID;
+    protected String extSpecimenID;
 
     @HL7Position(position = 27, subPosition = 6)
-    private String stat;
+    protected String stat;
 
     @HL7Position(position = 27, subPosition = 8)
-    private String caseTags;
+    protected String caseTags;
 
     @HL7Position(position = 34, subPosition = 1)
-    private String technician;
+    protected String technician;
 
     @HL7Position(position = 34, subPosition = 2)
-    private String technicianLN;
+    protected String technicianLN;
 
     @HL7Position(position = 34, subPosition = 3)
-    private String technicianFN;
+    protected String technicianFN;
 
     @HL7Position(position = 34, subPosition = 4)
-    private String technicianMN;
+    protected String technicianMN;
 
-    private List<SupplementalInfo> supplementalInfos = new ArrayList<>();
-
-    @HL7Position(position = 47)
-    private String specialInstruction;
+    protected List<SupplementalInfo> supplementalInfos = new ArrayList<>();
 
     @HL7Position(position = 47)
-    private String specialInstructionArtifact;
+    protected String specialInstruction;
 
     @HL7Position(position = 47)
-    private String qualityIssue;
+    protected String specialInstructionArtifact;
 
     @HL7Position(position = 47)
-    private String qualityIssueArtifact;
+    protected String qualityIssue;
 
     @HL7Position(position = 47)
-    private String qualityIssueResolution;
+    protected String qualityIssueArtifact;
 
     @HL7Position(position = 47)
-    private String tissuePieces;
+    protected String qualityIssueResolution;
 
     @HL7Position(position = 47)
-    private String tissuePiecesArtifact;
+    protected String tissuePieces;
 
     @HL7Position(position = 47)
-    private String recut;
+    protected String tissuePiecesArtifact;
 
     @HL7Position(position = 47)
-    private String recutArtifact;
+    protected String recut;
 
     @HL7Position(position = 47)
-    private String grossDescription;
+    protected String recutArtifact;
 
     @HL7Position(position = 47)
-    private String grossDescriptionArtifact;
+    protected String grossDescription;
+
+    @HL7Position(position = 47)
+    protected String grossDescriptionArtifact;
 
 
     public static OBR Default(String sampleId, String specimenId, String blockId, String slideId, String segmentNumber) {

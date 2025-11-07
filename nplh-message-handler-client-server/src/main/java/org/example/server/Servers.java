@@ -63,12 +63,12 @@ public class Servers {
         }
     }
 
-    public Server getServerByName(String serverName) throws Exception {
+    public Server getServerByName(String serverName) {
         for (Server server : serverList) {
             if (server.getServerName().equals(serverName)) {
                 return  server;
             }
         }
-        throw new Exception("Not found server");
+        throw new RuntimeException("Not found server");
     }
 }

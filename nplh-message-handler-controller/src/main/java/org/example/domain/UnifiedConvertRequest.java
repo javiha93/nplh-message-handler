@@ -2,7 +2,6 @@
 package org.example.domain;
 
 import lombok.Data;
-import org.example.domain.host.HostType;
 import org.example.domain.message.Message;
  import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Slide;

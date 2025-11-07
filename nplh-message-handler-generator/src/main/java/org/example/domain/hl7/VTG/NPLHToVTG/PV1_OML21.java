@@ -16,6 +16,9 @@ public class PV1_OML21 extends PV1 {
     }
     @Override
     public String toString() {
-        return super.toString();
+        String value = "PV1|||||||" +
+                nullSafe(requestorCode) + "^" + nullSafe(requestorLastName) + "^" + nullSafe(requestorFirstName) + "^" + nullSafe(requestorMiddleName) + "^" + nullSafe(requestorSuffix) + "^" + nullSafe(requestorPrefix) + "|";
+
+        return cleanSegment(value);
     }
 }

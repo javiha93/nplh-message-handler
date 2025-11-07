@@ -9,6 +9,8 @@
     <file url="file://$PROJECT_DIR$/nplh-message-handler-generator/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/nplh-message-handler-iris/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/nplh-message-handler-iris/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/nplh-message-handler-tests/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/nplh-message-handler-tests/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>

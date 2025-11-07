@@ -18,7 +18,8 @@
         <module>nplh-message-handler-iris</module> <!-- Módulo Común -->
         <module>nplh-message-handler-generator</module> <!-- Módulo Spring Boot -->
         <module>nplh-message-handler-client-server</module>    <!-- Módulo Cliente -->
-        <module>nplh-message-handler-src.controller</module> <!-- Módulo Controller -->
+        <module>nplh-message-handler-controller</module> <!-- Módulo Controller -->
+        <module>nplh-message-handler-tests</module>
     </modules>
 
     <!-- Propiedades comunes -->

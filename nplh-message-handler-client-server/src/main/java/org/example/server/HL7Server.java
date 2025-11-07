@@ -156,6 +156,32 @@ public class HL7Server extends Server implements Runnable {
         }
     }
 
+    public String waitForMessage(String caseId) {
+        long timeoutMillis = 10_000; // 10 segundos
+        long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime < timeoutMillis) {
+            synchronized (messages) {
+                for (ServerMessage msg : messages) {
+                    if (msg.getMessage() != null && msg.getMessage().contains(caseId)) {
+                        return msg.getMessage();
+                    }
+                }
+            }
+
+            try {
+                Thread.sleep(100); // Evita busy waiting (100 ms entre chequeos)
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("[{}] Espera interrumpida al buscar mensaje con caseId {}", serverName, caseId);
+                return null;
+            }
+        }
+
+        logger.warn("[{}] Timeout esperando mensaje con caseId {}", serverName, caseId);
+        return null;
+    }
+
     // TO DO: check abstract
     protected List<String> response(OutputStream outputStream, String receivedMessage) {
         return null;

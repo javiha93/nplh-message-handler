@@ -11,46 +11,46 @@ import org.example.domain.message.professional.Physician;
 public class PV1 extends HL7Segment {
 
     @HL7Position(position = 7, subPosition = 1)
-    private String requestorCode;
+    protected String requestorCode;
 
     @HL7Position(position = 7, subPosition = 2)
-    private String requestorLastName;
+    protected String requestorLastName;
 
     @HL7Position(position = 7, subPosition = 3)
-    private String requestorFirstName;
+    protected String requestorFirstName;
 
     @HL7Position(position = 7, subPosition = 4)
-    private String requestorMiddleName;
+    protected String requestorMiddleName;
 
     @HL7Position(position = 7, subPosition = 5)
-    private String requestorSuffix;
+    protected String requestorSuffix;
 
     @HL7Position(position = 7, subPosition = 6)
-    private String requestorPrefix;
+    protected String requestorPrefix;
 
     @HL7Position(position = 7, subPosition = 7)
-    private String requestorAddress;
+    protected String requestorAddress;
 
     @HL7Position(position = 7, subPosition = 9)
-    private String requestorCity;
+    protected String requestorCity;
 
     @HL7Position(position = 7, subPosition = 10)
-    private String requestorCountry;
+    protected String requestorCountry;
 
     @HL7Position(position = 7, subPosition = 11)
-    private String requestorState;
+    protected String requestorState;
 
     @HL7Position(position = 7, subPosition = 12)
-    private String requestorHomeTel;
+    protected String requestorHomeTel;
 
     @HL7Position(position = 7, subPosition = 13)
-    private String requestorMobileTel;
+    protected String requestorMobileTel;
 
     @HL7Position(position = 7, subPosition = 14)
-    private String requestorWorkTel;
+    protected String requestorWorkTel;
 
     @HL7Position(position = 7, subPosition = 15)
-    private String requestorZipCode;
+    protected String requestorZipCode;
 
     public static PV1 Default() {
         PV1 pv1 = new PV1();

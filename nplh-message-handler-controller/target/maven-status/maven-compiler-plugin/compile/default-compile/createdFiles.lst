@@ -1,8 +1,8 @@
-controller\MessageController$SampleIdRequest.class
-controller\MessageController$SendMessageRequest.class
-controller\MessageController.class
-Main.class
-controller\HostController$AddMessageRequest.class
-domain\UnifiedConvertRequest.class
-controller\HostController.class
-controller\HostController$ServerDTO.class
+org\example\controller\MessageController$SampleIdRequest.class
+org\example\controller\HostController$ServerDTO.class
+org\example\controller\HostController.class
+org\example\controller\HostController$AddMessageRequest.class
+org\example\Main.class
+org\example\domain\UnifiedConvertRequest.class
+org\example\controller\MessageController$SendMessageRequest.class
+org\example\controller\MessageController.class

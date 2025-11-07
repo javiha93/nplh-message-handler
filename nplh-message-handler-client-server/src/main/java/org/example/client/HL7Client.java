@@ -127,6 +127,29 @@ public class HL7Client extends Client {
         });
     }
 
+    public Optional<ClientMessageResponse> waitForResponse(String controlId, long timeoutMillis) {
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + timeoutMillis;
+
+        while (System.currentTimeMillis() < endTime) {
+            ClientMessage clientMessage = clientMessageList.getMessageByControlId(controlId);
+            if (clientMessage != null && clientMessage.getResponses() != null && !clientMessage.getResponses().isEmpty()) {
+                return Optional.of(clientMessage.getResponses().get(0));
+            }
+
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return Optional.empty();
+            }
+        }
+
+        logger.warn("Timeout esperando respuesta para controlId: {}", controlId);
+        return Optional.empty();
+    }
+
+
     public void closeSocket() {
         try {
             if (!socket.isClosed()) {

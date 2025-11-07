@@ -14,7 +14,9 @@ public class OBR_OML21 extends OBR {
     }
 
     public static OBR_OML21 FromMessage(Slide slide, Message message, int segmentNumber) {
-        return (OBR_OML21) OBR.FromMessage(slide, message, segmentNumber, new OBR_OML21());
+        OBR_OML21 obr = (OBR_OML21) OBR.FromMessage(slide, message, segmentNumber, new OBR_OML21());
+        obr.externalSampleId = message.getOrder().getSampleId();
+        return obr;
     }
     @Override
     public String toString() {

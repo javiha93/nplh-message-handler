@@ -10,6 +10,7 @@
         <module name="nplh-message-handler-common" />
         <module name="hl7-message-generator" />
         <module name="nplh-message-handler-client-server" />
+        <module name="nplh-message-handler-tests" />
         <module name="nplh-message-handler-controller" />
       </profile>
     </annotationProcessing>
