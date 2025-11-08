@@ -16,7 +16,7 @@ import org.example.service.MessageService;
 public enum LIS implements MessageType {
     OML21 {
         public MessageService.MessageResponse convert(Message m) {
-            LIS_OML21 oml21 = LIS_OML21.FromMessage(m);
+            LIS_OML21 oml21 = LIS_OML21.fromMessage(m);
             return new MessageService.MessageResponse(oml21.toString(), oml21.getControlId());
         }
     },

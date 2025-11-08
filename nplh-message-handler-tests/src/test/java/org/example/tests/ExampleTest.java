@@ -1,26 +1,29 @@
 package org.example.tests;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import org.example.client.Client;
 import org.example.client.Clients;
 import org.example.client.HL7Client;
-import org.example.domain.client.message.ClientMessageResponse;
+import org.example.client.WSClient;
+import org.example.domain.hl7.HL7Message;
 import org.example.domain.hl7.LIS.LISToNPLH.OML21.LIS_OML21;
+import org.example.domain.hl7.LIS.LISToNPLH.response.ACK.NPLH_ACK;
+import org.example.domain.hl7.LIS.NPLHToLIS.response.ACK.LIS_ACK;
 import org.example.domain.hl7.VTG.NPLHToVTG.VTG_OML21;
 import org.example.domain.host.HostInfo;
 import org.example.domain.host.HostInfoList;
 import org.example.domain.message.Message;
+import org.example.domain.message.entity.Block;
+import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessNewOrder.VTGWS_ProcessNewOrder;
+import org.example.domain.ws.WSMessage;
 import org.example.server.HL7Server;
 import org.example.server.Servers;
+import org.example.server.WSServer;
 import org.example.service.IrisService;
 import org.junit.jupiter.api.*;
 
 import java.security.SecureRandom;
-import java.util.Optional;
 
 import static org.example.service.IrisService.parseList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Ejemplo de test básico con JUnit 5
@@ -33,12 +36,28 @@ class ExampleTest {
     static Message message;
     static String caseId;
 
+    static HL7Client lisClient;
+    static HL7Client vtgClient;
+    static WSClient vtgwsClient;
+
+    static HL7Server lisServer;
+    static HL7Server vtgServer;
+    static WSServer vtgwsServer;
+
     @BeforeAll
     static void setupAll() {
         IrisService irisService = new IrisService();
         HostInfoList hostInfoList = new HostInfoList(parseList(irisService.getHostInfo(), HostInfo.class));
         clients = new Clients(hostInfoList, irisService);
         servers = new Servers(hostInfoList, irisService, clients);
+
+        lisClient = (HL7Client) clients.getClient("LIS_HL7");
+        vtgClient = (HL7Client) clients.getClient("VTG");
+        vtgwsClient = (WSClient) clients.getClient("VANTAGE WS");
+
+        lisServer = (HL7Server) servers.getServerByName("LIS_HL7");
+        vtgServer = (HL7Server) servers.getServerByName("VTG");
+        vtgwsServer = (WSServer) servers.getServerByName("VANTAGE WS");
 
         irisService.deleteAllMessages();
     }
@@ -50,55 +69,36 @@ class ExampleTest {
     }
 
     @Test
-    @DisplayName("Should pass a simple assertion")
-    void testSimpleAssertion() {
+    @DisplayName("NPLH receives from LIS and forwards to VTG")
+    void testSendFromLISforwardVTG() {
         // Arrange
-        LIS_OML21 oml21 = LIS_OML21.FromMessage(message);
-        HL7Client lis = (HL7Client) clients.getClient("LIS");
-        HL7Server vtgServer = (HL7Server) servers.getServerByName("VTG");
+        HL7Message oml21 = LIS_OML21.fromMessage(message);
         
         // Act
-        lis.send(oml21.toString(), oml21.getControlId());
-        Optional<ClientMessageResponse> response = lis.waitForResponse(oml21.getControlId(), 10_000);
+        HL7Message response = lisClient.sendWaitingHL7Response(caseId, oml21.toString(), oml21.getControlId());
+        Assertions.assertEquals(response, NPLH_ACK.CommunicationOK(oml21.getControlId()));
         
         // Assert
-        VTG_OML21 vtgOml21 = VTG_OML21.FromMessage(message);
-        String messageReceived = vtgServer.waitForMessage(caseId);
-        assertEquals(vtgOml21.toString(), messageReceived, "2 + 3 should equal 5");
+        HL7Message received = vtgServer.waitForObjectMessage(caseId);
+        Assertions.assertEquals(received, VTG_OML21.fromMessage(message));
     }
 
     @Test
-    @DisplayName("Should use AssertJ fluent assertions")
-    void testWithAssertJ() {
+    @DisplayName("NPLH receives from LIS and forwards to VTGWS")
+    void testSendFromLISforwardVTGWS() {
         // Arrange
-        String text = "Hello JUnit 5";
-        
+        HL7Message oml21 = LIS_OML21.fromMessage(message);
+
+        // Act
+        HL7Message response = lisClient.sendWaitingHL7Response(caseId, oml21.toString(), oml21.getControlId());
+        Assertions.assertEquals(response, NPLH_ACK.CommunicationOK(oml21.getControlId()));
+
         // Assert
-        assertThat(text)
-            .isNotNull()
-            .startsWith("Hello")
-            .contains("JUnit")
-            .endsWith("5");
+        WSMessage received = vtgwsServer.waitForObjectMessage(caseId);
+        WSMessage expected = VTGWS_ProcessNewOrder.FromMessage(message);
+        Assertions.assertEquals(received, expected);
     }
 
-    @Test
-    @DisplayName("Should handle exceptions")
-    void testException() {
-        Exception exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> {
-                throw new IllegalArgumentException("Test exception");
-            }
-        );
-        
-        assertThat(exception.getMessage()).isEqualTo("Test exception");
-    }
-
-    @Disabled("This test is disabled for demonstration")
-    @Test
-    void testDisabled() {
-        fail("This test should not run");
-    }
 
     @AfterEach
     void tearDown() {

@@ -2,10 +2,15 @@ package org.example.server;
 import com.sun.net.httpserver.HttpServer;
 import org.example.client.Clients;
 import org.example.client.WSClient;
+import org.example.domain.hl7.HL7Message;
+import org.example.domain.hl7.VTG.NPLHToVTG.VTG_OML21;
 import org.example.domain.host.HostType;
+import org.example.domain.server.message.ServerMessage;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
 import org.example.domain.host.Connection;
+import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessNewOrder.VTGWS_ProcessNewOrder;
+import org.example.domain.ws.WSMessage;
 import org.example.server.impl.*;
 import org.example.service.IrisService;
 import org.example.utils.MessageLogger;
@@ -102,6 +107,42 @@ public class WSServer extends Server {
         if (!irisService.checkWSConnectionStatus(connection.getId())) {
             irisService.enableWSConnection(serverName, connection.getId());
         }
+    }
+
+    public String waitForMessage(String caseId) {
+        long timeoutMillis = 10_000;
+        long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime < timeoutMillis) {
+            synchronized (messages) {
+                for (ServerMessage msg : messages) {
+                    if (msg.getMessage() != null && msg.getMessage().contains(caseId)) {
+                        return msg.getMessage();
+                    }
+                }
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("[{}] Interrupted wait looking for messages with caseId {}", serverName, caseId);
+                return null;
+            }
+        }
+
+        logger.warn("[{}] Timeout esperando mensaje con caseId {}", serverName, caseId);
+        return null;
+    }
+
+    public WSMessage waitForObjectMessage(String caseId) {
+        String messageReceived = waitForMessage(caseId);
+
+        try {
+            return VTGWS_ProcessNewOrder.fromXml(messageReceived);
+        } catch (Exception ignored) {
+        }
+        throw new RuntimeException("");
     }
 
     @Override

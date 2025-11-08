@@ -1,5 +1,6 @@
 package org.example.domain.ws.VTGWS.common;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.Message;
@@ -8,9 +9,13 @@ import org.example.domain.ws.WSSegment;
 @Data
 @NoArgsConstructor
 public class StainOrder extends WSSegment {
+    @JacksonXmlProperty(localName = "Block")
     private Block block;
+    @JacksonXmlProperty(localName = "ReceivedDateTime")
     private String receivedDateTime;
+    @JacksonXmlProperty(localName = "Slide")
     private Slide slide;
+    @JacksonXmlProperty(localName = "Specimen")
     private Specimen specimen;
 
     public static StainOrder FromOrder(Message message, org.example.domain.message.entity.Slide entitySlide) {

@@ -58,7 +58,6 @@ D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java
 D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java\org\example\domain\hl7\VTG\NPLHToVTG\OSegment.java
 D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java\org\example\domain\hl7\VTG\NPLHToVTG\PID_OML21.java
 D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java\org\example\domain\hl7\VTG\NPLHToVTG\PV1_OML21.java
-D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java\org\example\domain\hl7\VTG\NPLHToVTG\SAC_OML21.java
 D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java\org\example\domain\hl7\VTG\NPLHToVTG\VTG_OML21.java
 D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java\org\example\domain\hl7\VTG\VTGToNPLH\ADDITION\MSH.java
 D:\Repos\Tools\nplh-message-handler\nplh-message-handler-generator\src\main\java\org\example\domain\hl7\VTG\VTGToNPLH\ADDITION\OBR.java

@@ -1,10 +1,15 @@
 package org.example.domain.hl7.LIS.LISToNPLH.response.ACK;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
 
+import java.util.Objects;
 import java.util.UUID;
 
+@Data
+@NoArgsConstructor
 public class MSA extends HL7Segment {
     @HL7Position(position = 1)
     private String ackCode;
@@ -58,6 +63,24 @@ public class MSA extends HL7Segment {
                 nullSafe(ackCode) + "|" +                            // 1
                 nullSafe(messageControlId) + "|";                    // 2
         return cleanSegment(value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MSA msa = (MSA) o;
+        return Objects.equals(ackCode, msa.ackCode);
+    }
+
+    protected static MSA parseMSA(String line) {
+        MSA msa = new MSA();
+        String[] fields = line.split("\\|");
+
+        if (fields.length > 1) msa.setAckCode(getFieldValue(fields, 1));
+        if (fields.length > 2) msa.setMessageControlId(getFieldValue(fields, 2));
+
+        return msa;
     }
 
 }

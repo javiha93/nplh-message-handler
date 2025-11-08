@@ -4,11 +4,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
+import org.example.domain.hl7.VTG.NPLHToVTG.ORC_OML21;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Order;
 import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Specimen;
+
+import java.util.Objects;
 
 @Data
 @NoArgsConstructor
@@ -127,8 +130,8 @@ public class ORC extends HL7Segment {
     public String toString() {
         String value = "ORC|" +
                 nullSafe(actionCode) + "|" +                                                    // 1
-                nullSafe(sampleID) + "^^" + nullSafe(extSampleID) + "||||||||||||||" +          // 2
-                nullSafe(origin) + "|" + nullSafe(originDesc) + "||||" +                        // 17
+                nullSafe(sampleID) + "^^" + nullSafe(extSampleID) + "|||||||||||||||" +         // 2
+                nullSafe(origin) + "^" + nullSafe(originDesc) + "||||" +                        // 17
                 nullSafe(facilityCode) + "^" + nullSafe(facilityName) + "|";                    // 21
 
         return cleanSegment(value);
@@ -154,6 +157,47 @@ public class ORC extends HL7Segment {
                 nullSafe(slideStatus) + "|";         // 21
 
         return cleanSegment(value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ORC orc = (ORC) o;
+        return Objects.equals(actionCode, orc.actionCode) &&
+                Objects.equals(messageCode, orc.messageCode) &&
+                Objects.equals(sampleID, orc.sampleID) &&
+                Objects.equals(extSampleID, orc.extSampleID) &&
+                Objects.equals(origin, orc.origin) &&
+                Objects.equals(originDesc, orc.originDesc) &&
+                Objects.equals(facilityCode, orc.facilityCode) &&
+                Objects.equals(facilityName, orc.facilityName);
+    }
+
+    protected static ORC parseORC(String line, ORC orc) {
+        String[] fields = line.split("\\|");
+
+        if (fields.length > 1) {
+            orc.setActionCode(getFieldValue(fields, 1));
+        }
+
+        if (fields.length > 2) {
+            orc.setSampleID(getFieldValue(fields, 2));
+        }
+
+        if (fields.length > 17 && fields[17] != null && !fields[17].isEmpty()) {
+            String[] origin = fields[17].split("\\^");
+            if (origin.length > 0) orc.setOrigin(origin[0]);
+            if (origin.length > 1) orc.setOriginDesc(origin[1]);
+        }
+
+        if (fields.length > 21 && fields[21] != null && !fields[21].isEmpty()) {
+            String[] facility = fields[21].split("\\^");
+            if (facility.length > 0) orc.setFacilityCode(facility[0]);
+            if (facility.length > 1) orc.setFacilityName(facility[1]);
+        }
+
+        return orc;
     }
 
 }

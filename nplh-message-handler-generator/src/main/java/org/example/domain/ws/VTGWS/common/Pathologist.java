@@ -1,22 +1,34 @@
 package org.example.domain.ws.VTGWS.common;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.ws.WSSegment;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Data
 @NoArgsConstructor
 public class Pathologist extends WSSegment {
+    @JacksonXmlProperty(localName = "Code")
     private String code;
+    @JacksonXmlProperty(localName = "Email")
     private String email;
+    @JacksonXmlProperty(localName = "FirstName")
     private String firstName;
+    @JacksonXmlProperty(localName = "LastName")
     private String lastName;
+    @JacksonXmlProperty(localName = "MiddleName")
     private String middleName;
+    @JacksonXmlProperty(localName = "WorkPhone")
     private String workPhone;
 
     public static Pathologist FromPathologist(org.example.domain.message.professional.Pathologist entityPathologist) {
+        if (entityPathologist.isEmpty()) {
+            return null;
+        }
+
         Pathologist pathologist = new Pathologist();
 
         pathologist.setCode(entityPathologist.getCode());
@@ -27,6 +39,21 @@ public class Pathologist extends WSSegment {
         pathologist.setWorkPhone(entityPathologist.getWorkPhone());
 
         return pathologist;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Pathologist pathologist = (Pathologist) o;
+
+        return Objects.equals(code, pathologist.code)
+                && Objects.equals(email, pathologist.email)
+                && Objects.equals(firstName, pathologist.firstName)
+                && Objects.equals(lastName, pathologist.lastName)
+                && Objects.equals(middleName, pathologist.middleName)
+                && Objects.equals(workPhone, pathologist.workPhone);
     }
 
     private boolean isEmpty() {

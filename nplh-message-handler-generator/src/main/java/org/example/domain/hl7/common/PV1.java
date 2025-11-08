@@ -3,8 +3,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
+import org.example.domain.hl7.VTG.NPLHToVTG.PV1_OML21;
 import org.example.domain.message.Patient;
 import org.example.domain.message.professional.Physician;
+
+import java.util.Objects;
 
 @Data
 @NoArgsConstructor
@@ -120,6 +123,44 @@ public class PV1 extends HL7Segment {
                 nullSafe(requestorZipCode) + "|";
 
         return cleanSegment(value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PV1 pv1 = (PV1) o;
+        return Objects.equals(requestorCode, pv1.requestorCode) &&
+                Objects.equals(requestorLastName, pv1.requestorLastName) &&
+                Objects.equals(requestorFirstName, pv1.requestorFirstName) &&
+                Objects.equals(requestorMiddleName, pv1.requestorMiddleName) &&
+                Objects.equals(requestorSuffix, pv1.requestorSuffix) &&
+                Objects.equals(requestorPrefix, pv1.requestorPrefix) &&
+                Objects.equals(requestorAddress, pv1.requestorAddress) &&
+                Objects.equals(requestorCity, pv1.requestorCity) &&
+                Objects.equals(requestorCountry, pv1.requestorCountry) &&
+                Objects.equals(requestorState, pv1.requestorState) &&
+                Objects.equals(requestorHomeTel, pv1.requestorHomeTel) &&
+                Objects.equals(requestorMobileTel, pv1.requestorMobileTel) &&
+                Objects.equals(requestorWorkTel, pv1.requestorWorkTel) &&
+                Objects.equals(requestorZipCode, pv1.requestorZipCode);
+    }
+
+    protected static PV1 parsePV1(String line, PV1 pv1) {
+        String[] fields = line.split("\\|");
+
+        // Campo 8 (position 8) - Attending Doctor (ID^LastName^FirstName^MiddleName^Suffix^Prefix)
+        if (fields.length > 7) {
+            String[] physician = fields[7].split("\\^");
+            if (physician.length > 0) pv1.setRequestorCode(physician[0]);
+            if (physician.length > 1) pv1.setRequestorLastName(physician[1]);
+            if (physician.length > 2) pv1.setRequestorFirstName(physician[2]);
+            if (physician.length > 3) pv1.setRequestorMiddleName(physician[3]);
+            if (physician.length > 4) pv1.setRequestorSuffix(physician[4]);
+            if (physician.length > 5) pv1.setRequestorPrefix(physician[5]);
+        }
+
+        return pv1;
     }
 
 }

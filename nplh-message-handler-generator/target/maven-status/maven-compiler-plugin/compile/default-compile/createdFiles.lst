@@ -56,7 +56,6 @@ org\example\domain\ws\UPATHCLOUD\UPATHCLOUDToNPLH\SendScannedSlide\UPATHCLOUD_Se
 org\example\domain\hl7\VTG\VTGToNPLH\SPECIMENUPDATE\SAC.class
 org\example\domain\messageType\VTGWS$8.class
 org\example\domain\hl7\VTG\VTGToNPLH\SLIDEUPDATE\OBR.class
-org\example\domain\hl7\VTG\NPLHToVTG\SAC_OML21.class
 org\example\domain\hl7\VTG\VTGToNPLH\BLOCKUPDATE\SAC.class
 org\example\domain\hl7\VTG\VTGToNPLH\SLIDEUPDATE\VTG_SlideUpdate.class
 org\example\domain\hl7\common\MSH.class

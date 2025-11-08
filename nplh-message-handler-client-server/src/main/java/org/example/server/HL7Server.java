@@ -1,5 +1,7 @@
 package org.example.server;
 
+import org.example.domain.hl7.HL7Message;
+import org.example.domain.hl7.VTG.NPLHToVTG.VTG_OML21;
 import org.example.domain.host.Connection;
 import org.example.domain.server.message.ServerMessage;
 import org.example.service.IrisService;
@@ -157,7 +159,7 @@ public class HL7Server extends Server implements Runnable {
     }
 
     public String waitForMessage(String caseId) {
-        long timeoutMillis = 10_000; // 10 segundos
+        long timeoutMillis = 10_000;
         long startTime = System.currentTimeMillis();
 
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
@@ -170,16 +172,26 @@ public class HL7Server extends Server implements Runnable {
             }
 
             try {
-                Thread.sleep(100); // Evita busy waiting (100 ms entre chequeos)
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("[{}] Espera interrumpida al buscar mensaje con caseId {}", serverName, caseId);
+                logger.warn("[{}] Interrupted wait looking for messages with caseId {}", serverName, caseId);
                 return null;
             }
         }
 
         logger.warn("[{}] Timeout esperando mensaje con caseId {}", serverName, caseId);
         return null;
+    }
+
+    public HL7Message waitForObjectMessage(String caseId) {
+        String messageReceived = waitForMessage(caseId);
+
+        try {
+            return VTG_OML21.fromString(messageReceived);
+        } catch (Exception ignored) {
+        }
+        throw new RuntimeException("");
     }
 
     // TO DO: check abstract

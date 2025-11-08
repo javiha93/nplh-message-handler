@@ -1,6 +1,9 @@
 
 package org.example.domain.ws;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.function.Supplier;
 
 public class WSSegment {
@@ -19,5 +22,11 @@ public class WSSegment {
             indentation.append("     ");
         }
         return indentation.toString();
+    }
+
+    protected static String convertToXmlDateTime(String yyyymmdd) {
+        LocalDate date = LocalDate.parse(yyyymmdd, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        LocalDateTime dateTime = date.atStartOfDay();
+        return dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 }

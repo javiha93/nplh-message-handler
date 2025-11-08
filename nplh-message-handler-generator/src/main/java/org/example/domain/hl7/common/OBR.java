@@ -5,12 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
+import org.example.domain.hl7.VTG.NPLHToVTG.OBR_OML21;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.*;
 import org.example.domain.message.entity.supplementalInfo.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @NoArgsConstructor
@@ -485,4 +487,153 @@ public class OBR extends HL7Segment {
 
         return cleanSegment(value);
     }
+
+    protected static OBR parseOBR(String line, OBR obr) {
+        String[] fields = line.split("\\|");
+
+        // Campo 1 (position 1) - Segment Number
+        if (fields.length > 1) {
+            obr.setSegmentNumber(getFieldValue(fields, 1));
+        }
+
+        // Campo 2 (position 2) - External Sample ID
+        if (fields.length > 2) {
+            obr.setExternalSampleId(getFieldValue(fields, 2));
+        }
+
+        // Campo 4 (position 4) - Protocol (Code^Name^Identifier^^Description)
+        if (fields.length > 4 && fields[4] != null && !fields[4].isEmpty()) {
+            String[] protocol = fields[4].split("\\^");
+            if (protocol.length > 0) obr.setProtocolNumber(protocol[0]);
+            if (protocol.length > 1) obr.setProtocolName(protocol[1]);
+            if (protocol.length > 2) obr.setProtocolIdentifier(protocol[2]);
+            if (protocol.length > 4) obr.setProtocolDescription(protocol[4]);
+        }
+
+        // Campo 7 (position 7) - Collect Date/Time
+        if (fields.length > 7) {
+            obr.setCollectDateTime(getFieldValue(fields, 7));
+        }
+
+        // Campo 14 (position 14) - Received Date/Time
+        if (fields.length > 14) {
+            obr.setReceivedDateTime(getFieldValue(fields, 14));
+        }
+
+        // Campo 15 (position 15) - Specimen Source (TissueType^Description^SurgicalName^SurgicalDesc^AnatomicSite^AnatomicDesc^Subtype^SubtypeDesc)
+        if (fields.length > 15 && fields[15] != null && !fields[15].isEmpty()) {
+            String[] specimen = fields[15].split("\\^");
+            if (specimen.length > 0) obr.setTissueType(specimen[0]);
+            if (specimen.length > 1) obr.setTissueDescription(specimen[1]);
+            if (specimen.length > 2) obr.setSurgicalName(specimen[2]);
+            if (specimen.length > 3) obr.setSurgicalDescription(specimen[3]);
+            if (specimen.length > 4) obr.setAnatomicSite(specimen[4]);
+            if (specimen.length > 5) obr.setAnatomicDescription(specimen[5]);
+            if (specimen.length > 6) obr.setTissueSubtype(specimen[6]);
+            if (specimen.length > 7) obr.setTissueSubtypeDesc(specimen[7]);
+        }
+
+        // Campo 18 (position 18) - Workflow
+        if (fields.length > 18) {
+            obr.setWorkFlow(getFieldValue(fields, 18));
+        }
+
+        // Campo 19 (position 19) - Slide Info (SlideID^Sequence^ExtSlideID^TextComment)
+        if (fields.length > 19 && fields[19] != null && !fields[19].isEmpty()) {
+            String[] slide = fields[19].split("\\^");
+            if (slide.length > 0) obr.setSlideID(slide[0]);
+            if (slide.length > 1) obr.setSequence(slide[1]);
+            if (slide.length > 2) obr.setExtSlideID(slide[2]);
+            if (slide.length > 3) obr.setTextComment(slide[3]);
+        }
+
+        // Campo 20 (position 20) - Block Info (BlockID^SequenceBlock^ExtBlockID^ParentBlockID)
+        if (fields.length > 20 && fields[20] != null && !fields[20].isEmpty()) {
+            String[] block = fields[20].split("\\^");
+            if (block.length > 0) obr.setBlockID(block[0]);
+            if (block.length > 1) obr.setSequenceBlock(block[1]);
+            if (block.length > 2) obr.setExtBlockID(block[2]);
+            if (block.length > 3) obr.setParentBlockID(block[3]);
+        }
+
+        // Campo 21 (position 21) - Specimen Info (SpecimenID^SequenceSpecimen^ExtSpecimenID)
+        if (fields.length > 21 && fields[21] != null && !fields[21].isEmpty()) {
+            String[] specimenInfo = fields[21].split("\\^");
+            if (specimenInfo.length > 0) obr.setSpecimenID(specimenInfo[0]);
+            if (specimenInfo.length > 1) obr.setSequenceSpecimen(specimenInfo[1]);
+            if (specimenInfo.length > 2) obr.setExtSpecimenID(specimenInfo[2]);
+        }
+
+        return obr;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OBR obr = (OBR) o;
+        return Objects.equals(segmentNumber, obr.segmentNumber) &&
+                Objects.equals(externalSampleId, obr.externalSampleId) &&
+                Objects.equals(sampleId, obr.sampleId) &&
+                Objects.equals(protocolNumber, obr.protocolNumber) &&
+                Objects.equals(protocolName, obr.protocolName) &&
+                Objects.equals(protocolIdentifier, obr.protocolIdentifier) &&
+                Objects.equals(protocolDescription, obr.protocolDescription) &&
+                Objects.equals(collectDateTime, obr.collectDateTime) &&
+                Objects.equals(receivedDateTime, obr.receivedDateTime) &&
+                Objects.equals(tissueType, obr.tissueType) &&
+                Objects.equals(tissueDescription, obr.tissueDescription) &&
+                Objects.equals(surgicalName, obr.surgicalName) &&
+                Objects.equals(surgicalDescription, obr.surgicalDescription) &&
+                Objects.equals(anatomicSite, obr.anatomicSite) &&
+                Objects.equals(anatomicDescription, obr.anatomicDescription) &&
+                Objects.equals(tissueSubtype, obr.tissueSubtype) &&
+                Objects.equals(tissueSubtypeDesc, obr.tissueSubtypeDesc) &&
+                Objects.equals(pathologist, obr.pathologist) &&
+                Objects.equals(pathologistLN, obr.pathologistLN) &&
+                Objects.equals(pathologistFN, obr.pathologistFN) &&
+                Objects.equals(pathologistMN, obr.pathologistMN) &&
+                Objects.equals(pathologistSuffix, obr.pathologistSuffix) &&
+                Objects.equals(pathologistPrefix, obr.pathologistPrefix) &&
+                Objects.equals(pathologistAddress1, obr.pathologistAddress1) &&
+                Objects.equals(pathologistCity, obr.pathologistCity) &&
+                Objects.equals(pathologistCountry, obr.pathologistCountry) &&
+                Objects.equals(pathologistState, obr.pathologistState) &&
+                Objects.equals(pathologistHomeTel, obr.pathologistHomeTel) &&
+                Objects.equals(pathologistMobileTel, obr.pathologistMobileTel) &&
+                Objects.equals(pathologistZip, obr.pathologistZip) &&
+                Objects.equals(pathologistWorkTel, obr.pathologistWorkTel) &&
+                Objects.equals(pathologistMail, obr.pathologistMail) &&
+                Objects.equals(workFlow, obr.workFlow) &&
+                Objects.equals(slideID, obr.slideID) &&
+                Objects.equals(sequence, obr.sequence) &&
+                Objects.equals(extSlideID, obr.extSlideID) &&
+                Objects.equals(textComment, obr.textComment) &&
+                Objects.equals(blockID, obr.blockID) &&
+                Objects.equals(sequenceBlock, obr.sequenceBlock) &&
+                Objects.equals(extBlockID, obr.extBlockID) &&
+                Objects.equals(parentBlockID, obr.parentBlockID) &&
+                Objects.equals(specimenID, obr.specimenID) &&
+                Objects.equals(sequenceSpecimen, obr.sequenceSpecimen) &&
+                Objects.equals(extSpecimenID, obr.extSpecimenID) &&
+                Objects.equals(stat, obr.stat) &&
+                Objects.equals(caseTags, obr.caseTags) &&
+                Objects.equals(technician, obr.technician) &&
+                Objects.equals(technicianLN, obr.technicianLN) &&
+                Objects.equals(technicianFN, obr.technicianFN) &&
+                Objects.equals(technicianMN, obr.technicianMN) &&
+                Objects.equals(supplementalInfos, obr.supplementalInfos) &&
+                Objects.equals(specialInstruction, obr.specialInstruction) &&
+                Objects.equals(specialInstructionArtifact, obr.specialInstructionArtifact) &&
+                Objects.equals(qualityIssue, obr.qualityIssue) &&
+                Objects.equals(qualityIssueArtifact, obr.qualityIssueArtifact) &&
+                Objects.equals(qualityIssueResolution, obr.qualityIssueResolution) &&
+                Objects.equals(tissuePieces, obr.tissuePieces) &&
+                Objects.equals(tissuePiecesArtifact, obr.tissuePiecesArtifact) &&
+                Objects.equals(recut, obr.recut) &&
+                Objects.equals(recutArtifact, obr.recutArtifact) &&
+                Objects.equals(grossDescription, obr.grossDescription) &&
+                Objects.equals(grossDescriptionArtifact, obr.grossDescriptionArtifact);
+    }
+
 }

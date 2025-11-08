@@ -1,18 +1,25 @@
 package org.example.domain.ws.VTGWS.common;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.ws.WSSegment;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Data
 @NoArgsConstructor
 public class Physician extends WSSegment {
+    @JacksonXmlProperty(localName = "Code")
     private String code;
+    @JacksonXmlProperty(localName = "FirstName")
     private String firstName;
+    @JacksonXmlProperty(localName = "LastName")
     private String lastName;
+    @JacksonXmlProperty(localName = "MiddleName")
     private String middleName;
+    @JacksonXmlProperty(localName = "Suffix")
     private String suffix;
 
     public static Physician FromPhysician(org.example.domain.message.professional.Physician entityPhysician) {
@@ -25,6 +32,20 @@ public class Physician extends WSSegment {
         physician.setSuffix(entityPhysician.getSuffix());
 
         return physician;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Physician physician = (Physician) o;
+
+        return Objects.equals(code, physician.code)
+                && Objects.equals(firstName, physician.firstName)
+                && Objects.equals(lastName, physician.lastName)
+                && Objects.equals(middleName, physician.middleName)
+                && Objects.equals(suffix, physician.suffix);
     }
 
     private boolean isEmpty() {

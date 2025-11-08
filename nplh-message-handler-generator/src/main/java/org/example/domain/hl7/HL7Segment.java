@@ -18,4 +18,12 @@ public class HL7Segment {
         return value.replaceAll("\n+", "\n")  // Replace multiple break for just one
                 .replaceAll("\n$", "");   // Delete last break
     }
+
+    protected static String getFieldValue(String[] fields, int index) {
+        if (index >= fields.length) {
+            return null;
+        }
+        String value = fields[index].trim();
+        return value.isEmpty() ? null : value;
+    }
 }

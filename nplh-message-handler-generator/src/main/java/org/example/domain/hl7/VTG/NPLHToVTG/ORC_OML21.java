@@ -22,6 +22,15 @@ public class ORC_OML21 extends ORC {
     public String toString() {
         return super.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    protected static ORC_OML21 parseORC(String line) {
+        return (ORC_OML21) ORC.parseORC(line, new ORC_OML21());
+    }
 }
 
 

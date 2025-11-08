@@ -1,28 +1,38 @@
 package org.example.domain.ws.VTGWS.common;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.ws.WSSegment;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Data
 @NoArgsConstructor
 public class Patient extends WSSegment {
 
+    @JacksonXmlProperty(localName = "DateofBirth")
     private String dateofBirth;
+    @JacksonXmlProperty(localName = "FirstName")
     private String firstName;
+    @JacksonXmlProperty(localName = "Gender")
     private String gender;
+    @JacksonXmlProperty(localName = "LastName")
     private String lastName;
+    @JacksonXmlProperty(localName = "MiddleName")
     private String middleName;
+    @JacksonXmlProperty(localName = "PatientId")
     private String patientId;
+    @JacksonXmlProperty(localName = "Suffix")
     private String suffix;
+    @JacksonXmlProperty(localName = "ZipCode")
     private String zipCode;
 
     public static Patient FromPatient(org.example.domain.message.Patient entityPatient) {
         Patient patient = new Patient();
 
-        patient.setDateofBirth(entityPatient.getDateOfBirth());
+        patient.setDateofBirth(convertToXmlDateTime(entityPatient.getDateOfBirth()));
         patient.setFirstName(entityPatient.getFirstName());
         patient.setGender(entityPatient.getSex());
         patient.setLastName(entityPatient.getLastName());
@@ -46,6 +56,23 @@ public class Patient extends WSSegment {
                         zipCode
                 )
                 .allMatch(value -> value == null || value.trim().isEmpty());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Patient patient = (Patient) o;
+
+        return Objects.equals(dateofBirth, patient.dateofBirth)
+                && Objects.equals(firstName, patient.firstName)
+                && Objects.equals(gender, patient.gender)
+                && Objects.equals(lastName, patient.lastName)
+                && Objects.equals(middleName, patient.middleName)
+                && Objects.equals(patientId, patient.patientId)
+                && Objects.equals(suffix, patient.suffix)
+                && Objects.equals(zipCode, patient.zipCode);
     }
 
     public String toString(int indentationLevel) {

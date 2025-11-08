@@ -22,4 +22,12 @@ public class OBR_OML21 extends OBR {
     public String toString() {
         return super.toString();
     }
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    protected static OBR_OML21 parseOBR(String line) {
+        return (OBR_OML21) OBR.parseOBR(line, new OBR_OML21());
+    }
 }

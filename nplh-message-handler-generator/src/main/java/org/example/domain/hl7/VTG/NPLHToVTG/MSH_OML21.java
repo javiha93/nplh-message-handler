@@ -30,4 +30,13 @@ public class MSH_OML21 extends MSH {
     public String toString() {
         return super.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    protected static MSH_OML21 parseMSH(String line) {
+        return (MSH_OML21) MSH.parseMSH(line, new MSH_OML21());
+    }
 }

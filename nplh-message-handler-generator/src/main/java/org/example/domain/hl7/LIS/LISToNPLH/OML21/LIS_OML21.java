@@ -1,6 +1,7 @@
 package org.example.domain.hl7.LIS.LISToNPLH.OML21;
 
 import lombok.Data;
+import org.example.domain.hl7.HL7Message;
 import org.example.domain.hl7.HL7Segment;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Slide;
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class LIS_OML21 extends HL7Segment {
+public class LIS_OML21 extends HL7Segment implements HL7Message {
     MSH_OML21 msh;
     PID_OML21 pid;
     PV1_OML21 pv1;
@@ -30,7 +31,7 @@ public class LIS_OML21 extends HL7Segment {
         return LISOML21;
     }
 
-    public static LIS_OML21 FromMessage(Message message) {
+    public static LIS_OML21 fromMessage(Message message) {
         LIS_OML21 LISOML21 = new LIS_OML21();
 
         LISOML21.msh = MSH_OML21.FromMessageHeader(message.getHeader(), "OML^O21");
@@ -64,6 +65,7 @@ public class LIS_OML21 extends HL7Segment {
         return cleanMessage(oml21 + oSegmentsString);
     }
 
+    @Override
     public String getControlId() {
         return this.msh.getMessageControlID();
     }

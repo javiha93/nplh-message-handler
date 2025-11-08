@@ -1,19 +1,24 @@
 package org.example.domain.ws.VTGWS.common;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.entity.Specimen;
 import org.example.domain.ws.WSSegment;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Data
 @NoArgsConstructor
 public class Block extends WSSegment {
-
+    @JacksonXmlProperty(localName = "Barcode")
     private String barcode;
+    @JacksonXmlProperty(localName = "Sequence")
     private String sequence;
+    @JacksonXmlProperty(localName = "TissueSubTypeDescription")
     private String tissueSubTypeDescription;
+    @JacksonXmlProperty(localName = "TissueSubTypeName")
     private String tissueSubTypeName;
 
     public static Block Default(org.example.domain.message.entity.Block entityBlock, Specimen specimen) {
@@ -22,9 +27,22 @@ public class Block extends WSSegment {
         block.barcode = entityBlock.getId();
         block.sequence = entityBlock.getSequence();
         block.tissueSubTypeDescription = specimen.getProcedure().getTissue().getSubtypeDescription();
-        block.tissueSubTypeName = specimen.getProcedure().getTissue().getType();
+        block.tissueSubTypeName = specimen.getProcedure().getTissue().getSubtype();
 
         return  block;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Block block = (Block) o;
+
+        return Objects.equals(barcode, block.barcode)
+                && Objects.equals(sequence, block.sequence)
+                && Objects.equals(tissueSubTypeDescription, block.tissueSubTypeDescription)
+                && Objects.equals(tissueSubTypeName, block.tissueSubTypeName);
     }
 
     public boolean isEmpty() {

@@ -5,10 +5,10 @@ import org.example.domain.message.MessageHeader;
 
 @Data
 public class PersonInfo extends ContactInfo implements Cloneable {
-    String code;
-    String lastName;
-    String firstName;
-    String middleName;
+    protected String code;
+    protected String lastName;
+    protected String firstName;
+    protected String middleName;
 
     @Override
     public PersonInfo clone() {

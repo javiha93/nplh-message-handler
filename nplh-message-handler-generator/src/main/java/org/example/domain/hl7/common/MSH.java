@@ -4,8 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
+import org.example.domain.hl7.VTG.NPLHToVTG.MSH_OML21;
 import org.example.domain.message.MessageHeader;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Data
@@ -117,5 +119,42 @@ public class MSH extends HL7Segment {
                 nullSafe(processingID) + "|" +                                  // 11
                 nullSafe(versionID) + "|";                                      // 12
         return cleanSegment(value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MSH msh = (MSH) o;
+        return Objects.equals(sendingApplication, msh.sendingApplication) &&
+                Objects.equals(sendingFacility, msh.sendingFacility) &&
+                Objects.equals(receivingApplication, msh.receivingApplication) &&
+                Objects.equals(receivingFacility, msh.receivingFacility) &&
+                Objects.equals(messageType, msh.messageType) &&
+                Objects.equals(messageEvent, msh.messageEvent) &&
+                Objects.equals(processingID, msh.processingID) &&
+                Objects.equals(versionID, msh.versionID);
+    }
+
+    protected static MSH parseMSH(String line, MSH msh) {
+        String[] fields = line.split("\\|");
+
+        if (fields.length > 2) msh.setSendingApplication(getFieldValue(fields, 2));
+        if (fields.length > 3) msh.setSendingFacility(getFieldValue(fields, 3));
+        if (fields.length > 4) msh.setReceivingApplication(getFieldValue(fields, 4));
+        if (fields.length > 5) msh.setReceivingFacility(getFieldValue(fields, 5));
+        if (fields.length > 6) msh.setMessageDateHour(getFieldValue(fields, 6));
+
+        if (fields.length > 8) {
+            String[] messageType = fields[8].split("\\^");
+            if (messageType.length > 0) msh.setMessageType(messageType[0]);
+            if (messageType.length > 1) msh.setMessageEvent(messageType[1]);
+        }
+
+        if (fields.length > 9) msh.setMessageControlID(getFieldValue(fields, 9));
+        if (fields.length > 10) msh.setProcessingID(getFieldValue(fields, 10));
+        if (fields.length > 11) msh.setVersionID(getFieldValue(fields, 11));
+
+        return msh;
     }
 }

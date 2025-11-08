@@ -3,7 +3,7 @@ package org.example.server.impl;
 import org.example.domain.server.message.response.CustomResponse;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
-import org.example.domain.hl7.LIS.LISToNPLH.response.ACK.ACK;
+import org.example.domain.hl7.LIS.NPLHToLIS.response.ACK.LIS_ACK;
 import org.example.domain.host.Connection;
 import org.example.server.HL7Server;
 import org.example.service.IrisService;
@@ -26,11 +26,11 @@ public class LISHandler extends HL7Server {
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         ResponseStatus applicationResponse = ResponseStatus.enabled();
-        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
+        CustomResponse customResponse = CustomResponse.disabled(LIS_ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
         applicationResponse.setCustomResponse(customResponse);
 
         ResponseStatus communicationResponse = ResponseStatus.enabled();
-        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
+        customResponse = CustomResponse.disabled(LIS_ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
         communicationResponse.setCustomResponse(customResponse);
 
         ResponseInfo scanSlideResponse = ResponseInfo.createCustomResponse("SCAN_SLIDE", applicationResponse, communicationResponse);
@@ -55,9 +55,9 @@ public class LISHandler extends HL7Server {
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
                 ack = ack.replace("*controlId*", UUID.randomUUID().toString());
             } else if (communicationResponse.getIsError()) {
-                ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
+                ack = LIS_ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
             } else {
-                ack = ACK.CommunicationOK(extractUUID(receivedMessage)).toString();
+                ack = LIS_ACK.CommunicationOK(extractUUID(receivedMessage)).toString();
             }
             sendResponse(outputStream, formatHL7Response(ack));
 
@@ -72,9 +72,9 @@ public class LISHandler extends HL7Server {
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
                 ack = ack.replace("*controlId*", UUID.randomUUID().toString());
             } else if (applicationResponse.getIsError()) {
-                ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
+                ack = LIS_ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
             } else {
-                ack = ACK.ApplicationOK(extractUUID(receivedMessage)).toString();
+                ack = LIS_ACK.ApplicationOK(extractUUID(receivedMessage)).toString();
             }
             sendResponse(outputStream, formatHL7Response(ack));
 

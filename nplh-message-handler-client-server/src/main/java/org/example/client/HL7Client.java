@@ -3,8 +3,11 @@ package org.example.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.example.domain.hl7.HL7Message;
+import org.example.domain.hl7.LIS.LISToNPLH.response.ACK.NPLH_ACK;
 import org.example.domain.host.Connection;
 import org.example.domain.host.HostType;
+import org.example.domain.messageType.AUTOMATIONSW;
 import org.example.utils.MessageLogger;
 import org.example.service.IrisService;
 import org.example.utils.HL7LLPCharacters;
@@ -75,6 +78,21 @@ public class HL7Client extends Client {
         out.flush();
     }
 
+    public String sendWaitingResponse(String caseId, String message, String controlId) {
+        send(caseId, message, controlId);
+        return waitForResponse(controlId).getMessage();
+    }
+
+    public HL7Message sendWaitingHL7Response(String caseId, String message, String controlId) {
+        String response = sendWaitingResponse(caseId, message, controlId);
+
+        try {
+            return NPLH_ACK.fromString(response);
+        } catch (IllegalArgumentException ignored) {}
+
+        throw new IllegalArgumentException("Not able to parse response: " + response);
+    }
+
     private void startAsyncReceiver() {
         CompletableFuture.runAsync(() -> {
             while (!socket.isClosed()) {
@@ -127,26 +145,29 @@ public class HL7Client extends Client {
         });
     }
 
-    public Optional<ClientMessageResponse> waitForResponse(String controlId, long timeoutMillis) {
+    public ClientMessageResponse waitForResponse(String controlId) {
+        return waitForResponse(controlId, 10_000);
+    }
+    public ClientMessageResponse waitForResponse(String controlId, long timeoutMillis) {
         long startTime = System.currentTimeMillis();
         long endTime = startTime + timeoutMillis;
 
         while (System.currentTimeMillis() < endTime) {
             ClientMessage clientMessage = clientMessageList.getMessageByControlId(controlId);
             if (clientMessage != null && clientMessage.getResponses() != null && !clientMessage.getResponses().isEmpty()) {
-                return Optional.of(clientMessage.getResponses().get(0));
+                return clientMessage.getResponses().get(0);
             }
 
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return Optional.empty();
+                logger.error("Unable to find ACK response");
             }
         }
 
         logger.warn("Timeout esperando respuesta para controlId: {}", controlId);
-        return Optional.empty();
+        throw new RuntimeException("");
     }
 
 

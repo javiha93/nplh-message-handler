@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.professional.record.PersonInfo;
 
+import java.util.stream.Stream;
+
 @Data
 @NoArgsConstructor
 public class Technician extends PersonInfo implements Cloneable {
@@ -18,6 +20,17 @@ public class Technician extends PersonInfo implements Cloneable {
 
         return technician;
     }
+
+    public boolean isEmpty() {
+        return Stream.of(
+                        code,
+                        lastName,
+                        firstName,
+                        middleName
+                )
+                .allMatch(value -> value == null || value.trim().isEmpty());
+    }
+
     @Override
     public Technician clone() {
         return (Technician) super.clone();
