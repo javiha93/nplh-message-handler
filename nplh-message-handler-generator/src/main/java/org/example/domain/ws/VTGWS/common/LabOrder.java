@@ -8,7 +8,6 @@ import org.example.domain.message.Message;
 import org.example.domain.message.MessageHeader;
 import org.example.domain.message.entity.Order;
 import org.example.domain.message.entity.Slide;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessNewOrder.VTGWS_ProcessNewOrder;
 import org.example.domain.ws.WSSegment;
 
 import java.util.ArrayList;
@@ -54,7 +53,7 @@ public class LabOrder extends WSSegment {
     @JacksonXmlProperty(localName = "Technician")
     private Technician technician;
 
-    public static LabOrder FromMessage(Message message) {
+    public static LabOrder fromMessage(Message message) {
         LabOrder labOrder = new LabOrder();
 
         Order order = message.getOrder();
@@ -134,7 +133,7 @@ public class LabOrder extends WSSegment {
                     + nullSafe(requestingPhysician, Physician::new).toString(indentationLevel) + "\n"
                     + addIndentation(indentationLevel) + "<SendingApplication>" +  nullSafe(sendingApplication) + "</SendingApplication>\n"
                     + addIndentation(indentationLevel) + "<SendingFacility>" +  nullSafe(sendingFacility) + "</SendingFacility>\n"
-                    +  addIndentation(indentationLevel) + "<StainOrders>" + "\n";
+                    + addIndentation(indentationLevel) + "<StainOrders>" + "\n";
 
             indentationLevel ++;
 

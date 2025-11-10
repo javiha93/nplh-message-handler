@@ -2,10 +2,7 @@ package org.example.domain.message;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Data;
-import org.example.domain.message.entity.Block;
-import org.example.domain.message.entity.Order;
-import org.example.domain.message.entity.Slide;
-import org.example.domain.message.entity.Specimen;
+import org.example.domain.message.entity.*;
 import org.example.domain.message.professional.Physician;
 
 import java.time.LocalDateTime;
@@ -73,8 +70,18 @@ public class Message extends Reflection implements Cloneable {
         return registerTime.format(formatter);
     }
 
+    public void setStainProtocol(StainProtocol stainProtocol) {
+        for (Slide slide : getAllSlides()) {
+            slide.setStainProtocol(stainProtocol);
+        }
+    }
+
     public List<Slide> getAllSlides() {
         return patient.getAllSlides();
+    }
+
+    public Slide getSingleSlide() {
+        return getPatient().getSingleSlide();
     }
 
     public Slide getSlide(String id) {
@@ -96,8 +103,10 @@ public class Message extends Reflection implements Cloneable {
         return patient.getAllOrders();
     }
 
-    public Specimen getSpecimen() {return patient.getSpecimen();}
+    public Specimen getSingleSpecimen() {return patient.getSingleSpecimen();}
 
+    public Specimen getFirstSpecimen() {return patient.getFirstSpecimen();
+    }
     public Specimen getSpecimen(String id) {return patient.getSpecimen(id);}
 
     public Order getOrder() { return patient.getSingleOrder(); }

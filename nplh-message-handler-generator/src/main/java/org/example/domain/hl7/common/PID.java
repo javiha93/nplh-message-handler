@@ -100,6 +100,14 @@ public class PID extends HL7Segment {
         pid.sex = patient.getSex();
         pid.zip = patient.getZip();
         pid.secondSurname = patient.getSecondSurname();
+        pid.address1 = patient.getAddress();
+        pid.city = patient.getCity();
+        pid.state = patient.getState();
+        pid.country = patient.getCountry();
+        pid.homeTel = patient.getHomePhone();
+        pid.email = patient.getEmail();
+        pid.mobileTel = patient.getMobile();
+        pid.workTel = patient.getWorkPhone();
 
         return pid;
     }
@@ -113,7 +121,7 @@ public class PID extends HL7Segment {
                 nullSafe(dateOfBirth) + "|" +                                                                                                // 7
                 nullSafe(sex) + "|||" +                                                                                                      // 8
                 nullSafe(address1) + "^^" + nullSafe(city) + "^" + nullSafe(state) + "^" + nullSafe(zip) + "^" + nullSafe(country) + "||" +  // 11
-                nullSafe(homeTel) + "^^^" + nullSafe(email) + "^^^^^^^^" + nullSafe(mobileTel) + "|" +                                       // 13
+                nullSafe(homeTel) + "^^^" + nullSafe(email) + "^^^^^^^^^" + nullSafe(mobileTel) + "|" +                                       // 13
                 nullSafe(workTel) + "|";                                                                                                     // 14
         return cleanSegment(value);
     }

@@ -14,11 +14,11 @@ public class MSH_OML21 extends MSH {
     }
 
     public static MSH_OML21 FromMessageHeader(MessageHeader messageHeader) {
-        return (MSH_OML21) MSH.FromMessageHeader(messageHeader, new MSH_OML21());
+        return (MSH_OML21) MSH.fromMessageHeader(messageHeader, new MSH_OML21());
     }
 
     public static MSH_OML21 FromMessageHeader(MessageHeader messageHeader, String messageType) {
-        MSH_OML21 msh = (MSH_OML21) MSH.FromMessageHeader(messageHeader, new MSH_OML21());
+        MSH_OML21 msh = (MSH_OML21) MSH.fromMessageHeader(messageHeader, new MSH_OML21());
 
         String[] messageTypeParts = messageType.split("\\^");
         msh.setMessageType(messageTypeParts[0]);
@@ -37,6 +37,12 @@ public class MSH_OML21 extends MSH {
     }
 
     protected static MSH_OML21 parseMSH(String line) {
-        return (MSH_OML21) MSH.parseMSH(line, new MSH_OML21());
+        MSH_OML21 msh = (MSH_OML21) MSH.parseMSH(line, new MSH_OML21());
+
+        if (!msh.getMessageType().equals("OML") || !msh.getMessageEvent().equals("O21")) {
+            throw new RuntimeException("Unable to parse to OML^O21");
+        }
+
+        return msh;
     }
 }

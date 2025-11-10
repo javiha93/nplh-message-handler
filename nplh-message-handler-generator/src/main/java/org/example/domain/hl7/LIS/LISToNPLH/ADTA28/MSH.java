@@ -2,11 +2,7 @@ package org.example.domain.hl7.LIS.LISToNPLH.ADTA28;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.domain.hl7.HL7Position;
-import org.example.domain.hl7.HL7Segment;
 import org.example.domain.message.MessageHeader;
-
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +18,7 @@ public class MSH extends org.example.domain.hl7.common.MSH {
     }
 
     public static MSH FromMessageHeader(MessageHeader messageHeader, String messageType) {
-        return (MSH) org.example.domain.hl7.LIS.LISToNPLH.ADTA08.MSH.FromMessageHeader(messageHeader, messageType, new MSH());
+        return (MSH) org.example.domain.hl7.LIS.LISToNPLH.ADTA08.MSH.fromMessageHeader(messageHeader, messageType, new MSH());
     }
 
     @Override

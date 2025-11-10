@@ -2,7 +2,6 @@ package org.example.domain.hl7.VTG.VTGToNPLH.BLOCKUPDATE;
 
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
-import org.example.domain.message.entity.Slide;
 
 public class ORC extends org.example.domain.hl7.common.ORC {
 
@@ -17,7 +16,7 @@ public class ORC extends org.example.domain.hl7.common.ORC {
     }
 
     public static ORC FromMessage(Block block, Message message, String blockStatus) {
-        ORC orc = (ORC) org.example.domain.hl7.common.ORC.FromMessage(block, message, new ORC());
+        ORC orc = (ORC) org.example.domain.hl7.common.ORC.fromMessage(block, message, new ORC());
         orc.setMessageCode("SC");
         orc.setActionCode("IP");
         orc.setBlockStatus(blockStatus);

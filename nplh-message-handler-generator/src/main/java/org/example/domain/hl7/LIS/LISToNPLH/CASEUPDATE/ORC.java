@@ -15,7 +15,7 @@ public class ORC extends org.example.domain.hl7.common.ORC {
     }
 
     public static ORC FromMessage(Order order, String orderStatus) {
-        ORC orc = (ORC) FromMessage(order, new ORC());
+        ORC orc = (ORC) fromMessage(order, new ORC());
 
         orc.setMessageCode("SC");
         orc.setActionCode("CM");

@@ -2,14 +2,14 @@ package org.example.server;
 import com.sun.net.httpserver.HttpServer;
 import org.example.client.Clients;
 import org.example.client.WSClient;
-import org.example.domain.hl7.HL7Message;
-import org.example.domain.hl7.VTG.NPLHToVTG.VTG_OML21;
 import org.example.domain.host.HostType;
 import org.example.domain.server.message.ServerMessage;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
 import org.example.domain.host.Connection;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessNewOrder.VTGWS_ProcessNewOrder;
+import org.example.domain.ws.UPATHCLOUD.NPLHToUPATHCLOUD.AddCase.UPATHCLOUD_AddCase;
+import org.example.domain.ws.VSS.NPLHToVSS.ProcessOrder.VSS_ProcessOrder;
+import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessNewOrder.VTGWS_ProcessNewOrder;
 import org.example.domain.ws.WSMessage;
 import org.example.server.impl.*;
 import org.example.service.IrisService;
@@ -139,7 +139,17 @@ public class WSServer extends Server {
         String messageReceived = waitForMessage(caseId);
 
         try {
+            return UPATHCLOUD_AddCase.fromXml(messageReceived);
+        } catch (Exception ignored) {
+        }
+
+        try {
             return VTGWS_ProcessNewOrder.fromXml(messageReceived);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            return VSS_ProcessOrder.fromXml(messageReceived);
         } catch (Exception ignored) {
         }
         throw new RuntimeException("");

@@ -17,7 +17,7 @@ public enum UPATHCLOUD implements MessageType {
     },
     sendScannedSlideImageLabelId {
         public MessageService.MessageResponse convert(Message m, Slide slide) {
-            UPATHCLOUD_SendScannedSlide sendScannedSlide = UPATHCLOUD_SendScannedSlide.FromMessage(slide);
+            UPATHCLOUD_SendScannedSlide sendScannedSlide = UPATHCLOUD_SendScannedSlide.fromMessage(slide);
             return new MessageService.MessageResponse(sendScannedSlide.toString(), "");
         }
     },

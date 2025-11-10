@@ -1,0 +1,86 @@
+package org.example.domain.ws.VSS.common;
+
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.example.domain.ws.WSSegment;
+
+import java.util.Objects;
+import java.util.stream.Stream;
+
+@Data
+@NoArgsConstructor
+public class Pathologist extends WSSegment {
+    @JacksonXmlProperty(localName = "Code")
+    private String code;
+    @JacksonXmlProperty(localName = "LastName")
+    private String lastName;
+    @JacksonXmlProperty(localName = "FirstName")
+    private String firstName;
+    @JacksonXmlProperty(localName = "MiddleName")
+    private String middleName;
+    @JacksonXmlProperty(localName = "Prefix")
+    private String prefix;
+    @JacksonXmlProperty(localName = "Suffix")
+    private String suffix;
+
+    public static Pathologist FromPathologist(org.example.domain.message.professional.Pathologist entityPathologist) {
+        if (entityPathologist.isEmpty()) {
+            return null;
+        }
+
+        Pathologist pathologist = new Pathologist();
+
+        pathologist.setCode(entityPathologist.getCode());
+        //TODO Apply logic customFields
+        pathologist.setLastName(entityPathologist.getLastName() + "," + entityPathologist.getFirstName() + "," + entityPathologist.getMiddleName());
+        pathologist.setPrefix(entityPathologist.getPrefix());
+        pathologist.setSuffix(entityPathologist.getSuffix());
+
+        return pathologist;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Pathologist pathologist = (Pathologist) o;
+
+        return Objects.equals(code, pathologist.code)
+                && Objects.equals(firstName, pathologist.firstName)
+                && Objects.equals(lastName, pathologist.lastName)
+                && Objects.equals(middleName, pathologist.middleName)
+                && Objects.equals(suffix, pathologist.suffix)
+                && Objects.equals(prefix, pathologist.prefix);
+    }
+    private boolean isEmpty() {
+        return Stream.of(
+                        firstName,
+                        code,
+                        lastName,
+                        middleName
+                )
+                .allMatch(value -> value == null || value.trim().isEmpty());
+    }
+
+    public String toString(int indentationLevel) {
+        String pathologist = addIndentation(indentationLevel) + "<Pathologist>\n";
+
+        if (!this.isEmpty()) {
+            indentationLevel ++;
+
+            pathologist += addIndentation(indentationLevel) + "<Code>" +  nullSafe(code) + "</Code>\n"
+                    + addIndentation(indentationLevel) + "<FirstName>" +  nullSafe(firstName) + "</FirstName>\n"
+                    + addIndentation(indentationLevel) + "<LastName>" +  nullSafe(lastName) + "</LastName>\n"
+                    + addIndentation(indentationLevel) + "<MiddleName>" +  nullSafe(middleName) + "</MiddleName>\n"
+                    + addIndentation(indentationLevel) + "<Prefix>" +  nullSafe(prefix) + "</Prefix>\n"
+                    + addIndentation(indentationLevel) + "<Suffix>" +  nullSafe(suffix) + "</Suffix>\n";
+
+            indentationLevel --;
+        }
+
+        pathologist += addIndentation(indentationLevel) + "</Pathologist>";
+        return pathologist;
+    }
+}

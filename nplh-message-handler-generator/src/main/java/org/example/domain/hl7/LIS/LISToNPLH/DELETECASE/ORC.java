@@ -1,6 +1,5 @@
 package org.example.domain.hl7.LIS.LISToNPLH.DELETECASE;
 
-import org.example.domain.hl7.HL7Position;
 import org.example.domain.message.entity.Order;
 
 public class ORC extends org.example.domain.hl7.common.ORC {
@@ -17,7 +16,7 @@ public class ORC extends org.example.domain.hl7.common.ORC {
     }
 
     public static ORC FromMessage(Order order) {
-       ORC orc = (ORC) FromMessage(order, new ORC());
+       ORC orc = (ORC) fromMessage(order, new ORC());
 
         orc.setMessageCode("CA");
         orc.setActionCode("CA");

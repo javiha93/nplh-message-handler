@@ -52,7 +52,6 @@ public abstract class BaseTest {
     @BeforeAll
     public static void setUpAll() {
 
-        IrisService irisService = new IrisService();
         logger.info("=".repeat(100));
         logger.info("Inicializando entorno de tests - BaseTest");
         logger.info("=".repeat(100));

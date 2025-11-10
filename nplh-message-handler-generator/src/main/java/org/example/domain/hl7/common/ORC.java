@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
-import org.example.domain.hl7.VTG.NPLHToVTG.ORC_OML21;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Order;
@@ -18,49 +17,49 @@ import java.util.Objects;
 public class ORC extends HL7Segment {
 
     @HL7Position(position = 1)
-    private String actionCode;
+    protected String actionCode;
 
     @HL7Position(position = 1)
-    private String messageCode;
+    protected String messageCode;
 
     @HL7Position(position = 2, subPosition = 1)
-    private String sampleID;
+    protected String sampleID;
 
     @HL7Position(position = 2, subPosition = 3)
-    private String extSampleID;
+    protected String extSampleID;
 
     @HL7Position(position = 4)
-    private String slideId;
+    protected String slideId;
 
     @HL7Position(position = 4)
-    private String blockId;
+    protected String blockId;
 
     @HL7Position(position = 4)
-    private String specimenId;
+    protected String specimenId;
 
     @HL7Position(position = 17, subPosition = 1)
-    private String origin;
+    protected String origin;
 
     @HL7Position(position = 17, subPosition = 2)
-    private String originDesc;
+    protected String originDesc;
 
     @HL7Position(position = 21, subPosition = 1)
-    private String facilityCode;
+    protected String facilityCode;
 
     @HL7Position(position = 21, subPosition = 2)
-    private String facilityName;
+    protected String facilityName;
 
     @HL7Position(position = 12)
-    private String orderStatus;
+    protected String orderStatus;
 
     @HL7Position(position = 12)
-    private String specimenStatus;
+    protected String specimenStatus;
 
     @HL7Position(position = 12)
-    private String blockStatus;
+    protected String blockStatus;
 
     @HL7Position(position = 12)
-    private String slideStatus;
+    protected String slideStatus;
 
     public static ORC Default(String sampleID) {
         ORC orc = new ORC();
@@ -82,7 +81,7 @@ public class ORC extends HL7Segment {
         return orc;
     }
 
-    public static ORC FromMessage(Slide slide, Message message, ORC orc) {
+    public static ORC fromMessage(Slide slide, Message message, ORC orc) {
         Block block = slide.getBlockParent(message);
         Specimen specimen = block.getSpecimenParent(message);
         Order order = specimen.getOrderParent(message);
@@ -96,7 +95,7 @@ public class ORC extends HL7Segment {
         return orc;
     }
 
-    public static ORC FromMessage(Block block, Message message, ORC orc) {
+    public static ORC fromMessage(Block block, Message message, ORC orc) {
         Specimen specimen = block.getSpecimenParent(message);
         Order order = specimen.getOrderParent(message);
 
@@ -108,7 +107,7 @@ public class ORC extends HL7Segment {
         return orc;
     }
 
-    public static ORC FromMessage(Specimen specimen, String sampleID, ORC orc) {
+    public static ORC fromMessage(Specimen specimen, String sampleID, ORC orc) {
         orc.sampleID = sampleID;
         orc.facilityCode = specimen.getFacilityCode();
         orc.facilityName = specimen.getFacilityName();
@@ -116,7 +115,7 @@ public class ORC extends HL7Segment {
         return orc;
     }
 
-    public static ORC FromMessage(Order order, ORC orc) {
+    public static ORC fromMessage(Order order, ORC orc) {
         Specimen specimen = order.getFirstSpecimen();
 
         orc.sampleID = order.getSampleId();

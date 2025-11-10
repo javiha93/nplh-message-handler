@@ -1,21 +1,20 @@
 package org.example.domain.messageType;
 
-import org.example.domain.hl7.VTG.VTGToNPLH.SPECIMENUPDATE.VTG_SpecimenUpdate;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Slide;
 import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Specimen;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrder.*;
+import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessCancelOrder.VTGWS_ProcessCancelOrder;
+import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessChangeOrder.VTGWS_ProcessChangeOrder;
+import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessNewOrder.VTGWS_ProcessNewOrder;
+import org.example.domain.ws.VTGWS.NPLHTpVTGWS.response.VTGWS_ProcessApplicationACK;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessCancelOrderRequest.*;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessChangeOrder.*;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessChangeOrderRequest.*;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessNewOrder.*;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessNewOrderRequest.*;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessPatientUpdate.*;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessPhysicianUpdate.*;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessAssignedPathologistUpdate.*;
 import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessVTGEvent.VTGWS_ProcessVTGEvent;
-import org.example.domain.ws.VTGWS.VTGWSToNPLH.response.*;
 import org.example.service.MessageService;
 
 public enum VTGWS implements MessageType {

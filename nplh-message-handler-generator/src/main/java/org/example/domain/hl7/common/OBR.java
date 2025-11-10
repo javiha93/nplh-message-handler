@@ -18,189 +18,189 @@ import java.util.Objects;
 @NoArgsConstructor
 public class OBR extends HL7Segment {
 
-    @HL7Position(position = 1)
+    //@HL7Position(position = 1)
     protected String segmentNumber;
 
-    @HL7Position(position = 2)
+    //@HL7Position(position = 2)
     protected String externalSampleId;
 
-    @HL7Position(position = 2)
+    //@HL7Position(position = 2)
     protected String sampleId;
 
-    @HL7Position(position = 4, subPosition = 1)
+    //@HL7Position(position = 4, subPosition = 1)
     protected String protocolNumber;
 
-    @HL7Position(position = 4, subPosition = 2)
+    //@HL7Position(position = 4, subPosition = 2)
     protected String protocolName;
 
-    @HL7Position(position = 4, subPosition = 3)
+    //@HL7Position(position = 4, subPosition = 3)
     protected String protocolIdentifier;
 
-    @HL7Position(position = 4, subPosition = 5)
+    //@HL7Position(position = 4, subPosition = 5)
     protected String protocolDescription;
 
-    @HL7Position(position = 7, subPosition = 1)
+    //@HL7Position(position = 7, subPosition = 1)
     protected String collectDateTime;
 
-    @HL7Position(position = 14)
+    //@HL7Position(position = 14)
     protected String receivedDateTime;
 
-    @HL7Position(position = 15, subPosition = 1)
+    //@HL7Position(position = 15, subPosition = 1)
     protected String tissueType;
 
-    @HL7Position(position = 15, subPosition = 2)
+    //@HL7Position(position = 15, subPosition = 2)
     protected String tissueDescription;
 
-    @HL7Position(position = 15, subPosition = 3)
+    //@HL7Position(position = 15, subPosition = 3)
     protected String surgicalName;
 
-    @HL7Position(position = 15, subPosition = 4)
+    //@HL7Position(position = 15, subPosition = 4)
     protected String surgicalDescription;
 
-    @HL7Position(position = 15, subPosition = 5)
+    //@HL7Position(position = 15, subPosition = 5)
     protected String anatomicSite;
 
-    @HL7Position(position = 15, subPosition = 6)
+    //@HL7Position(position = 15, subPosition = 6)
     protected String anatomicDescription;
 
-    @HL7Position(position = 15, subPosition = 7)
+    //@HL7Position(position = 15, subPosition = 7)
     protected String tissueSubtype;
 
-    @HL7Position(position = 15, subPosition = 8)
+    //@HL7Position(position = 15, subPosition = 8)
     protected String tissueSubtypeDesc;
 
-    @HL7Position(position = 16, subPosition = 1)
+    //@HL7Position(position = 16, subPosition = 1)
     protected String pathologist;
 
-    @HL7Position(position = 16, subPosition = 2)
+    //@HL7Position(position = 16, subPosition = 2)
     protected String pathologistLN;
 
-    @HL7Position(position = 16, subPosition = 3)
+    //@HL7Position(position = 16, subPosition = 3)
     protected String pathologistFN;
 
-    @HL7Position(position = 16, subPosition = 4)
+    //@HL7Position(position = 16, subPosition = 4)
     protected String pathologistMN;
 
-    @HL7Position(position = 16, subPosition = 5)
+    //@HL7Position(position = 16, subPosition = 5)
     protected String pathologistSuffix;
 
-    @HL7Position(position = 16, subPosition = 6)
+    //@HL7Position(position = 16, subPosition = 6)
     protected String pathologistPrefix;
 
-    @HL7Position(position = 16, subPosition = 7)
+    //@HL7Position(position = 16, subPosition = 7)
     protected String pathologistAddress1;
 
-    @HL7Position(position = 16, subPosition = 9)
+    //@HL7Position(position = 16, subPosition = 9)
     protected String pathologistCity;
 
-    @HL7Position(position = 16, subPosition = 10)
+    //@HL7Position(position = 16, subPosition = 10)
     protected String pathologistCountry;
 
-    @HL7Position(position = 16, subPosition = 11)
+    //@HL7Position(position = 16, subPosition = 11)
     protected String pathologistState;
 
-    @HL7Position(position = 16, subPosition = 12)
+    //@HL7Position(position = 16, subPosition = 12)
     protected String pathologistHomeTel;
 
-    @HL7Position(position = 16, subPosition = 13)
+    //@HL7Position(position = 16, subPosition = 13)
     protected String pathologistMobileTel;
 
-    @HL7Position(position = 16, subPosition = 15)
+    //@HL7Position(position = 16, subPosition = 15)
     protected String pathologistZip;
 
-    @HL7Position(position = 17, subPosition = 1)
+    //@HL7Position(position = 17, subPosition = 1)
     protected String pathologistWorkTel;
 
-    @HL7Position(position = 17, subPosition = 4)
+    //@HL7Position(position = 17, subPosition = 4)
     protected String pathologistMail;
 
-    @HL7Position(position = 18)
+    //@HL7Position(position = 18)
     protected String workFlow;
 
-    @HL7Position(position = 19, subPosition = 1)
+    //@HL7Position(position = 19, subPosition = 1)
     protected String slideID;
 
-    @HL7Position(position = 19, subPosition = 2)
+    //@HL7Position(position = 19, subPosition = 2)
     protected String sequence;
 
-    @HL7Position(position = 19, subPosition = 3)
+    //@HL7Position(position = 19, subPosition = 3)
     protected String extSlideID;
 
-    @HL7Position(position = 19, subPosition = 4)
+    //@HL7Position(position = 19, subPosition = 4)
     protected String textComment;
 
-    @HL7Position(position = 20, subPosition = 1)
+    //@HL7Position(position = 20, subPosition = 1)
     protected String blockID;
 
-    @HL7Position(position = 20, subPosition = 2)
+    //@HL7Position(position = 20, subPosition = 2)
     protected String sequenceBlock;
 
-    @HL7Position(position = 20, subPosition = 3)
+    //@HL7Position(position = 20, subPosition = 3)
     protected String extBlockID;
 
-    @HL7Position(position = 20, subPosition = 4)
+    //@HL7Position(position = 20, subPosition = 4)
     protected String parentBlockID;
 
-    @HL7Position(position = 21, subPosition = 1)
+    //@HL7Position(position = 21, subPosition = 1)
     protected String specimenID;
 
-    @HL7Position(position = 21, subPosition = 2)
+    //@HL7Position(position = 21, subPosition = 2)
     protected String sequenceSpecimen;
 
-    @HL7Position(position = 21, subPosition = 3)
+    //@HL7Position(position = 21, subPosition = 3)
     protected String extSpecimenID;
 
-    @HL7Position(position = 27, subPosition = 6)
+    //@HL7Position(position = 27, subPosition = 6)
     protected String stat;
 
-    @HL7Position(position = 27, subPosition = 8)
+    //@HL7Position(position = 27, subPosition = 8)
     protected String caseTags;
 
-    @HL7Position(position = 34, subPosition = 1)
+    //@HL7Position(position = 34, subPosition = 1)
     protected String technician;
 
-    @HL7Position(position = 34, subPosition = 2)
+    //@HL7Position(position = 34, subPosition = 2)
     protected String technicianLN;
 
-    @HL7Position(position = 34, subPosition = 3)
+    //@HL7Position(position = 34, subPosition = 3)
     protected String technicianFN;
 
-    @HL7Position(position = 34, subPosition = 4)
+    //@HL7Position(position = 34, subPosition = 4)
     protected String technicianMN;
 
     protected List<SupplementalInfo> supplementalInfos = new ArrayList<>();
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String specialInstruction;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String specialInstructionArtifact;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String qualityIssue;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String qualityIssueArtifact;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String qualityIssueResolution;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String tissuePieces;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String tissuePiecesArtifact;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String recut;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String recutArtifact;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String grossDescription;
 
-    @HL7Position(position = 47)
+    //@HL7Position(position = 47)
     protected String grossDescriptionArtifact;
 
 
@@ -301,9 +301,13 @@ public class OBR extends HL7Segment {
         Specimen specimen = block.getSpecimenParent(message);
         Order order = specimen.getOrderParent(message);
 
-        FromMessage(specimen, message, obr);
+        obr = FromMessage(specimen, message, obr);
 
-        obr.externalSampleId = order.getSampleId() + " " + specimen.getSequence() + block.getSequence() + "-" + slide.getSequence();
+        if (order.getExtSampleId() != null) {
+            obr.externalSampleId = order.getExtSampleId();
+        } else {
+            obr.externalSampleId = order.getSampleId() + " " + specimen.getSequence() + block.getSequence() + "-" + slide.getSequence();
+        }
         obr.protocolNumber = slide.getStainProtocol().getNumber();
         obr.protocolName = slide.getStainProtocol().getName();
         obr.protocolIdentifier = slide.getStainProtocol().getIdentifier();
@@ -404,6 +408,8 @@ public class OBR extends HL7Segment {
     }
 
     public static OBR FromMessage(Order order, OBR obr) {
+        obr.stat = order.getStat();
+
         obr.pathologist = order.getPathologist().getCode();
         obr.pathologistLN = order.getPathologist().getLastName();
         obr.pathologistFN = order.getPathologist().getFirstName();
@@ -533,6 +539,30 @@ public class OBR extends HL7Segment {
             if (specimen.length > 7) obr.setTissueSubtypeDesc(specimen[7]);
         }
 
+        // Pathologist
+        if (fields.length > 16 && fields[16] != null && !fields[16].isEmpty()) {
+            String[] pathologist = fields[16].split("\\^");
+            if (pathologist.length > 0) obr.setPathologist(pathologist[0]);
+            if (pathologist.length > 1) obr.setPathologistLN(pathologist[1]);
+            if (pathologist.length > 2) obr.setPathologistFN(pathologist[2]);
+            if (pathologist.length > 3) obr.setPathologistMN(pathologist[3]);
+            if (pathologist.length > 4) obr.setPathologistSuffix(pathologist[4]);
+            if (pathologist.length > 5) obr.setPathologistPrefix(pathologist[5]);
+            if (pathologist.length > 6) obr.setPathologistAddress1(pathologist[6]);
+            if (pathologist.length > 8) obr.setPathologistCity(pathologist[8]);
+            if (pathologist.length > 9) obr.setPathologistCountry(pathologist[9]);
+            if (pathologist.length > 10) obr.setPathologistState(pathologist[10]);
+            if (pathologist.length > 11) obr.setPathologistHomeTel(pathologist[11]);
+            if (pathologist.length > 12) obr.setPathologistMobileTel(pathologist[12]);
+            if (pathologist.length > 14) obr.setPathologistZip(pathologist[14]);
+        }
+
+        if (fields.length > 17 && fields[17] != null && !fields[17].isEmpty()) {
+            String[] pathologist = fields[17].split("\\^");
+            if (pathologist.length > 0) obr.setPathologistWorkTel(pathologist[0]);
+            if (pathologist.length > 3) obr.setPathologistMail(pathologist[3]);
+        }
+
         // Campo 18 (position 18) - Workflow
         if (fields.length > 18) {
             obr.setWorkFlow(getFieldValue(fields, 18));
@@ -562,6 +592,15 @@ public class OBR extends HL7Segment {
             if (specimenInfo.length > 0) obr.setSpecimenID(specimenInfo[0]);
             if (specimenInfo.length > 1) obr.setSequenceSpecimen(specimenInfo[1]);
             if (specimenInfo.length > 2) obr.setExtSpecimenID(specimenInfo[2]);
+        }
+
+        //Technician
+        if (fields.length > 34 && fields[34] != null && !fields[34].isEmpty()) {
+            String[] technician = fields[34].split("\\^");
+            if (technician.length > 0) obr.setTechnician(technician[0]);
+            if (technician.length > 1) obr.setTechnicianLN(technician[1]);
+            if (technician.length > 2) obr.setTechnicianFN(technician[2]);
+            if (technician.length > 3) obr.setTechnicianMN(technician[3]);
         }
 
         return obr;

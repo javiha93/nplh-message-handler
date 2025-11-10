@@ -16,21 +16,21 @@ public class Pathologist extends PersonInfo implements  Cloneable {
     public static Pathologist Default() {
 
         Pathologist pathologist = new Pathologist();
-        pathologist.setCode("IndiID");
-        pathologist.setLastName("ILastName");
-        pathologist.setFirstName("IFirstName");
-        pathologist.setMiddleName("ImiddleName");
-        pathologist.setAddress("Iaddress");
-        pathologist.setCity("city");
-        pathologist.setCountry("Icountry");
-        pathologist.setState("state");
-        pathologist.setZip("zipcode");
-        pathologist.setHomePhone("hometel");
-        pathologist.setWorkPhone("worktel");
-        pathologist.setMobile("mobiletel");
-        pathologist.setEmail("Imail@e.com");
-        pathologist.setSuffix("Isufix");
-        pathologist.setPrefix("Iprefix");
+        pathologist.setCode("PatoId");
+        pathologist.setLastName("PatoLastName");
+        pathologist.setFirstName("PatoFirstName");
+        pathologist.setMiddleName("PatoMiddleName");
+        pathologist.setAddress("PatoAddress");
+        pathologist.setCity("Patocity");
+        pathologist.setCountry("Patocountry");
+        pathologist.setState("Patostate");
+        pathologist.setZip("Patozip");
+        pathologist.setHomePhone("Patohometel");
+        pathologist.setWorkPhone("Patoworktel");
+        pathologist.setMobile("Patomobiletel");
+        pathologist.setEmail("Patomail@e.com");
+        pathologist.setSuffix("Patosuf");
+        pathologist.setPrefix("Patopref");
 
         return pathologist;
     }

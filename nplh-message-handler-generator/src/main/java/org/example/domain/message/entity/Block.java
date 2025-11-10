@@ -29,7 +29,6 @@ public class Block extends EntityInfo implements Cloneable {
 
         block.setId(id);
         block.setSequence(sequence);
-        block.setExternalId(id);
 
         Slide slide = Slide.Default( id + ";1", "1", "NW");
 

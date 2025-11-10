@@ -17,7 +17,7 @@ public class VTGWS_ProcessCancelOrderRequest extends WSSegment {
         VTGWS_ProcessCancelOrderRequest processCancelOrderRequest = new VTGWS_ProcessCancelOrderRequest();
 
         processCancelOrderRequest.setTransactionId(message.getHeader().getMessageControlId());
-        processCancelOrderRequest.setLabOrder(LabOrder.FromMessage(message));
+        processCancelOrderRequest.setLabOrder(LabOrder.fromMessage(message));
 
         return processCancelOrderRequest;
     }

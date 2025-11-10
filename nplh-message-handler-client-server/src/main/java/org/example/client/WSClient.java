@@ -54,6 +54,10 @@ public class WSClient extends Client {
         logger.info("Connect Client {} on url {}", clientName, this.baseUrl);
     }
 
+    public String send(String soapAction, String messageBody) {
+        return send(soapAction, messageBody, "");
+    }
+
     public String send(String soapAction, String messageBody, String controlId) {
         String requestBody = buildSoapEnvelope(messageBody, this.clientName);
 

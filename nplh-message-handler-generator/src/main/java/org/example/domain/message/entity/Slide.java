@@ -67,11 +67,9 @@ public class Slide extends EntityInfo implements Cloneable {
 
         slide.setId(id);
         slide.setSequence(sequence);
-        slide.setExternalId(id);
 
         slide.setActionCode(actionCode);
         slide.setStainProtocol(StainProtocol.Default());
-        slide.setComment("Comment");
         slide.setIsRescanned(false);
 
         return slide;

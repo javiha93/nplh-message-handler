@@ -44,7 +44,6 @@ public class Specimen extends EntityInfo implements Cloneable {
 
         specimen.setId(id);
         specimen.setSequence(sequence);
-        specimen.setExternalId(id);
         specimen.setCollectDateTime("20141014");
         specimen.setFacilityCode("FC");
         specimen.setFacilityName("FName");

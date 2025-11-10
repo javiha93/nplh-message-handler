@@ -17,11 +17,11 @@ public class MSH extends org.example.domain.hl7.common.MSH {
     }
 
     public static MSH FromMessageHeader(MessageHeader messageHeader) {
-        return (MSH) org.example.domain.hl7.common.MSH.FromMessageHeader(messageHeader, new MSH());
+        return (MSH) org.example.domain.hl7.common.MSH.fromMessageHeader(messageHeader, new MSH());
     }
 
     public static MSH FromMessageHeader(MessageHeader messageHeader, String messageType) {
-        MSH msh = (MSH) org.example.domain.hl7.common.MSH.FromMessageHeader(messageHeader, new MSH());
+        MSH msh = (MSH) org.example.domain.hl7.common.MSH.fromMessageHeader(messageHeader, new MSH());
 
         String[] messageTypeParts = messageType.split("\\^");
         msh.setMessageType(messageTypeParts[0]);

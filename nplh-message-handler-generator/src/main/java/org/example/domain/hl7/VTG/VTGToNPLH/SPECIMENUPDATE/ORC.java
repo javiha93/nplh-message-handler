@@ -1,7 +1,5 @@
 package org.example.domain.hl7.VTG.VTGToNPLH.SPECIMENUPDATE;
 
-import org.example.domain.message.Message;
-import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Specimen;
 
 public class ORC extends org.example.domain.hl7.common.ORC {
@@ -17,7 +15,7 @@ public class ORC extends org.example.domain.hl7.common.ORC {
     }
 
     public static ORC FromMessage(Specimen specimen, String sampleId, String specimenStatus) {
-        ORC orc = (ORC) org.example.domain.hl7.common.ORC.FromMessage(specimen, sampleId, new ORC());
+        ORC orc = (ORC) org.example.domain.hl7.common.ORC.fromMessage(specimen, sampleId, new ORC());
         orc.setMessageCode("SC");
         orc.setActionCode("IP");
         orc.setSpecimenStatus(specimenStatus);

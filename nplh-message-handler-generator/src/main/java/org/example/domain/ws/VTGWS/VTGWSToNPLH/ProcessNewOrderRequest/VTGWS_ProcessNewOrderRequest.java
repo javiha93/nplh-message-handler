@@ -17,7 +17,7 @@ public class VTGWS_ProcessNewOrderRequest extends WSSegment {
         VTGWS_ProcessNewOrderRequest processNewOrderRequest = new VTGWS_ProcessNewOrderRequest();
 
         processNewOrderRequest.setTransactionId(message.getHeader().getMessageControlId());
-        processNewOrderRequest.setLabOrder(LabOrder.FromMessage(message));
+        processNewOrderRequest.setLabOrder(LabOrder.fromMessage(message));
 
         return processNewOrderRequest;
     }

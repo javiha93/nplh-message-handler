@@ -12,6 +12,17 @@ public class StainProtocol extends Reflection implements Cloneable {
     private String identifier;
     private String description;
 
+    public static StainProtocol Default(String number, String name, String description) {
+        StainProtocol stainProtocol = new StainProtocol();
+
+        stainProtocol.setNumber(number);
+        stainProtocol.setName(name);
+        stainProtocol.setIdentifier("STAIN");
+        stainProtocol.setDescription(description);
+
+        return stainProtocol;
+    }
+
     public static StainProtocol Default() {
         StainProtocol stainProtocol = new StainProtocol();
 

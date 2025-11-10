@@ -13,10 +13,10 @@ public class Technician extends PersonInfo implements Cloneable {
     public static Technician Default() {
 
         Technician technician = new Technician();
-        technician.setCode("IndiID");
-        technician.setLastName("ILastName");
-        technician.setFirstName("IFirstName");
-        technician.setMiddleName("ImiddleName");
+        technician.setCode("TeciID");
+        technician.setLastName("TecLastName");
+        technician.setFirstName("TecFirstName");
+        technician.setMiddleName("TecMiddleName");
 
         return technician;
     }

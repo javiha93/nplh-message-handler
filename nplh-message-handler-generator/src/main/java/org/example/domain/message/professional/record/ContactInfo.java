@@ -6,6 +6,7 @@ import org.example.domain.message.Reflection;
 @Data
 public class ContactInfo extends Reflection implements Cloneable{
     protected String address;
+    protected String address2;
     protected String city;
     protected String country;
     protected String state;

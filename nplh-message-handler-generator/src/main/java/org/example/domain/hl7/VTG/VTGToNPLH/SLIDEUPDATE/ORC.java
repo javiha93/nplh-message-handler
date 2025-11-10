@@ -1,7 +1,6 @@
 package org.example.domain.hl7.VTG.VTGToNPLH.SLIDEUPDATE;
 
 import org.example.domain.message.Message;
-import org.example.domain.message.entity.Block;
 import org.example.domain.message.entity.Slide;
 
 public class ORC extends org.example.domain.hl7.common.ORC {
@@ -17,7 +16,7 @@ public class ORC extends org.example.domain.hl7.common.ORC {
     }
 
     public static ORC FromMessage(Slide slide, Message message, String slideStatus) {
-        ORC orc = (ORC) org.example.domain.hl7.common.ORC.FromMessage(slide, message, new ORC());
+        ORC orc = (ORC) org.example.domain.hl7.common.ORC.fromMessage(slide, message, new ORC());
         orc.setMessageCode("SC");
         orc.setActionCode("IP");
         orc.setSlideStatus(slideStatus);

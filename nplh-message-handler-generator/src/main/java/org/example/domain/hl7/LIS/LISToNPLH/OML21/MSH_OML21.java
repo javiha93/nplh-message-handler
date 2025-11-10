@@ -14,11 +14,11 @@ public class MSH_OML21 extends MSH {
     }
 
     public static MSH_OML21 FromMessageHeader(MessageHeader messageHeader) {
-        return (MSH_OML21) MSH.FromMessageHeader(messageHeader, new MSH_OML21());
+        return (MSH_OML21) MSH.fromMessageHeader(messageHeader, new MSH_OML21());
     }
 
     public static MSH_OML21 FromMessageHeader(MessageHeader messageHeader, String messageType) {
-        MSH_OML21 msh = (MSH_OML21) MSH.FromMessageHeader(messageHeader, new MSH_OML21());
+        MSH_OML21 msh = (MSH_OML21) MSH.fromMessageHeader(messageHeader, new MSH_OML21());
 
         String[] messageTypeParts = messageType.split("\\^");
         msh.setMessageType(messageTypeParts[0]);

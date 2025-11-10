@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
-import org.example.domain.hl7.VTG.NPLHToVTG.MSH_OML21;
 import org.example.domain.message.MessageHeader;
 
 import java.util.Objects;
@@ -81,7 +80,7 @@ public class MSH extends HL7Segment {
         return msh;
     }
 
-    public static MSH FromMessageHeader(MessageHeader messageHeader, MSH msh) {
+    public static MSH fromMessageHeader(MessageHeader messageHeader, MSH msh) {
         msh.sendingApplication = messageHeader.getSendingApplication();
         msh.sendingFacility = messageHeader.getSendingFacility();
         msh.receivingApplication = messageHeader.getReceivingApplication();
@@ -96,8 +95,8 @@ public class MSH extends HL7Segment {
         return msh;
     }
 
-    public static MSH FromMessageHeader(MessageHeader messageHeader, String messageType, MSH msh) {
-        msh = FromMessageHeader(messageHeader, msh);
+    public static MSH fromMessageHeader(MessageHeader messageHeader, String messageType, MSH msh) {
+        msh = fromMessageHeader(messageHeader, msh);
 
         String[] messageTypeParts = messageType.split("\\^");
         msh.setMessageType(messageTypeParts[0]);

@@ -1,9 +1,6 @@
 package org.example.domain.hl7.LIS.LISToNPLH.DELETESLIDE;
 
-import org.example.domain.hl7.HL7Position;
-import org.example.domain.hl7.HL7Segment;
 import org.example.domain.message.Message;
-import org.example.domain.message.entity.Order;
 import org.example.domain.message.entity.Slide;
 
 public class ORC extends org.example.domain.hl7.common.ORC {
@@ -21,7 +18,7 @@ public class ORC extends org.example.domain.hl7.common.ORC {
     }
 
     public static ORC FromMessage(Slide slide, Message message) {
-        ORC orc = (ORC) FromMessage(slide, message, new ORC());
+        ORC orc = (ORC) fromMessage(slide, message, new ORC());
 
         orc.setMessageCode("CA");
         orc.setActionCode("CA");

@@ -47,11 +47,10 @@ public class Order extends Reflection implements Cloneable {
         order.setRegisterDate("20240518170503");
         order.setActionCode("NW");
         order.setSampleId(sampleId);
-        order.setExtSampleId(sampleId);
 
-        Specimen specimen = Specimen.OneBlock( sampleId + ";A", "A");
-
-        order.setSpecimen(specimen);
+        order.setSpecimen(Specimen.OneBlock( sampleId + ";A", "A"));
+        order.setPathologist(Pathologist.Default());
+        order.setTechnician(Technician.Default());
 
         return order;
     }

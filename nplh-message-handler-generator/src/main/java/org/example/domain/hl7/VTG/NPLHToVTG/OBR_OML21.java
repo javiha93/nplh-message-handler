@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.common.OBR;
 import org.example.domain.message.Message;
+import org.example.domain.message.entity.Order;
 import org.example.domain.message.entity.Slide;
 
 @Data
@@ -16,8 +17,20 @@ public class OBR_OML21 extends OBR {
     public static OBR_OML21 FromMessage(Slide slide, Message message, int segmentNumber) {
         OBR_OML21 obr = (OBR_OML21) OBR.FromMessage(slide, message, segmentNumber, new OBR_OML21());
         obr.externalSampleId = message.getOrder().getSampleId();
+
+        obr.pathologistAddress1 = null;
+        obr.pathologistCity = null;
+        obr.pathologistCountry = null;
+        obr.pathologistState = null;
+        obr.pathologistHomeTel = null;
+        obr.pathologistMobileTel = null;
+        obr.pathologistWorkTel = null;
+        obr.pathologistZip = null;
+        obr.pathologistMail = null;
+
         return obr;
     }
+
     @Override
     public String toString() {
         return super.toString();

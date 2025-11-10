@@ -11,11 +11,13 @@ import org.example.domain.message.professional.record.PersonInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Data
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Patient extends PersonInfo implements Cloneable {
     private String suffix;
+    private String preffix;
     private String secondSurname;
     private String dateOfBirth;
     private String sex;
@@ -25,18 +27,17 @@ public class Patient extends PersonInfo implements Cloneable {
 
         Patient patient = new Patient();
         patient.setCode("MN-10000000");
-        patient.setLastName("LastName");
-        patient.setFirstName("FirstName");
-        patient.setMiddleName("MiddleInitial");
-        patient.setAddress("Iaddress");
-        patient.setCity("city");
-        patient.setCountry("Icountry");
-        patient.setState("state");
-        patient.setZip("zipcode");
-        patient.setHomePhone("hometel");
-        patient.setWorkPhone("worktel");
-        patient.setMobile("mobiletel");
-        patient.setEmail("Imail@e.com");
+        patient.setLastName("PatLastName");
+        patient.setFirstName("PatFirstName");
+        patient.setMiddleName("PatMiddleInitial");
+        patient.setAddress("Pataddress");
+        patient.setCity("Patcity");
+        patient.setCountry("Patcountry");
+        patient.setState("Patstate");
+        patient.setZip("Patzip");
+        patient.setHomePhone("Pathometel");
+        patient.setWorkPhone("Patworktel");
+        patient.setEmail("Patmail@e.com");
         patient.setSuffix("Sr.");
         patient.setSex("M");
         patient.setDateOfBirth("19800101");
@@ -46,6 +47,16 @@ public class Patient extends PersonInfo implements Cloneable {
         patient.setOrder(order);
 
         return patient;
+    }
+
+    public boolean isEmpty() {
+        return Stream.of(
+                        code,
+                        lastName,
+                        firstName,
+                        middleName
+                )
+                .allMatch(value -> value == null || value.trim().isEmpty());
     }
 
     public List<Slide> getAllSlides() {
@@ -105,12 +116,16 @@ public class Patient extends PersonInfo implements Cloneable {
         setOrders(orderList);
     }
 
-    public Specimen getSpecimen() {
+    public Specimen getSingleSpecimen() {
         if (getAllSpecimens().size() == 1) {
-            return getAllSpecimens().get(0);
+            return getAllSpecimens().getFirst();
         } else {
             throw new RuntimeException("Not possible to return only a specimen. Patient contains " + orders.getOrderList().size() + " specimens" );
         }
+    }
+
+    public Specimen getFirstSpecimen() {
+        return getAllSpecimens().getFirst();
     }
 
     public Specimen getSpecimen(String id) {
@@ -134,7 +149,7 @@ public class Patient extends PersonInfo implements Cloneable {
         }
     }
 
-    public Slide getSlide() {
+    public Slide getSingleSlide() {
         if (getAllSlides().size() == 1) {
             return getAllSlides().get(0);
         } else {

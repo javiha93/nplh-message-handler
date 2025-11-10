@@ -4,6 +4,8 @@ import lombok.Data;
 import org.example.domain.message.professional.record.ContactInfo;
 import org.example.domain.message.professional.record.PersonInfo;
 
+import java.util.stream.Stream;
+
 @Data
 public class Physician extends PersonInfo implements Cloneable {
     private String suffix;
@@ -13,21 +15,20 @@ public class Physician extends PersonInfo implements Cloneable {
     public static Physician Default() {
 
         Physician physician = new Physician();
-        physician.setCode("IndiID");
-        physician.setLastName("ILastName");
-        physician.setFirstName("IFirstName");
-        physician.setMiddleName("ImiddleName");
-        physician.setAddress("Iaddress");
-        physician.setCity("city");
-        physician.setCountry("Icountry");
-        physician.setState("state");
-        physician.setZip("zipcode");
-        physician.setHomePhone("hometel");
-        physician.setWorkPhone("worktel");
-        physician.setMobile("mobiletel");
-        physician.setEmail("Imail@e.com");
-        physician.setSuffix("Isufix");
-        physician.setPrefix("Iprefix");
+        physician.setCode("PhyiID");
+        physician.setLastName("PhyLastName");
+        physician.setFirstName("PhyFirstName");
+        physician.setMiddleName("PhymiddleName");
+        physician.setAddress("Phyaddress");
+        physician.setCity("Phycity");
+        physician.setCountry("Phycountry");
+        physician.setState("Phystate");
+        physician.setZip("Phyzip");
+        physician.setHomePhone("Phyhometel");
+        physician.setWorkPhone("Phyworktel");
+        physician.setMobile("Phymobiletel");
+        physician.setSuffix("Physuf");
+        physician.setPrefix("Phypref");
 
         return physician;
     }
@@ -36,4 +37,15 @@ public class Physician extends PersonInfo implements Cloneable {
         return (Physician) super.clone();
     }
 
+    public boolean isEmpty() {
+        return Stream.of(
+                        firstName,
+                        code,
+                        lastName,
+                        middleName,
+                        email,
+                        workPhone
+                )
+                .allMatch(value -> value == null || value.trim().isEmpty());
+    }
 }

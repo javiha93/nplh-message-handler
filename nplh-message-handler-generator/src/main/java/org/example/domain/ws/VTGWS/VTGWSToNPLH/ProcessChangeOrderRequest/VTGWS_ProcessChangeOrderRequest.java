@@ -17,7 +17,7 @@ public class VTGWS_ProcessChangeOrderRequest extends WSSegment {
         VTGWS_ProcessChangeOrderRequest processChangeOrderRequest = new VTGWS_ProcessChangeOrderRequest();
 
         processChangeOrderRequest.setTransactionId(message.getHeader().getMessageControlId());
-        processChangeOrderRequest.setLabOrder(LabOrder.FromMessage(message));
+        processChangeOrderRequest.setLabOrder(LabOrder.fromMessage(message));
 
         return processChangeOrderRequest;
     }

@@ -15,7 +15,7 @@ public class ORC_OML21 extends ORC {
     }
 
     public static ORC_OML21 FromMessage(Slide slide, Message message) {
-        return (ORC_OML21) FromMessage(slide, message, new ORC_OML21());
+        return (ORC_OML21) fromMessage(slide, message, new ORC_OML21());
     }
 
     @Override
