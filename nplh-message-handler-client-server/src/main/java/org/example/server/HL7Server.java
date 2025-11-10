@@ -4,6 +4,7 @@ import org.example.domain.hl7.HL7Message;
 import org.example.domain.hl7.LIS.NPLHToLIS.SCAN_SLIDE.LIS_SCAN_SLIDE;
 import org.example.domain.hl7.VTG.NPLHToVTG.VTG_OML21;
 import org.example.domain.host.Connection;
+import org.example.domain.host.HostType;
 import org.example.domain.server.message.ServerMessage;
 import org.example.service.IrisService;
 import org.example.service.UINotificationService;
@@ -33,10 +34,12 @@ public class HL7Server extends Server implements Runnable {
     private Thread serverThread;
 
     private final int port;
+    private final HostType hostType;
 
-    public HL7Server(String hostName, Connection connection, IrisService irisService) {
+    public HL7Server(String hostName, HostType hostType, Connection connection, IrisService irisService) {
         serverName = hostName;
 
+        this.hostType = hostType;
         this.port = connection.getPort();
         this.isRunning = true;
         this.irisService = irisService;
@@ -188,12 +191,12 @@ public class HL7Server extends Server implements Runnable {
     public HL7Message waitForObjectMessage(String caseId) {
         String messageReceived = waitForMessage(caseId);
 
-        if (this.serverName.equals("VTG")) {
+        if (this.hostType.equals(HostType.VTG)) {
             try {
                 return VTG_OML21.fromString(messageReceived);
             } catch (Exception ignored) {
             }
-        } else if (this.serverName.equals("LIS_HL7")) {
+        } else if (this.hostType.equals(HostType.LIS)) {
             try {
                 return LIS_SCAN_SLIDE.fromString(messageReceived);
             } catch (Exception ignored) {

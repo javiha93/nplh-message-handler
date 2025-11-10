@@ -1,5 +1,6 @@
 package org.example.server.impl;
 
+import org.example.domain.host.HostType;
 import org.example.domain.server.message.response.CustomResponse;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
@@ -21,8 +22,8 @@ public class LISHandler extends HL7Server {
 
     private final MessageLogger messageLogger;
 
-    public LISHandler(String hostName, Connection connection, IrisService irisService) {
-        super(hostName, connection, irisService);
+    public LISHandler(String hostName, HostType hostType, Connection connection, IrisService irisService) {
+        super(hostName, hostType, connection, irisService);
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         ResponseStatus applicationResponse = ResponseStatus.enabled();

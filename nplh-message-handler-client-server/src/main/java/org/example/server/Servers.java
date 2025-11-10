@@ -44,10 +44,10 @@ public class Servers {
             for (Connection connection: outboundConnections) {
                 // TO DO enum for hostType
                  if (host.getHostType().equals(HostType.LIS)) { //   if (connection.getWsName() == null) {
-                    serverList.add(new LISHandler(host.getHostName(), connection, irisService));
+                    serverList.add(new LISHandler(host.getHostName(), host.getHostType(), connection, irisService));
                 }
                  if (host.getHostType().equals(HostType.VTG) && !connection.getConnectionName().contains("VIP") && !connection.getConnectionName().contains("WS")) {
-                     serverList.add(new VTGHandler(host.getHostName(), connection, irisService));
+                     serverList.add(new VTGHandler(host.getHostName(), host.getHostType(), connection, irisService));
                  }
             }
         }
