@@ -11,6 +11,7 @@ public class Connection {
     private String ip;
     private Integer port;
     private String path;
+    private String requestorAddress;
     private String wsName;
     private String wsLocation;
     private String apiKeyFile;
