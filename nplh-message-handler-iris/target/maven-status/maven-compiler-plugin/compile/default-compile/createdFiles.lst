@@ -1,1 +1,4 @@
+org\example\service\DuplicateHostService.class
 org\example\service\IrisService.class
+org\example\service\StainProtocolsService.class
+org\example\configuration\IrisConnectionManager.class

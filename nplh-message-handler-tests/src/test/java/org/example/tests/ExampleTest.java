@@ -22,11 +22,13 @@ import org.example.domain.ws.WSMessage;
 import org.example.server.HL7Server;
 import org.example.server.Servers;
 import org.example.server.WSServer;
+import org.example.service.DuplicateHostService;
 import org.example.service.IrisService;
 import org.example.service.StainProtocolsService;
 import org.junit.jupiter.api.*;
 
 import java.security.SecureRandom;
+import java.util.List;
 
 import static org.example.service.IrisService.parseList;
 
@@ -37,6 +39,7 @@ import static org.example.service.IrisService.parseList;
 class ExampleTest {
 
     static StainProtocolsService stainProtocolsService;
+    static DuplicateHostService duplicateHostService;
 
     static Clients clients;
     static Servers servers;
@@ -56,12 +59,17 @@ class ExampleTest {
     static WSServer upathCloudServer;
 
     static StainProtocol advanceStainProtocol;
+    static List<String> duplicatedVtgwsHost;
 
     @BeforeAll
     static void setupAll() {
         IrisConnectionManager irisConnectionManager = new IrisConnectionManager();
         IrisService irisService = new IrisService(irisConnectionManager);
         stainProtocolsService = new StainProtocolsService(irisConnectionManager);
+        duplicateHostService = new DuplicateHostService(irisConnectionManager);
+
+        duplicatedVtgwsHost = List.of("VANTAGE WS Oklahoma", "VANTAGE WS Milwaukee");
+        duplicateHostService.duplicateHost("VANTAGEWS", duplicatedVtgwsHost);
 
         HostInfoList hostInfoList = new HostInfoList(parseList(irisService.getHostInfo(), HostInfo.class));
         clients = new Clients(hostInfoList, irisService);
@@ -81,8 +89,11 @@ class ExampleTest {
 
         irisService.deleteAllMessages();
 
-        advanceStainProtocol = StainProtocol.Default("1234", "ADV", "VSSprotocol");
-        stainProtocolsService.createStainProtocolAndAssign("VSS", advanceStainProtocol.getNumber(), advanceStainProtocol.getName(), advanceStainProtocol.getDescription());
+        //advanceStainProtocol = StainProtocol.Default("1234", "ADV", "VSSprotocol");
+        //stainProtocolsService.createStainProtocolAndAssign("VSS", advanceStainProtocol.getNumber(), advanceStainProtocol.getName(), advanceStainProtocol.getDescription());
+
+        duplicatedVtgwsHost = List.of("VANTAGE WS Oklahoma", "VANTAGE WS Milwaukee");
+        duplicateHostService.duplicateHost("VANTAGEWS", duplicatedVtgwsHost);
     }
 
     @BeforeEach
@@ -118,6 +129,12 @@ class ExampleTest {
 
         // Assert
         WSMessage received = vtgwsServer.waitForObjectMessage(caseId);
+        Assertions.assertEquals(received, VTGWS_ProcessNewOrder.FromMessage(message));
+
+        received = ((WSServer) servers.getServerByName("VANTAGE WS Oklahoma")).waitForObjectMessage(caseId);
+        Assertions.assertEquals(received, VTGWS_ProcessNewOrder.FromMessage(message));
+
+        received = ((WSServer) servers.getServerByName("VANTAGE WS Milwaukee")).waitForObjectMessage(caseId);
         Assertions.assertEquals(received, VTGWS_ProcessNewOrder.FromMessage(message));
     }
 
@@ -166,6 +183,11 @@ class ExampleTest {
 
     @AfterAll
     static void tearDownAll() {
+
+        for (String hostName : duplicatedVtgwsHost) {
+            //duplicateHostService.deleteHost(hostName);
+        }
+
         System.out.println("Tearing down test suite...");
         try {
             Thread.sleep(5000); // espera 5 segundos (5000 milisegundos)

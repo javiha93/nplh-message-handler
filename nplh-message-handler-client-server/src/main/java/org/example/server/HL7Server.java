@@ -191,6 +191,7 @@ public class HL7Server extends Server implements Runnable {
     public HL7Message waitForObjectMessage(String caseId) {
         String messageReceived = waitForMessage(caseId);
 
+        //TODO Check how to do it
         if (this.hostType.equals(HostType.VTG)) {
             try {
                 return VTG_OML21.fromString(messageReceived);

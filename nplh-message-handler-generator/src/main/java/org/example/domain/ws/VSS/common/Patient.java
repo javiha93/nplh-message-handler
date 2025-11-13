@@ -28,7 +28,7 @@ public class Patient extends WSSegment {
     @JacksonXmlProperty(localName = "Suffix")
     private String suffix;
 
-    public static Patient FromPatient(org.example.domain.message.Patient entityPatient) {
+    public static Patient fromPatient(org.example.domain.message.Patient entityPatient) {
         if (entityPatient.isEmpty()) {
             return null;
         }

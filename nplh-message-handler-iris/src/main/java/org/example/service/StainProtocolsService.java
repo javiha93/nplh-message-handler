@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class StainProtocolsService {
 
-    static final Logger logger = LoggerFactory.getLogger(IrisService.class);
+    static final Logger logger = LoggerFactory.getLogger(StainProtocolsService.class);
     private final IrisConnectionManager connectionManager;
 
     public StainProtocolsService(IrisConnectionManager connectionManager) {
@@ -23,6 +23,6 @@ public class StainProtocolsService {
 
     public void createStainProtocolAndAssign(String host, String testIdName, String testAbbreviation, String testName) {
         connectionManager.callVoid("Automation.StainProtocolController", "CreateStainProtocolAndAssign", host, testIdName, testAbbreviation, testName);
-        logger.info("Create and Assigned stain protocol");
+        logger.info("Create and Assigned stain protocol: {}^{}^{} to {}", testIdName, testAbbreviation, testName, host);
     }
 }

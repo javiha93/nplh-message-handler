@@ -35,7 +35,7 @@ public class VSS_ProcessOrder extends WSSegment implements WSMessage {
     public static VSS_ProcessOrder fromMessage(Message message) {
         VSS_ProcessOrder processOrder = new VSS_ProcessOrder();
 
-        processOrder.setPatient(Patient.FromPatient(message.getPatient()));
+        processOrder.setPatient(Patient.fromPatient(message.getPatient()));
         processOrder.setPhysician(Physician.FromPhysician(message.getPhysician()));
         processOrder.setCaseId(message.getOrder().getSampleId());
 
