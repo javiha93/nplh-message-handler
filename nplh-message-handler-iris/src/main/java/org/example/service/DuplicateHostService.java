@@ -20,8 +20,13 @@ public class DuplicateHostService {
 
     public void duplicateHost(String host, List<String> newHostList) {
         connectionManager.callVoid("termutils.DuplicateHost", "DuplicateHostWrapper", host, String.join(",", newHostList));
+        logger.info("Duplicated host {} successfully New hosts: {}", host, String.join(",", newHostList));
+    }
+    public void duplicateHost(String host) {
+        connectionManager.callVoid("termutils.DuplicateHost", "DuplicateHostWrapper", host);
         logger.info("Duplicated host {} successfully", host);
     }
+
 
     public void deleteHost(String host) {
         connectionManager.callVoid("hca.utl.chcaUTL", "DelHost", host);

@@ -10,6 +10,7 @@ public class HostInfo {
     private String hostId;
     private String hostName;
     private HostType hostType;
+    private Boolean isDefault;
     private ConnectionType connectionType;
     private List<Connection> connections;
 

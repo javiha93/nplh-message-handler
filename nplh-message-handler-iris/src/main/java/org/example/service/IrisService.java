@@ -44,7 +44,8 @@ public class IrisService {
 //    }
 
     public String getHostInfo() {
-        return connectionManager.callString("Automation.HostController", "GetHostsStatus");
+        String x = connectionManager.callString("Automation.HostController", "GetHostsStatus");
+        return x;
     }
 
     public String getSharingPath() {

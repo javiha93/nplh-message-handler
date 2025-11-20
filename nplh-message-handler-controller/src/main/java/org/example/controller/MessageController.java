@@ -7,6 +7,7 @@ import org.example.client.*;
 import org.example.domain.client.message.ClientMessageResponse;
 import org.example.domain.message.Message;
 import org.example.server.Servers;
+import org.example.service.DuplicateHostService;
 import org.example.service.IrisService;
 import org.example.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;

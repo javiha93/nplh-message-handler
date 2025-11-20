@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings, MailX } from 'lucide-react';
+import { X, RefreshCw, XCircle, Edit, CheckCircle, AlertTriangle, Settings, MailX, Layers2, Trash2 } from 'lucide-react';
 import { serverService, Server, ServerMessage } from '../../services/ServerService';
 import { ServerEditModal } from './ServerEditModal';
 import ServerMessageModal from './ServerMessageModal';
@@ -25,6 +25,15 @@ const ServerSidebarSection: React.FC<ServerSidebarSectionProps> = ({
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [messageModalServer, setMessageModalServer] = useState<Server | null>(null);
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [serverToDuplicate, setServerToDuplicate] = useState<Server | null>(null);
+  const [newHostName, setNewHostName] = useState('');
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [serverToDelete, setServerToDelete] = useState<Server | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Track servers with new real-time messages
   const [serversWithNewMessages, setServersWithNewMessages] = useState<Set<string>>(new Set());
@@ -295,6 +304,140 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
     setMessageModalOpen(false);
   };
 
+  const handleOpenDuplicateModal = (server: Server, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setServerToDuplicate(server);
+    setNewHostName('');
+    setDuplicateError(null);
+    setDuplicateModalOpen(true);
+  };
+
+  const handleCloseDuplicateModal = () => {
+    setDuplicateModalOpen(false);
+    setServerToDuplicate(null);
+    setNewHostName('');
+    setDuplicateError(null);
+  };
+
+  const handleDuplicateHost = async () => {
+    if (!serverToDuplicate || !newHostName.trim()) {
+      setDuplicateError('Please enter a new host name');
+      return;
+    }
+
+    setIsDuplicating(true);
+    setDuplicateError(null);
+
+    try {
+      const currentHostName = getServerName(serverToDuplicate);
+      const response = await fetch('http://localhost:8085/api/hosts/duplicate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          hostName: currentHostName,
+          newHostName: newHostName.trim()
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to duplicate host');
+      }
+
+      // Update clients and servers
+      console.log('Calling updateClientsServers endpoint after duplicate...');
+      const updateResponse = await fetch('http://localhost:8085/api/hosts/updateClientsServers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!updateResponse.ok) {
+        console.warn('Warning: Failed to update clients and servers', updateResponse.status);
+      } else {
+        const updateResult = await updateResponse.text();
+        console.log('UpdateClientsServers response:', updateResult);
+      }
+
+      // Reload servers to show the new duplicated host
+      await loadServers();
+      handleCloseDuplicateModal();
+    } catch (err) {
+      console.error('Error duplicating host:', err);
+      setDuplicateError(err instanceof Error ? err.message : 'Error duplicating host');
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  const handleOpenDeleteModal = (server: Server, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setServerToDelete(server);
+    setDeleteError(null);
+    setDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setServerToDelete(null);
+    setDeleteError(null);
+  };
+
+  const handleDeleteHost = async () => {
+    if (!serverToDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const hostName = getServerName(serverToDelete);
+      const response = await fetch('http://localhost:8085/api/hosts/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          hostName: hostName
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete host');
+      }
+
+      // Update clients and servers
+      console.log('Calling updateClientsServers endpoint after delete...');
+      const updateResponse = await fetch('http://localhost:8085/api/hosts/updateClientsServers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!updateResponse.ok) {
+        console.warn('Warning: Failed to update clients and servers', updateResponse.status);
+      } else {
+        const updateResult = await updateResponse.text();
+        console.log('UpdateClientsServers response:', updateResult);
+      }
+
+      // Reload servers to remove the deleted host
+      await loadServers();
+      handleCloseDeleteModal();
+    } catch (err) {
+      console.error('Error deleting host:', err);
+      setDeleteError(err instanceof Error ? err.message : 'Error deleting host');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Helper functions para manejar ResponseStatus
   const getResponseStatusDisplay = (responseStatus: any) => {
     if (!responseStatus) {
@@ -405,7 +548,29 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
                     <div key={index} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-700">{serverName}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-gray-700">{serverName}</h4>
+                            <div className="flex items-center gap-1">
+                            {server.isDefault && (
+                              <button
+                                onClick={(e) => handleOpenDuplicateModal(server, e)}
+                                className=" rounded text-gray-500 hover:text-blue-700 hover:bg-blue-100 transition-colors"
+                                title="Duplicate Host"
+                              >
+                                <Layers2 size={13} />
+                              </button>
+                              )}
+                              {!server.isDefault && (
+                                <button
+                                  onClick={(e) => handleOpenDeleteModal(server, e)}
+                                  className="rounded text-red-500 hover:text-red-700 hover:bg-red-100 transition-colors"
+                                  title="Remove Host"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
                           {hasResponseStatus(server) && (
                             <div className="bg-gray-100 rounded-md px-2 py-1 mt-2 inline-flex items-center gap-2">
                               <div className="text-xs text-gray-600 flex items-center gap-1">
@@ -502,6 +667,159 @@ const handleSaveServer = async (serverData: Partial<Server>) => {
         onClose={handleCloseMessageModal}
         newMessageIndices={messageModalServer ? (newMessageIndices.get(messageModalServer.serverName || messageModalServer.name || '') || new Set()) : new Set()}
       />
+
+      {/* Modal de duplicación */}
+      {duplicateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Duplicate Host</h3>
+              <button
+                onClick={handleCloseDuplicateModal}
+                className="p-1 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Original Host
+                </label>
+                <input
+                  type="text"
+                  value={serverToDuplicate ? getServerName(serverToDuplicate) : ''}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Host Name *
+                </label>
+                <input
+                  type="text"
+                  value={newHostName}
+                  onChange={(e) => setNewHostName(e.target.value)}
+                  placeholder="Enter new host name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !isDuplicating) {
+                      handleDuplicateHost();
+                    }
+                  }}
+                />
+              </div>
+
+              {duplicateError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <p className="text-sm text-red-600">{duplicateError}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  onClick={handleCloseDuplicateModal}
+                  disabled={isDuplicating}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDuplicateHost}
+                  disabled={isDuplicating || !newHostName.trim()}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isDuplicating ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Duplicating...
+                    </>
+                  ) : (
+                    <>
+                      <Layers2 size={16} />
+                      Duplicate
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de eliminación */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Delete Host</h3>
+              <button
+                onClick={handleCloseDeleteModal}
+                className="p-1 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <p className="text-sm text-yellow-800">
+                  <strong>Warning:</strong> This action cannot be undone. Are you sure you want to delete this host?
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Host to Delete
+                </label>
+                <input
+                  type="text"
+                  value={serverToDelete ? getServerName(serverToDelete) : ''}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+                />
+              </div>
+
+              {deleteError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <p className="text-sm text-red-600">{deleteError}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  onClick={handleCloseDeleteModal}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteHost}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      Delete
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

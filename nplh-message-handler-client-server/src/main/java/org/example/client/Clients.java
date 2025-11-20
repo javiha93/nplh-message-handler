@@ -33,6 +33,40 @@ public class Clients {
         logger.info("****************************************************************************************************");
     }
 
+    public void updateClients(HostInfoList hostInfoList) {
+        List<HostInfo> hl7Hosts = hostInfoList.getHL7Hosts();
+        List<HostInfo> missingHl7Hosts = new ArrayList<>();
+        for (HostInfo hostInfo : hl7Hosts) {
+            boolean clientDoesNotExist = clientList.stream()
+                    .noneMatch(client -> client.clientName.equals(hostInfo.getHostName()));
+            if (clientDoesNotExist) {
+                missingHl7Hosts.add(hostInfo);
+            }
+        }
+        addHL7Clients(missingHl7Hosts);
+
+        List<HostInfo> wsHosts = hostInfoList.getWSHosts();
+        List<HostInfo> missingWsHosts = new ArrayList<>();
+        for (HostInfo hostInfo : wsHosts) {
+            boolean clientDoesNotExist = clientList.stream()
+                    .noneMatch(client -> client.clientName.equals(hostInfo.getHostName()));
+            if (clientDoesNotExist) {
+                missingWsHosts.add(hostInfo);
+            }
+        }
+        addWSClients(missingWsHosts);
+
+        List<Client> clientsToDelete = new ArrayList<>();
+        for (Client client : clientList) {
+            boolean hostDoesNotExist = hostInfoList.getHostInfos().stream()
+                    .noneMatch(hostInfo -> hostInfo.getHostName().equals(client.getClientName()));
+            if (hostDoesNotExist) {
+                clientsToDelete.add(client);
+            }
+        }
+        clientList.removeAll(clientsToDelete);
+    }
+
     private void addHL7Clients(List<HostInfo> hl7Hosts) {
         for (HostInfo host: hl7Hosts) {
             List<Connection> inboundConnections = host.getInboundConnections();

@@ -3,11 +3,14 @@ package org.example.controller;
 import lombok.Data;
 import org.example.client.Client;
 import org.example.client.Clients;
+import org.example.domain.host.HostInfo;
+import org.example.domain.host.HostInfoList;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
 import org.example.domain.server.message.ServerMessage;
 import org.example.server.Server;
 import org.example.server.Servers;
+import org.example.service.DuplicateHostService;
 import org.example.service.IrisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.example.service.IrisService.parseList;
+
 @RestController
 @RequestMapping("/api/hosts")
 @CrossOrigin(origins = "*")
@@ -32,12 +37,14 @@ public class HostController {
     private static final Logger logger = LoggerFactory.getLogger(HostController.class);
 
     private final IrisService irisService;
+    private final DuplicateHostService duplicateHostService;
     private final Servers servers;
     private final Clients clients;
 
     @Autowired
-    public HostController(IrisService irisService, Clients clients, Servers servers) {
+    public HostController(IrisService irisService, DuplicateHostService duplicateHostService, Clients clients, Servers servers) {
         this.irisService = irisService;
+        this.duplicateHostService = duplicateHostService;
         this.servers = servers;
         this.clients = clients;
     }
@@ -61,12 +68,47 @@ public class HostController {
         }
     }
 
+    @PostMapping("/updateClientsServers")
+    public ResponseEntity<String> updateServersClients() {
+        try {
+            HostInfoList hostInfoList = new HostInfoList(parseList(irisService.getHostInfo(), HostInfo.class));
+
+            clients.updateClients(hostInfoList);
+            servers.updateServers(hostInfoList);
+
+            return ResponseEntity.ok("Updated servers and clients successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error duplicating host: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/duplicate")
+    public ResponseEntity<String> duplicateHost(String hostName, String newHostName) {
+        try {
+            duplicateHostService.duplicateHost(hostName, List.of(newHostName));
+            return ResponseEntity.ok("Duplicate host " + hostName + " successfully. New host: " + newHostName );
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error duplicating host: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/delete")
+    public ResponseEntity<String> deleteHost(String hostName) {
+        try {
+            duplicateHostService.deleteHost(hostName);
+            return ResponseEntity.ok("Deleted host " + hostName + " successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error removing host: " + e.getMessage());
+        }
+    }
+
     
     private ServerDTO convertToDTO(Server server) {
         ServerDTO dto = new ServerDTO();
         dto.serverName = server.getServerName();
         dto.responses = server.getResponses();
         dto.isRunning = server.getIsRunning();
+        dto.isDefault = server.getIsDefault();
         dto.messages = server.getMessages();
 
         try {
@@ -286,6 +328,7 @@ public class HostController {
     @Data
     public static class ServerDTO {
         public String serverName;
+        public Boolean isDefault;
         public Boolean isRunning;
         public List<ResponseInfo> responses;
         public String hostType;

@@ -17,6 +17,9 @@ public class Server {
     @JsonProperty("isRunning")
     protected Boolean isRunning = false;
 
+    @JsonProperty("isDefault")
+    protected Boolean isDefault = true;
+
     @JsonProperty("responses")
     protected List<ResponseInfo> responses = new ArrayList<>();
 
