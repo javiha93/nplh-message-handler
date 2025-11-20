@@ -2,7 +2,10 @@ package org.example.client;
 
 import org.example.domain.client.message.ClientMessage;
 import org.example.domain.client.message.ClientMessageList;
+import org.example.domain.hl7.VTG.NPLHToVTG.OML21.VTG_OML21;
 import org.example.domain.host.HostType;
+import org.example.domain.server.message.WSResponseMessage;
+import org.example.domain.ws.VSS.VSSToNPLH.response.CommunicationResponse;
 import org.example.utils.MessageLogger;
 import org.example.domain.host.Connection;
 import org.example.service.IrisService;
@@ -12,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +56,21 @@ public class WSClient extends Client {
         if (requestorAddress != null && !requestorAddress.isEmpty()) {
             ProxyHelper.configureIP(requestorAddress);
         }
+    }
+
+    public WSResponseMessage sendWaitingWSResponse(String soapAction, String messageBody) {
+        WSResponseMessage responseMessage = new WSResponseMessage();
+
+        responseMessage.setSentTime(LocalDateTime.now());
+        String response = send(soapAction, messageBody);
+        responseMessage.setRoughMessage(response);
+
+        try {
+            responseMessage.setMessage(CommunicationResponse.fromXml(response, soapAction));
+        } catch (Exception ignored) {
+        }
+
+        return responseMessage;
     }
 
     public String send(String soapAction, String messageBody) {

@@ -42,7 +42,7 @@ public class VTGWSHandler extends SoapHandler {
     }
 
     @Override
-    protected List<String> response(HttpExchange exchange, String soapAction) throws IOException {
+    protected List<String> response(HttpExchange exchange, String soapAction, String requestBody) throws IOException {
         List<String> responses = new ArrayList<>();
 
         ResponseStatus communicationResponse = server.getDefaultResponse().getCommunicationResponse();
@@ -72,14 +72,14 @@ public class VTGWSHandler extends SoapHandler {
             String transactionId = "";
             if (applicationResponse.getCustomResponse().getUseCustomResponse()) {
                 soapResponse = applicationResponse.getCustomResponse().getCustomResponseText();
-                soapResponse = soapResponse.replace("*originalControlId*", getTransactionId(messageReceived));
+                soapResponse = soapResponse.replace("*originalControlId*", getTransactionId(requestBody));
                 soapResponse = soapResponse.replace("*controlId*", UUID.randomUUID().toString());
             } else if (applicationResponse.getIsError()) {
-                VTGWS_ProcessApplicationACK processApplicationACK = VTGWS_ProcessApplicationACK.FromOriginalTransactionIdError(getTransactionId(messageReceived), applicationResponse.getErrorText());
+                VTGWS_ProcessApplicationACK processApplicationACK = VTGWS_ProcessApplicationACK.FromOriginalTransactionIdError(getTransactionId(requestBody), applicationResponse.getErrorText());
                 soapResponse = processApplicationACK.toString();
                 transactionId = processApplicationACK.getTransactionId();
             } else {
-                VTGWS_ProcessApplicationACK processApplicationACK = VTGWS_ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(messageReceived));
+                VTGWS_ProcessApplicationACK processApplicationACK = VTGWS_ProcessApplicationACK.FromOriginalTransactionIdOk(getTransactionId(requestBody));
                 soapResponse = processApplicationACK.toString();
                 transactionId = processApplicationACK.getTransactionId();
             }

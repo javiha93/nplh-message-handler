@@ -3,9 +3,7 @@ package org.example.domain.hl7.common;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
-import org.example.domain.hl7.VTG.NPLHToVTG.OBR_OML21;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.*;
 import org.example.domain.message.entity.supplementalInfo.*;
@@ -311,6 +309,7 @@ public class OBR extends HL7Segment {
         obr.protocolNumber = slide.getStainProtocol().getNumber();
         obr.protocolName = slide.getStainProtocol().getName();
         obr.protocolIdentifier = slide.getStainProtocol().getIdentifier();
+        obr.protocolDescription = slide.getStainProtocol().getDescription();
         obr.slideID = slide.getId();
         obr.sequence = slide.getSequence();
         obr.blockID = block.getId();

@@ -2,7 +2,6 @@ package org.example.domain.hl7.LIS.LISToNPLH.response.ACK;
 
 import org.example.domain.hl7.HL7Message;
 import org.example.domain.hl7.HL7Segment;
-import org.example.domain.hl7.common.MSH;
 
 import java.util.Objects;
 
@@ -10,13 +9,13 @@ import static org.example.domain.hl7.LIS.LISToNPLH.response.ACK.ERR.parseERR;
 import static org.example.domain.hl7.LIS.LISToNPLH.response.ACK.MSA.parseMSA;
 import static org.example.domain.hl7.LIS.LISToNPLH.response.ACK.MSH_ACK.parseMSH;
 
-public class NPLH_ACK extends HL7Segment implements HL7Message {
+public class NPLH_LIS_ACK extends HL7Segment implements HL7Message {
     MSH_ACK msh;
     MSA msa;
     ERR err;
 
-    public static NPLH_ACK CommunicationOK(String originalControlId){
-        NPLH_ACK ack = new NPLH_ACK();
+    public static NPLH_LIS_ACK CommunicationOK(String originalControlId){
+        NPLH_LIS_ACK ack = new NPLH_LIS_ACK();
 
         ack.msh = MSH_ACK.Default();
         ack.msa = MSA.CommunicationOK(originalControlId);
@@ -24,8 +23,8 @@ public class NPLH_ACK extends HL7Segment implements HL7Message {
         return ack;
     }
 
-    public static NPLH_ACK CommunicationOK(String originalControlId, String controlId){
-        NPLH_ACK ack = new NPLH_ACK();
+    public static NPLH_LIS_ACK CommunicationOK(String originalControlId, String controlId){
+        NPLH_LIS_ACK ack = new NPLH_LIS_ACK();
 
         ack.msh = MSH_ACK.Default(controlId);
         ack.msa = MSA.CommunicationOK(originalControlId);
@@ -33,8 +32,8 @@ public class NPLH_ACK extends HL7Segment implements HL7Message {
         return ack;
     }
 
-    public static NPLH_ACK CommunicationError(String originalControlId, String error){
-        NPLH_ACK ack = new NPLH_ACK();
+    public static NPLH_LIS_ACK CommunicationError(String originalControlId, String error){
+        NPLH_LIS_ACK ack = new NPLH_LIS_ACK();
 
         ack.msh = MSH_ACK.Default();
         ack.msa = MSA.CommunicationError(originalControlId, error);
@@ -42,8 +41,8 @@ public class NPLH_ACK extends HL7Segment implements HL7Message {
         return ack;
     }
 
-    public static NPLH_ACK ApplicationOK(String originalControlId){
-        NPLH_ACK ack = new NPLH_ACK();
+    public static NPLH_LIS_ACK ApplicationOK(String originalControlId){
+        NPLH_LIS_ACK ack = new NPLH_LIS_ACK();
 
         ack.msh = MSH_ACK.Default();
         ack.msa = MSA.ApplicationOK(originalControlId);
@@ -51,8 +50,8 @@ public class NPLH_ACK extends HL7Segment implements HL7Message {
         return ack;
     }
 
-    public static NPLH_ACK ApplicationOK(String originalControlId, String controlId){
-        NPLH_ACK ack = new NPLH_ACK();
+    public static NPLH_LIS_ACK ApplicationOK(String originalControlId, String controlId){
+        NPLH_LIS_ACK ack = new NPLH_LIS_ACK();
 
         ack.msh = MSH_ACK.Default(controlId);
         ack.msa = MSA.ApplicationOK(originalControlId);
@@ -60,8 +59,8 @@ public class NPLH_ACK extends HL7Segment implements HL7Message {
         return ack;
     }
 
-    public static NPLH_ACK ApplicationError(String originalControlId, String error){
-        NPLH_ACK ack = new NPLH_ACK();
+    public static NPLH_LIS_ACK ApplicationError(String originalControlId, String error){
+        NPLH_LIS_ACK ack = new NPLH_LIS_ACK();
 
         ack.msh = MSH_ACK.Default();
         ack.msa = MSA.ApplicationError(originalControlId, error);
@@ -81,18 +80,18 @@ public class NPLH_ACK extends HL7Segment implements HL7Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        NPLH_ACK ack = (NPLH_ACK) o;
+        NPLH_LIS_ACK ack = (NPLH_LIS_ACK) o;
         return Objects.equals(msh, ack.msh) &&
                 Objects.equals(msa, ack.msa) &&
                 Objects.equals(err, ack.err);
     }
 
-    public static NPLH_ACK fromString(String hl7Message) {
+    public static NPLH_LIS_ACK fromString(String hl7Message) {
         if (hl7Message == null || hl7Message.trim().isEmpty()) {
             throw new IllegalArgumentException("Empty message");
         }
 
-        NPLH_ACK ack = new NPLH_ACK();
+        NPLH_LIS_ACK ack = new NPLH_LIS_ACK();
 
         String[] lines = hl7Message.split("\\r?\\n");
 

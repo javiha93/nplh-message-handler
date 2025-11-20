@@ -1,5 +1,6 @@
 package org.example.server;
 import com.sun.net.httpserver.HttpServer;
+import lombok.Getter;
 import org.example.client.Clients;
 import org.example.client.WSClient;
 import org.example.domain.host.HostType;
@@ -10,6 +11,7 @@ import org.example.domain.host.Connection;
 import org.example.domain.ws.UPATHCLOUD.NPLHToUPATHCLOUD.AddCase.UPATHCLOUD_AddCase;
 import org.example.domain.ws.VSS.NPLHToVSS.ProcessOrder.VSS_ProcessOrder;
 import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessNewOrder.VTGWS_ProcessNewOrder;
+import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessStainingStatusUpdate.VTGWS_ProcessStainingStatusUpdate;
 import org.example.domain.ws.WSMessage;
 import org.example.server.impl.*;
 import org.example.service.IrisService;
@@ -20,11 +22,16 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.net.InetSocketAddress;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class WSServer extends Server {
 
     private HttpServer server;
+    @Getter
     private HostType hostType;
     private String location;
     private final Connection connection;
@@ -32,6 +39,8 @@ public class WSServer extends Server {
 
     final MessageLogger messageLogger;
     static final Logger logger = LoggerFactory.getLogger(WSServer.class);
+    @Getter
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     public WSServer(String serverName, HostType hostType, Connection connection, IrisService irisService, Clients clients) {
         this.clients = clients;
@@ -71,7 +80,8 @@ public class WSServer extends Server {
             };
 
             server.createContext(connection.getPath(), soapHandler);
-            server.setExecutor(null);
+            server.setExecutor(threadPool);
+            //server.setExecutor(Executors.newCachedThreadPool());
             server.start();
             isRunning = true;
 
@@ -109,15 +119,23 @@ public class WSServer extends Server {
         }
     }
 
-    public String waitForMessage(String caseId) {
-        long timeoutMillis = 10_000;
+    public String waitForMessage(LocalDateTime sentTime, String... searchTerms) {
+        long timeoutMillis = 20_000;
         long startTime = System.currentTimeMillis();
 
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
             synchronized (messages) {
                 for (ServerMessage msg : messages) {
-                    if (msg.getMessage() != null && msg.getMessage().contains(caseId)) {
-                        return msg.getMessage();
+                    String messageContent = msg.getMessage();
+
+                    if (messageContent != null && msg.receiveTime.isAfter(sentTime)) {
+
+                        boolean allTermsFound = Arrays.stream(searchTerms)
+                                .allMatch(messageContent::contains);
+
+                        if (allTermsFound) {
+                            return messageContent;
+                        }
                     }
                 }
             }
@@ -126,17 +144,17 @@ public class WSServer extends Server {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("[{}] Interrupted wait looking for messages with caseId {}", serverName, caseId);
+                logger.warn("[{}] Interrupted wait looking for messages with {}", serverName, Arrays.toString(searchTerms));
                 return null;
             }
         }
 
-        logger.warn("[{}] Timeout esperando mensaje con caseId {}", serverName, caseId);
+        logger.warn("[{}] Timeout waiting message with {}", serverName, Arrays.toString(searchTerms));
         return null;
     }
 
-    public WSMessage waitForObjectMessage(String caseId) {
-        String messageReceived = waitForMessage(caseId);
+    public WSMessage waitForObjectMessage(LocalDateTime sentTime, String... searchTerms) {
+        String messageReceived = waitForMessage(sentTime, searchTerms);
 
         try {
             return UPATHCLOUD_AddCase.fromXml(messageReceived);
@@ -145,6 +163,11 @@ public class WSServer extends Server {
 
         try {
             return VTGWS_ProcessNewOrder.fromXml(messageReceived);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            return VTGWS_ProcessStainingStatusUpdate.fromXml(messageReceived);
         } catch (Exception ignored) {
         }
 

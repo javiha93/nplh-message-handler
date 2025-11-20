@@ -1,21 +1,20 @@
-package org.example.domain.hl7.VTG.NPLHToVTG;
+package org.example.domain.hl7.VTG.NPLHToVTG.OML21;
 
 import lombok.Data;
 import org.example.domain.hl7.HL7Message;
 import org.example.domain.hl7.HL7Segment;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Slide;
-import org.junit.jupiter.api.Assertions;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static org.example.domain.hl7.VTG.NPLHToVTG.MSH_OML21.parseMSH;
-import static org.example.domain.hl7.VTG.NPLHToVTG.OBR_OML21.parseOBR;
-import static org.example.domain.hl7.VTG.NPLHToVTG.ORC_OML21.parseORC;
-import static org.example.domain.hl7.VTG.NPLHToVTG.PID_OML21.parsePID;
-import static org.example.domain.hl7.VTG.NPLHToVTG.PV1_OML21.parsePV1;
+import static org.example.domain.hl7.VTG.NPLHToVTG.OML21.MSH_OML21.parseMSH;
+import static org.example.domain.hl7.VTG.NPLHToVTG.OML21.OBR_OML21.parseOBR;
+import static org.example.domain.hl7.VTG.NPLHToVTG.OML21.ORC_OML21.parseORC;
+import static org.example.domain.hl7.VTG.NPLHToVTG.OML21.PID_OML21.parsePID;
+import static org.example.domain.hl7.VTG.NPLHToVTG.OML21.PV1_OML21.parsePV1;
 
 @Data
 public class VTG_OML21 extends HL7Segment implements HL7Message {
@@ -34,7 +33,7 @@ public class VTG_OML21 extends HL7Segment implements HL7Message {
         int segmentNumber = 0;
         for (Slide slide : message.getAllSlides()) {
             segmentNumber ++;
-            OBR_OML21 obr = OBR_OML21.FromMessage(slide, message, segmentNumber);
+            OBR_OML21 obr = OBR_OML21.fromMessage(slide, message, segmentNumber);
             ORC_OML21 orc = ORC_OML21.FromMessage(slide, message);
             oml21.oSegments.add(new OSegment(orc, obr));
         }

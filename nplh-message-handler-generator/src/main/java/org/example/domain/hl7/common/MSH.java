@@ -13,35 +13,35 @@ import java.util.UUID;
 @NoArgsConstructor
 public class MSH extends HL7Segment {
 
-    @HL7Position(position = 3)
-    private String sendingApplication;
+    //@HL7Position(position = 3)
+    protected String sendingApplication;
 
-    @HL7Position(position = 4)
-    private String sendingFacility;
+    //@HL7Position(position = 4)
+    protected String sendingFacility;
 
-    @HL7Position(position = 5)
-    private String receivingApplication;
+    //@HL7Position(position = 5)
+    protected String receivingApplication;
 
-    @HL7Position(position = 6)
-    private String receivingFacility;
+    //@HL7Position(position = 6)
+    protected String receivingFacility;
 
-    @HL7Position(position = 7)
-    private String messageDateHour;
+    //@HL7Position(position = 7)
+    protected String messageDateHour;
 
-    @HL7Position(position = 9, subPosition = 1)
-    private String messageType;
+    //@HL7Position(position = 9, subPosition = 1)
+    protected String messageType;
 
-    @HL7Position(position = 9, subPosition = 2)
-    private String messageEvent;
+    //@HL7Position(position = 9, subPosition = 2)
+    protected String messageEvent;
 
-    @HL7Position(position = 10)
-    private String messageControlID;
+    //@HL7Position(position = 10)
+    protected String messageControlID;
 
-    @HL7Position(position = 11)
-    private String processingID;
+    //@HL7Position(position = 11)
+    protected String processingID;
 
-    @HL7Position(position = 12)
-    private String versionID;
+    //@HL7Position(position = 12)
+    protected String versionID;
 
     public static MSH Default()
     {

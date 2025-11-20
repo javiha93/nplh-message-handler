@@ -1,16 +1,13 @@
 package org.example.domain.ws.VSS.common;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.Message;
-import org.example.domain.ws.VSS.NPLHToVSS.ProcessOrder.VSS_ProcessOrder;
-import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessNewOrder.VTGWS_ProcessNewOrder;
 import org.example.domain.ws.WSSegment;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Data
@@ -51,9 +48,9 @@ public class StainOrder extends WSSegment {
     @JacksonXmlProperty(localName = "Specimen")
     private Specimen specimen;
     @JacksonXmlProperty(localName = "LastPrinted")
-    private String lastPrinted;
+    private LocalDateTime lastPrinted;
 
-    public static StainOrder FromMessage(String orderRequest, Message message, org.example.domain.message.entity.Slide entitySlide) {
+    public static StainOrder fromMessage(String orderRequest, Message message, org.example.domain.message.entity.Slide entitySlide) {
         StainOrder stainOrder = new StainOrder();
         org.example.domain.message.entity.Block entityBlock = entitySlide.getBlockParent(message);
         org.example.domain.message.entity.Specimen entitySpecimen = entityBlock.getSpecimenParent(message);
@@ -76,7 +73,9 @@ public class StainOrder extends WSSegment {
         stainOrder.setSlide(Slide.FromSlide(entitySlide));
         stainOrder.setSpecimen(Specimen.FromSpecimen(entitySpecimen));
         //TODO check TIMEZONE
-        stainOrder.setLastPrinted(entitySlide.getLabelPrinted());
+        if (entitySlide.getLabelPrinted() != null && !entitySlide.getLabelPrinted().isEmpty()) {
+            stainOrder.setLastPrinted(LocalDateTime.parse(entitySlide.getLabelPrinted()));
+        }
 
         return stainOrder;
     }
@@ -93,6 +92,9 @@ public class StainOrder extends WSSegment {
         if (o == null || getClass() != o.getClass()) return false;
 
         StainOrder that = (StainOrder) o;
+
+        LocalDate thisDate = (this.lastPrinted == null) ? null : this.lastPrinted.toLocalDate();
+        LocalDate thatDate = (that.lastPrinted == null) ? null : that.lastPrinted.toLocalDate();
 
         return Objects.equals(orderRequest, that.orderRequest)
                 && Objects.equals(caseID, that.caseID)
@@ -111,7 +113,9 @@ public class StainOrder extends WSSegment {
                 && Objects.equals(slide, that.slide)
                 && Objects.equals(block, that.block)
                 && Objects.equals(specimen, that.specimen)
-                && Objects.equals(lastPrinted, that.lastPrinted);
+                && (Objects.equals(thisDate, thatDate)
+                    || Objects.equals(thisDate.minusDays(1), thatDate)
+                    || Objects.equals(thisDate.plusDays(1), thatDate));
     }
 
     public String toString(int indentationLevel) {

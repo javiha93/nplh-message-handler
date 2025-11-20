@@ -26,7 +26,7 @@ public enum VTG implements MessageType {
     },
     SLIDE_UPDATE {
         public MessageService.MessageResponse convert(Message m, Slide slide, String status) {
-            VTG_SlideUpdate slideUpdate = VTG_SlideUpdate.FromMessage(m, slide, status);
+            VTG_SlideUpdate slideUpdate = VTG_SlideUpdate.fromMessage(m, slide, status);
             return new MessageService.MessageResponse(slideUpdate.toString(), slideUpdate.getControlId());
         }
     },

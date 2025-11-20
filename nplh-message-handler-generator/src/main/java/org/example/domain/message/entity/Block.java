@@ -60,6 +60,39 @@ public class Block extends EntityInfo implements Cloneable {
         slides.getSlideList().add(slide);
     }
 
+    public void addSlide(int numOfSlides) {
+        for (int i = 0; i < numOfSlides; i++) {
+            this.addSlide();
+        }
+    }
+
+    public void addSlide() {
+
+        Slide lastSlide = slides.getSlideList().getLast();
+        Slide newSlide = lastSlide.clone();
+
+        String newSequence = incrementSequence(newSlide.getSequence());
+        newSlide.setSequence(newSequence);
+        newSlide.setId(incrementId(newSlide.getId(), newSequence));
+
+        slides.getSlideList().add(newSlide);
+    }
+
+    private String incrementId(String id, String sequence) {
+        String firstIdPart =  id.substring(0, id.lastIndexOf(";"));
+        return firstIdPart + ";" + sequence;
+    }
+
+    private String incrementSequence(String sequenceString) {
+        try {
+            int sequence = Integer.parseInt(sequenceString);
+            return String.valueOf(sequence + 1);
+        } catch (NumberFormatException ignored) {
+            return sequenceString + "1";
+        }
+    }
+
+
     public void setSlideList(List<Slide> slides) {
         this.slides.setSlideList(slides);
     }

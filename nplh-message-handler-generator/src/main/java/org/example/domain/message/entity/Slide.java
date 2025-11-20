@@ -20,6 +20,7 @@ import java.util.List;
 public class Slide extends EntityInfo implements Cloneable {
     private String actionCode;
     private StainProtocol stainProtocol;
+    private StainingInfo stainingInfo = new StainingInfo();
     private Control control;
     private String comment;
     private String labelPrinted;

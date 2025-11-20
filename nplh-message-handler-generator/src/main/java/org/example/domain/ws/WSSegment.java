@@ -13,6 +13,10 @@ public class WSSegment {
         return value == null ? "" : value;
     }
 
+    protected String nullSafe(LocalDateTime value) {
+        return value == null ? "" : value.toString();
+    }
+
     protected <T extends WSSegment> T nullSafe(T segment, Supplier<T> emptyInstanceSupplier) {
         return segment != null ? segment : emptyInstanceSupplier.get();
     }

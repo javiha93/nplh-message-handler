@@ -2,7 +2,6 @@ package org.example.domain.hl7.LIS.NPLHToLIS.SCAN_SLIDE;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.domain.hl7.VTG.NPLHToVTG.ORC_OML21;
 import org.example.domain.hl7.common.ORC;
 import org.example.domain.message.entity.Slide;
 

@@ -4,7 +4,7 @@ import org.example.domain.host.HostType;
 import org.example.domain.server.message.response.CustomResponse;
 import org.example.domain.server.message.response.ResponseInfo;
 import org.example.domain.server.message.response.ResponseStatus;
-import org.example.domain.hl7.VTG.VTGToNPLH.response.ACK.ACK;
+import org.example.domain.hl7.VTG.VTGToNPLH.response.ACK.NPLH_VTG_ACK;
 import org.example.domain.host.Connection;
 import org.example.server.HL7Server;
 import org.example.service.IrisService;
@@ -25,11 +25,11 @@ public class VTGHandler extends HL7Server {
         this.messageLogger = new MessageLogger(LoggerFactory.getLogger("servers." + hostName), irisService, hostName, MockType.SERVER);
 
         ResponseStatus applicationResponse = ResponseStatus.enabled();
-        CustomResponse customResponse = CustomResponse.disabled(ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
+        CustomResponse customResponse = CustomResponse.disabled(NPLH_VTG_ACK.ApplicationOK("*originalControlId*", "*controlId*").toString());
         applicationResponse.setCustomResponse(customResponse);
 
         ResponseStatus communicationResponse = ResponseStatus.disabled();
-        customResponse = CustomResponse.disabled(ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
+        customResponse = CustomResponse.disabled(NPLH_VTG_ACK.CommunicationOK("*originalControlId*", "*controlId*").toString());
         communicationResponse.setCustomResponse(customResponse);
 
         setDefaultResponse(ResponseInfo.createDefault(applicationResponse, communicationResponse));
@@ -50,9 +50,9 @@ public class VTGHandler extends HL7Server {
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
                 ack = ack.replace("*controlId*", UUID.randomUUID().toString());
             } else if (communicationResponse.getIsError()) {
-                ack = ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
+                ack = NPLH_VTG_ACK.CommunicationError(extractUUID(receivedMessage), communicationResponse.getErrorText()).toString();
             } else {
-                ack = ACK.CommunicationOK(extractUUID(receivedMessage)).toString();
+                ack = NPLH_VTG_ACK.CommunicationOK(extractUUID(receivedMessage)).toString();
             }
             sendResponse(outputStream, formatHL7Response(ack));
 
@@ -65,9 +65,9 @@ public class VTGHandler extends HL7Server {
                 ack = ack.replace("*originalControlId*", extractUUID(receivedMessage));
                 ack = ack.replace("*controlId*", UUID.randomUUID().toString());
             } else if (applicationResponse.getIsError()) {
-                ack = ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
+                ack = NPLH_VTG_ACK.ApplicationError(extractUUID(receivedMessage), applicationResponse.getErrorText()).toString();
             } else {
-                ack = ACK.ApplicationOK(extractUUID(receivedMessage)).toString();
+                ack = NPLH_VTG_ACK.ApplicationOK(extractUUID(receivedMessage)).toString();
             }
             sendResponse(outputStream, formatHL7Response(ack));
 

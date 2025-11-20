@@ -3,11 +3,11 @@ package org.example.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.example.domain.hl7.HL7Message;
-import org.example.domain.hl7.LIS.LISToNPLH.response.ACK.NPLH_ACK;
+import org.example.domain.client.message.HL7ResponseMessage;
+import org.example.domain.hl7.LIS.LISToNPLH.response.ACK.NPLH_LIS_ACK;
+import org.example.domain.hl7.VTG.VTGToNPLH.response.ACK.NPLH_VTG_ACK;
 import org.example.domain.host.Connection;
 import org.example.domain.host.HostType;
-import org.example.domain.messageType.AUTOMATIONSW;
 import org.example.utils.MessageLogger;
 import org.example.service.IrisService;
 import org.example.utils.HL7LLPCharacters;
@@ -27,6 +27,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -58,11 +59,11 @@ public class HL7Client extends Client {
         openSocket();
     }
 
-    public void send(String message, String controlId) {
-        send("", message, controlId);
+    public LocalDateTime send(String message, String controlId) {
+       return send("", message, controlId);
     }
 
-    public void send(String caseId, String message, String controlId) {
+    public LocalDateTime send(String caseId, String message, String controlId) {
         openSocket();
 
         String llpMessage = textToLlp(message);
@@ -76,6 +77,8 @@ public class HL7Client extends Client {
             out.write(c);
         }
         out.flush();
+
+        return LocalDateTime.now();
     }
 
     public String sendWaitingResponse(String caseId, String message, String controlId) {
@@ -83,14 +86,26 @@ public class HL7Client extends Client {
         return waitForResponse(controlId).getMessage();
     }
 
-    public HL7Message sendWaitingHL7Response(String caseId, String message, String controlId) {
+    public HL7ResponseMessage sendWaitingHL7Response(String caseId, String message, String controlId) {
+        HL7ResponseMessage responseMessage = new HL7ResponseMessage();
+        responseMessage.setSentTime(LocalDateTime.now());
         String response = sendWaitingResponse(caseId, message, controlId);
+        responseMessage.setRoughMessage(response);
 
-        try {
-            return NPLH_ACK.fromString(response);
-        } catch (IllegalArgumentException ignored) {}
+        if (clientType.equals(HostType.LIS)) {
+            try {
+                responseMessage.setMessage(NPLH_LIS_ACK.fromString(response));
+            } catch (IllegalArgumentException ignored) {}
+        }
+        if (clientType.equals(HostType.VTG)) {
+            try {
+                responseMessage.setMessage(NPLH_VTG_ACK.fromString(response));
+            } catch (IllegalArgumentException ignored) {}
+        }
 
-        throw new IllegalArgumentException("Not able to parse response: " + response);
+        return responseMessage;
+//
+//        throw new IllegalArgumentException("Not able to parse response: " + response);
     }
 
     private void startAsyncReceiver() {

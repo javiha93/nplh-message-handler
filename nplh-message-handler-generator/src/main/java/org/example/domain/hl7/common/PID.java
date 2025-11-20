@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.HL7Position;
 import org.example.domain.hl7.HL7Segment;
-import org.example.domain.hl7.VTG.NPLHToVTG.PID_OML21;
 import org.example.domain.message.Patient;
 
 import java.util.Objects;

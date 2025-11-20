@@ -1,10 +1,9 @@
-package org.example.domain.hl7.VTG.NPLHToVTG;
+package org.example.domain.hl7.VTG.NPLHToVTG.OML21;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.common.OBR;
 import org.example.domain.message.Message;
-import org.example.domain.message.entity.Order;
 import org.example.domain.message.entity.Slide;
 
 @Data
@@ -14,7 +13,7 @@ public class OBR_OML21 extends OBR {
         return (OBR_OML21) OBR.Default(sampleId, specimenId, blockId, slideId, segmentNumber, new OBR_OML21());
     }
 
-    public static OBR_OML21 FromMessage(Slide slide, Message message, int segmentNumber) {
+    public static OBR_OML21 fromMessage(Slide slide, Message message, int segmentNumber) {
         OBR_OML21 obr = (OBR_OML21) OBR.FromMessage(slide, message, segmentNumber, new OBR_OML21());
         obr.externalSampleId = message.getOrder().getSampleId();
 

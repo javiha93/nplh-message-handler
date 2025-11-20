@@ -1,6 +1,8 @@
 package org.example.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.example.domain.server.message.ServerMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +28,17 @@ public class UINotificationService {
         .version(HttpClient.Version.HTTP_1_1)
         .build();
     
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    
-    /**
-     * Adds messages to a server through the UI middleware
-     * The UI will then forward the request to the backend
-     * 
-     * @param serverName The name of the server that received messages
-     * @param serverMessage List of response messages
-     */
+    private static final ObjectMapper objectMapper = createObjectMapper();
+
+
+    private static ObjectMapper createObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        return mapper;
+    }
     public static void addServerMessage(String serverName, ServerMessage serverMessage) {
         // Execute asynchronously to avoid blocking the main thread
         CompletableFuture.runAsync(() -> {
@@ -46,8 +50,8 @@ public class UINotificationService {
                 
                 String jsonBody = objectMapper.writeValueAsString(requestBody);
 
-                logger.info("📤 Request URL: {}", UI_ENDPOINT);
-                logger.debug("Request body: {}", jsonBody);
+                //logger.info("📤 Request URL: {}", UI_ENDPOINT);
+                //logger.debug("Request body: {}", jsonBody);
                 
                 // Build HTTP request
                 HttpRequest request = HttpRequest.newBuilder()
@@ -56,16 +60,16 @@ public class UINotificationService {
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
                 
-                logger.info("📤 Sending HTTP request...");
+                //logger.info("📤 Sending HTTP request...");
                 
                 // Send request
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
                 
-                logger.info("📥 Received response with status: {}", response.statusCode());
+                //logger.info("📥 Received response with status: {}", response.statusCode());
                 
                 if (response.statusCode() == 200) {
-                    logger.info("✅ Messages sent successfully to UI for server '{}'", serverName);
-                    logger.debug("Response body: {}", response.body());
+                    //logger.info("✅ Messages sent successfully to UI for server '{}'", serverName);
+                    //logger.debug("Response body: {}", response.body());
                 } else {
                     logger.warn("⚠️ UI returned status {}: {}", response.statusCode(), response.body());
                 }

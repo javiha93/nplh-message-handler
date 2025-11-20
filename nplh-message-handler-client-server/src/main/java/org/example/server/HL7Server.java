@@ -2,7 +2,8 @@ package org.example.server;
 
 import org.example.domain.hl7.HL7Message;
 import org.example.domain.hl7.LIS.NPLHToLIS.SCAN_SLIDE.LIS_SCAN_SLIDE;
-import org.example.domain.hl7.VTG.NPLHToVTG.VTG_OML21;
+import org.example.domain.hl7.LIS.NPLHToLIS.SLIDE_UPDATE.LIS_SLIDE_UPDATE;
+import org.example.domain.hl7.VTG.NPLHToVTG.OML21.VTG_OML21;
 import org.example.domain.host.Connection;
 import org.example.domain.host.HostType;
 import org.example.domain.server.message.ServerMessage;
@@ -21,7 +22,11 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.example.utils.MessageHandler.llpToText;
 
@@ -32,6 +37,8 @@ public class HL7Server extends Server implements Runnable {
     IrisService irisService;
     ServerSocket serverSocket;
     private Thread serverThread;
+
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     private final int port;
     private final HostType hostType;
@@ -96,81 +103,186 @@ public class HL7Server extends Server implements Runnable {
 
     @Override
     public void run() {
-        logger.info("Connect Client [{}] on port {}", serverName, serverSocket.getLocalPort());
+        logger.info("Server Ready Client [{}] on port {}", serverName, serverSocket.getLocalPort());
 
         while (isRunning && !Thread.currentThread().isInterrupted()) {
-            readMessage();
+            try {
+                Socket clientSocket = serverSocket.accept();
+                threadPool.execute(() -> handleConnection(clientSocket));
+
+            } catch (SocketTimeoutException e) {
+            } catch (IOException e) {
+                if (isRunning) {
+                    logger.error("[{}] Error accepting connection", serverName, e);
+                }
+            }
         }
     }
 
-    private void readMessage() {
-        try (Socket socket = serverSocket.accept();
+    private void handleConnection(Socket socket) {
+        try (socket;
              InputStream inputStream = socket.getInputStream();
              OutputStream outputStream = socket.getOutputStream()) {
 
-            if (!isRunning) {
-                return;
-            }
+            MDC.put("serverLogger", this.serverName);
 
             StringBuilder rawMessage = new StringBuilder();
             int current;
 
+            // MANTENEMOS EL SOCKET ABIERTO MIENTRAS LLEGUEN DATOS (-1 indica fin de stream)
             while ((current = inputStream.read()) != -1) {
                 char c = (char) current;
 
+                // Filtramos el carácter de inicio de bloque (VT = 11) si es necesario
+                // O simplemente lo agregamos. Normalmente en HL7 empieza con VT.
+                rawMessage.append(c);
+
+                // Detectar fin de mensaje HL7 (FS = 28)
                 if (c == HL7LLPCharacters.FS.getCharacter()) {
+                    // Leer el siguiente caracter que debería ser CR (13)
                     int next = inputStream.read();
+                    if (next != -1) {
+                        rawMessage.append((char) next);
+                    }
+
                     if (next == HL7LLPCharacters.CR.getCharacter()) {
-                        break;
+                        // 1. TENEMOS UN MENSAJE COMPLETO
+                        String fullLlpMessage = rawMessage.toString();
+
+                        // Procesamos este mensaje individualmente
+                        processSingleMessage(outputStream, fullLlpMessage);
+
+                        // 2. MUY IMPORTANTE: Limpiamos el buffer para el SIGUIENTE mensaje
+                        // que podría venir por este mismo socket inmediatamente.
+                        rawMessage.setLength(0);
+
+                        // NO HACEMOS BREAK. El while continúa esperando el siguiente mensaje.
                     }
                 }
-
-                rawMessage.append(c);
             }
+            // El while solo termina cuando el CLIENTE (LIS) cierra la conexión (inputStream devuelve -1)
 
-            if (!isRunning) {
-                return;
-            }
-
-            String fullLlpMessage = rawMessage.toString();
-            String cleanTextMessage = llpToText(fullLlpMessage);
-
-            //LoggerMessage
-            MDC.put("serverLogger", this.serverName);
-
-            try {
-                List<String> responses = response(outputStream, cleanTextMessage);
-                ServerMessage serverMessage = new ServerMessage(cleanTextMessage, responses);
-
-                messages.add(serverMessage);
-                messageLogger.addServerMessage("", cleanTextMessage, responses);
-                //UI DELETE ON AT
-                UINotificationService.addServerMessage(serverName, serverMessage);
-            } catch (Exception e) {
-                logger.info("[{}] Unable to create and send a response for message: {}", serverName, cleanTextMessage);
-                ServerMessage serverMessage = new ServerMessage(cleanTextMessage);
-
-                messages.add(serverMessage);
-                messageLogger.addServerMessage("", cleanTextMessage);
-                //UI DELETE ON AT
-                UINotificationService.addServerMessage(serverName, serverMessage);
-            }
-
-        } catch (SocketTimeoutException ignored) {
         } catch (Exception e) {
-            logger.error("[{}] Error processing HL7 connection", serverName, e);
+            logger.error("[{}] Error processing HL7 connection inside thread", serverName, e);
+        } finally {
+            MDC.remove("serverLogger");
         }
     }
 
-    public String waitForMessage(String caseId) {
-        long timeoutMillis = 10_000;
+    private void processSingleMessage(OutputStream outputStream, String fullLlpMessage) {
+        String cleanTextMessage = llpToText(fullLlpMessage);
+
+        // Si el mensaje está vacío tras limpiar, ignoramos
+        if (cleanTextMessage == null || cleanTextMessage.trim().isEmpty()) return;
+
+        try {
+            List<String> responses = response(outputStream, cleanTextMessage);
+            ServerMessage serverMessage = new ServerMessage(cleanTextMessage, responses);
+
+            synchronized (messages) {
+                messages.add(serverMessage);
+            }
+
+            messageLogger.addServerMessage("", cleanTextMessage, responses);
+            UINotificationService.addServerMessage(serverName, serverMessage);
+        } catch (Exception e) {
+            logger.info("[{}] Unable to create and send a response for message: {}", serverName, cleanTextMessage);
+            ServerMessage serverMessage = new ServerMessage(cleanTextMessage);
+
+            synchronized (messages) {
+                messages.add(serverMessage);
+            }
+
+            messageLogger.addServerMessage("", cleanTextMessage);
+            UINotificationService.addServerMessage(serverName, serverMessage);
+        }
+    }
+
+//    @Override
+//    public void run() {
+//        logger.info("Connect Client [{}] on port {}", serverName, serverSocket.getLocalPort());
+//
+//        while (isRunning && !Thread.currentThread().isInterrupted()) {
+//            readMessage();
+//        }
+//    }
+//
+//    private void readMessage() {
+//        try (Socket socket = serverSocket.accept();
+//             InputStream inputStream = socket.getInputStream();
+//             OutputStream outputStream = socket.getOutputStream()) {
+//
+//            if (!isRunning) {
+//                return;
+//            }
+//
+//            StringBuilder rawMessage = new StringBuilder();
+//            int current;
+//
+//            while ((current = inputStream.read()) != -1) {
+//                char c = (char) current;
+//
+//                if (c == HL7LLPCharacters.FS.getCharacter()) {
+//                    int next = inputStream.read();
+//                    if (next == HL7LLPCharacters.CR.getCharacter()) {
+//                        break;
+//                    }
+//                }
+//
+//                rawMessage.append(c);
+//            }
+//
+//            if (!isRunning) {
+//                return;
+//            }
+//
+//            String fullLlpMessage = rawMessage.toString();
+//            String cleanTextMessage = llpToText(fullLlpMessage);
+//
+//            //LoggerMessage
+//            MDC.put("serverLogger", this.serverName);
+//
+//            try {
+//                List<String> responses = response(outputStream, cleanTextMessage);
+//                ServerMessage serverMessage = new ServerMessage(cleanTextMessage, responses);
+//
+//                messages.add(serverMessage);
+//                messageLogger.addServerMessage("", cleanTextMessage, responses);
+//                //UI DELETE ON AT
+//                UINotificationService.addServerMessage(serverName, serverMessage);
+//            } catch (Exception e) {
+//                logger.info("[{}] Unable to create and send a response for message: {}", serverName, cleanTextMessage);
+//                ServerMessage serverMessage = new ServerMessage(cleanTextMessage);
+//
+//                messages.add(serverMessage);
+//                messageLogger.addServerMessage("", cleanTextMessage);
+//                //UI DELETE ON AT
+//                UINotificationService.addServerMessage(serverName, serverMessage);
+//            }
+//
+//        } catch (SocketTimeoutException ignored) {
+//        } catch (Exception e) {
+//            logger.error("[{}] Error processing HL7 connection", serverName, e);
+//        }
+//    }
+
+    public String waitForMessage(LocalDateTime sentTime, String... searchTerms) {
+        long timeoutMillis = 20_000;
         long startTime = System.currentTimeMillis();
 
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
             synchronized (messages) {
                 for (ServerMessage msg : messages) {
-                    if (msg.getMessage() != null && msg.getMessage().contains(caseId)) {
-                        return msg.getMessage();
+
+                    String messageContent = msg.getMessage();
+                    if (messageContent != null && msg.receiveTime.isAfter(sentTime)) {
+
+                        boolean allTermsFound = Arrays.stream(searchTerms)
+                                .allMatch(messageContent::contains);
+
+                        if (allTermsFound) {
+                            return messageContent;
+                        }
                     }
                 }
             }
@@ -179,17 +291,17 @@ public class HL7Server extends Server implements Runnable {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("[{}] Interrupted wait looking for messages with caseId {}", serverName, caseId);
+                logger.warn("[{}] Interrupted wait looking for messages with caseId {}", serverName, searchTerms);
                 return null;
             }
         }
 
-        logger.warn("[{}] Timeout esperando mensaje con caseId {}", serverName, caseId);
+        logger.warn("[{}] Timeout esperando mensaje con caseId {}", serverName, searchTerms);
         return null;
     }
 
-    public HL7Message waitForObjectMessage(String caseId) {
-        String messageReceived = waitForMessage(caseId);
+    public HL7Message waitForObjectMessage(LocalDateTime sentTime, String... searchTerms) {
+        String messageReceived = waitForMessage(sentTime, searchTerms);
 
         //TODO Check how to do it
         if (this.hostType.equals(HostType.VTG)) {
@@ -200,6 +312,11 @@ public class HL7Server extends Server implements Runnable {
         } else if (this.hostType.equals(HostType.LIS)) {
             try {
                 return LIS_SCAN_SLIDE.fromString(messageReceived);
+            } catch (Exception ignored) {
+            }
+
+            try {
+                return LIS_SLIDE_UPDATE.fromString(messageReceived);
             } catch (Exception ignored) {
             }
         }

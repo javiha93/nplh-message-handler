@@ -1,10 +1,12 @@
 package org.example.domain.ws.VSS.NPLHToVSS.ProcessOrder;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.Message;
@@ -32,7 +34,7 @@ public class VSS_ProcessOrder extends WSSegment implements WSMessage {
     @JacksonXmlProperty(localName = "StainOrder")
     private List<StainOrder> stainOrderList;
 
-    public static VSS_ProcessOrder fromMessage(Message message) {
+    public static VSS_ProcessOrder fromMessage(Message message, String orderRequest) {
         VSS_ProcessOrder processOrder = new VSS_ProcessOrder();
 
         processOrder.setPatient(Patient.fromPatient(message.getPatient()));
@@ -42,8 +44,24 @@ public class VSS_ProcessOrder extends WSSegment implements WSMessage {
         List<Slide> allSlides = message.getAllSlides();
         List<StainOrder> stainOrders = new ArrayList<>();
         for (Slide slide: allSlides) {
-            stainOrders.add(StainOrder.FromMessage("NewOrder", message, slide));
+            stainOrders.add(StainOrder.fromMessage(orderRequest, message, slide));
         }
+        processOrder.setStainOrderList(stainOrders);
+
+
+        return processOrder;
+    }
+
+    public static VSS_ProcessOrder fromMessage(Message message, Slide slide, String orderRequest) {
+        VSS_ProcessOrder processOrder = new VSS_ProcessOrder();
+
+        processOrder.setPatient(Patient.fromPatient(message.getPatient()));
+        processOrder.setPhysician(Physician.FromPhysician(message.getPhysician()));
+        processOrder.setCaseId(message.getOrder().getSampleId());
+
+        List<StainOrder> stainOrders = new ArrayList<>();
+        stainOrders.add(StainOrder.fromMessage(orderRequest, message, slide));
+
         processOrder.setStainOrderList(stainOrders);
 
 
@@ -106,6 +124,8 @@ public class VSS_ProcessOrder extends WSSegment implements WSMessage {
             XmlMapper mapper = new XmlMapper();
             mapper.configure(FromXmlParser.Feature.EMPTY_ELEMENT_AS_NULL, true);
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
             return mapper.readValue(processXml, VSS_ProcessOrder.class);
         } catch (Exception e) {

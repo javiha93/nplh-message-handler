@@ -116,7 +116,7 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       { 
         id: 'BLOCK_UPDATE', 
         name: 'BLOCK_UPDATE',
-        requiresSpecimenSelector: true,
+        requiresSpecimenSelector: false,
         requiresBlockSelector: true,
         requiresStatusSelector: true,
         statusOptions: BASE_STATUS_OPTIONS
@@ -124,8 +124,8 @@ export const HOST_CONFIGURATIONS: HostConfig[] = [
       { 
         id: 'SLIDE_UPDATE', 
         name: 'SLIDE_UPDATE',
-        requiresSpecimenSelector: true,
-        requiresBlockSelector: true,
+        requiresSpecimenSelector: false,
+        requiresBlockSelector: false,
         requiresSlideSelector: true,
         requiresStatusSelector: true,
         statusOptions: BASE_STATUS_OPTIONS
@@ -319,7 +319,7 @@ export class MessageConfigHelper {  /**
     }
     
     // Fallback para hosts tipo LIS
-    if (hostId.includes('LIS')) {
+    if (hostId.includes('LIS') || hostId.includes('Cerner')) {
       const lisConfig = HOST_CONFIGURATIONS.find(host => host.id === 'LIS_HL7');
       if (lisConfig) {
         return {
@@ -348,6 +348,18 @@ export class MessageConfigHelper {  /**
       if (vssConfig) {
         return {
           ...vssConfig,
+          id: hostId,
+          name: hostId
+        };
+      }
+    }
+
+// Fallback para hosts tipo VANTAGE WS
+    if (hostId.includes('VANTAGE WS')) {
+      const vtgwsConfig = HOST_CONFIGURATIONS.find(host => host.id === 'VANTAGE WS');
+      if (vtgwsConfig) {
+        return {
+          ...vtgwsConfig,
           id: hostId,
           name: hostId
         };

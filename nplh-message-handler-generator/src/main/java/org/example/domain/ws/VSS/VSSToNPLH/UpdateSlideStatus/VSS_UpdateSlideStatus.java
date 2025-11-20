@@ -4,11 +4,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.Message;
 import org.example.domain.message.entity.Slide;
+import org.example.domain.ws.WSMessage;
 import org.example.domain.ws.WSSegment;
 
 @Data
 @NoArgsConstructor
-public class VSS_UpdateSlideStatus extends WSSegment {
+public class VSS_UpdateSlideStatus extends WSSegment implements WSMessage {
     private SlideStatusInfo slideStatusInfo;
 
     public static VSS_UpdateSlideStatus FromSlide(Message message, Slide slide, String status) {
@@ -17,6 +18,11 @@ public class VSS_UpdateSlideStatus extends WSSegment {
         updateSlideStatus.slideStatusInfo = SlideStatusInfo.FromSlide(message, slide, status);
 
         return updateSlideStatus;
+    }
+
+    @Override
+    public String getSoapAction() {
+        return "UpdateSlideStatus";
     }
 
     @Override

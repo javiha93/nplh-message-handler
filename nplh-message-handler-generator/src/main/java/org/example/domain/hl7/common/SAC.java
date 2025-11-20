@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 public class SAC extends HL7Segment {
 
     @HL7Position(position = 7)
-    private String registerDateTime;
+    protected String registerDateTime;
 
     public static SAC Default() {
         SAC sac = new SAC();
@@ -40,5 +40,15 @@ public class SAC extends HL7Segment {
                 nullSafe(registerDateTime);
 
         return cleanSegment(value);
+    }
+
+    protected static SAC parseSAC(String line, SAC sac) {
+        String[] fields = line.split("\\|");
+
+        if (fields.length > 7) {
+            sac.setRegisterDateTime(getFieldValue(fields, 7));
+        }
+
+        return sac;
     }
 }

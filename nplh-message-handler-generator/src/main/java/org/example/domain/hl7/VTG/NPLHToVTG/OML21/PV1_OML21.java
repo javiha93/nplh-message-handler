@@ -1,4 +1,4 @@
-package org.example.domain.hl7.VTG.NPLHToVTG;
+package org.example.domain.hl7.VTG.NPLHToVTG.OML21;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.hl7.common.PV1;
