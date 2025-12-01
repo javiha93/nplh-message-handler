@@ -246,4 +246,3 @@ ClassMethod CheckSession() [ Private ]
 }
 
 }
-

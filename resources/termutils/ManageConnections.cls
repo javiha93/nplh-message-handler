@@ -85,4 +85,3 @@ ClassMethod GetConnectionByConnectionName(connectionName As %String) As termutil
 }
 
 }
-
