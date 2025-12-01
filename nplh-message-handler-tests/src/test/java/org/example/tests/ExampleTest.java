@@ -261,14 +261,13 @@ class ExampleTest {
             }
         }
 
-        // Receive SlideUpdate LIS
+        // Receive SlideUpdate from VTG to LIS
         for (Map.Entry<Slide, LocalDateTime> entry : sortedUpdates.entrySet()) {
             Slide slide = entry.getKey();
             LocalDateTime sentTime = entry.getValue();
 
             HL7Message slideUpdate = lisServer.waitForObjectMessage(sentTime, slide.getId());
-            Assertions.assertEquals(slideUpdate, LIS_SLIDE_UPDATE.fromMessage(message, slide, "PRINTED"));
-
+            Assertions.assertEquals(slideUpdate, LIS_SLIDE_UPDATE.fromVTGUpdate(message, slide, "PRINTED"));
         }
 
         //Send Staining from VSS
@@ -279,21 +278,50 @@ class ExampleTest {
             WSResponseMessage wsResponse = vssClient.sendWaitingWSResponse(vssSlideUpdate.getSoapAction(), vssSlideUpdate.toString());
             Assertions.assertEquals(wsResponse.getMessage(), CommunicationResponse.FromSoapActionOk(vssSlideUpdate.getSoapAction()));
 
-            vssStainingUpdates.put(slide, response.getSentTime());
+            vssStainingUpdates.put(slide, wsResponse.getSentTime());
         }
 
-        sortedUpdates = new TreeMap<>(
+        Map<Slide, LocalDateTime> sorted2Updates = new TreeMap<>(
                 Comparator.comparing(vssStainingUpdates::get)
         );
-        sortedUpdates.putAll(vssStainingUpdates);
+        sorted2Updates.putAll(vssStainingUpdates);
 
-        //Receive StainingStatusUpdate VTG
-        for (Map.Entry<Slide, LocalDateTime> entry : sortedUpdates.entrySet()) {
+        //Receive StainingStatusUpdate VTGWS
+        for (Map.Entry<Slide, LocalDateTime> entry : sorted2Updates.entrySet()) {
             Slide slide = entry.getKey();
             LocalDateTime sentTime = entry.getValue();
 
             WSMessage vtgwsStainingUpdate = vtgwsServer.waitForObjectMessage(sentTime, slide.getId() + "<");
             Assertions.assertEquals(vtgwsStainingUpdate, VTGWS_ProcessStainingStatusUpdate.fromSlide(message, slide, "STAINING"));
+        }
+
+        // Receive SlideUpdate from VSS to LIS
+        for (Map.Entry<Slide, LocalDateTime> entry : sorted2Updates.entrySet()) {
+            Slide slide = entry.getKey();
+            LocalDateTime sentTime = entry.getValue();
+
+            HL7Message slideUpdate = lisServer.waitForObjectMessage(sentTime, slide.getId());
+            var sl = LIS_SLIDE_UPDATE.fromVSSUpdate(message, slide);
+            Assertions.assertEquals(slideUpdate, sl);
+        }
+
+        //Send Staining from VSS
+        vssStainingUpdates = new HashMap<>();
+        for (Slide slide : message.getAllSlides()) {
+            WSMessage vssSlideUpdate = VSS_UpdateSlideStatus.FromSlide(message, slide, "SlideStained");
+            WSResponseMessage wsResponse = vssClient.sendWaitingWSResponse(vssSlideUpdate.getSoapAction(), vssSlideUpdate.toString());
+            Assertions.assertEquals(wsResponse.getMessage(), CommunicationResponse.FromSoapActionOk(vssSlideUpdate.getSoapAction()));
+
+            vssStainingUpdates.put(slide, wsResponse.getSentTime());
+        }
+
+        //Receive StainingStatusUpdate VTGWS
+        for (Map.Entry<Slide, LocalDateTime> entry : sorted2Updates.entrySet()) {
+            Slide slide = entry.getKey();
+            LocalDateTime sentTime = entry.getValue();
+
+            WSMessage vtgwsStainingUpdate = vtgwsServer.waitForObjectMessage(sentTime, slide.getId() + "<", "STAINED");
+            Assertions.assertEquals(vtgwsStainingUpdate, VTGWS_ProcessStainingStatusUpdate.fromSlide(message, slide, "STAINED"));
         }
     }
 
