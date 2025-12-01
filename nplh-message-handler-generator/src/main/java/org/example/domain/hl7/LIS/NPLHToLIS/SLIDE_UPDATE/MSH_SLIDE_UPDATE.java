@@ -5,7 +5,7 @@ import org.example.domain.message.MessageHeader;
 
 public class MSH_SLIDE_UPDATE extends MSH {
 
-    public static MSH_SLIDE_UPDATE FromMessageHeader(MessageHeader messageHeader) {
+    public static MSH_SLIDE_UPDATE fromMessageHeader(MessageHeader messageHeader) {
         MSH_SLIDE_UPDATE msh = (MSH_SLIDE_UPDATE) MSH.fromMessageHeader(messageHeader, new MSH_SLIDE_UPDATE());
 
         msh.setReceivingApplication("LIS");

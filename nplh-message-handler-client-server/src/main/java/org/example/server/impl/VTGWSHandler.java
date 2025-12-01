@@ -39,6 +39,9 @@ public class VTGWSHandler extends SoapHandler {
 
         customResponse = CustomResponse.disabled(VTGWS_ProcessApplicationACK.FromOriginalTransactionIdOk("*originalControlId*", "*controlId*").toString());
         defaultResponse.getApplicationResponse().setCustomResponse(customResponse);
+
+
+        //ResponseInfo processApplicationResponse =
     }
 
     @Override

@@ -319,6 +319,11 @@ public class HL7Server extends Server implements Runnable {
                 return LIS_SLIDE_UPDATE.fromString(messageReceived);
             } catch (Exception ignored) {
             }
+
+            try {
+                return LIS_SLIDE_UPDATE.fromVSSUpdate(messageReceived);
+            } catch (Exception ignored) {
+            }
         }
 
         throw new RuntimeException("");

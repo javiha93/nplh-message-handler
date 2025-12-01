@@ -1,8 +1,6 @@
 package org.example.domain.hl7.LIS.NPLHToLIS.SLIDE_UPDATE;
 
 import lombok.Data;
-import org.example.domain.hl7.VTG.NPLHToVTG.OML21.PID_OML21;
-import org.example.domain.hl7.common.PID;
 import org.example.domain.hl7.common.SAC;
 import org.example.domain.message.entity.Order;
 
@@ -12,7 +10,7 @@ import java.util.Objects;
 public class SAC_SLIDE_UPDATE extends SAC {
 
     String caseId;
-    public static SAC_SLIDE_UPDATE FromOrder(Order order) {
+    public static SAC_SLIDE_UPDATE fromOrder(Order order) {
         SAC_SLIDE_UPDATE sac = (SAC_SLIDE_UPDATE) SAC.FromOrder(order, new SAC_SLIDE_UPDATE());
 
         sac.setCaseId(order.getSampleId());

@@ -1,14 +1,13 @@
 package org.example.domain.hl7.LIS.NPLHToLIS.SLIDE_UPDATE;
 
 import lombok.Data;
-import org.example.domain.hl7.VTG.NPLHToVTG.OML21.PID_OML21;
 import org.example.domain.hl7.common.PID;
 import org.example.domain.message.Patient;
 
 @Data
 public class PID_SLIDE_UPDATE extends PID {
 
-    public static PID_SLIDE_UPDATE FromPatient(Patient patient) {
+    public static PID_SLIDE_UPDATE fromPatient(Patient patient) {
         PID_SLIDE_UPDATE pid = new PID_SLIDE_UPDATE();
 
         pid.extPatientID = patient.getCode();
