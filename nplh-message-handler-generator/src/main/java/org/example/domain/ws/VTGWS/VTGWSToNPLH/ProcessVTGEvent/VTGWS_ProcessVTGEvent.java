@@ -3,11 +3,12 @@ package org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessVTGEvent;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.domain.message.Message;
+import org.example.domain.ws.WSMessage;
 import org.example.domain.ws.WSSegment;
 
 @Data
 @NoArgsConstructor
-public class VTGWS_ProcessVTGEvent extends WSSegment {
+public class VTGWS_ProcessVTGEvent extends WSSegment implements WSMessage {
 
     private String transactionId;
     private EventStatus eventStatus;
@@ -38,6 +39,11 @@ public class VTGWS_ProcessVTGEvent extends WSSegment {
         processVTGEvent.eventStatus = EventStatus.FromMessage(message, eventType, slide);
 
         return processVTGEvent;
+    }
+
+    @Override
+    public String getSoapAction() {
+        return "ProcessVANTAGEEvent";
     }
 
     @Override

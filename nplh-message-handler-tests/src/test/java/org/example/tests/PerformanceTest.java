@@ -115,11 +115,14 @@ public class PerformanceTest extends BaseTest {
     public void stainingFlow(Message localMessage, String localCaseId, int slidesPerCase) throws InterruptedException {
         localMessage.getOrder().getBlock().addSlide(slidesPerCase - 1);
         localMessage.setStainProtocol(advanceStainProtocol);
-        HL7Message oml21 = LIS_OML21.fromMessage(localMessage);
+        //HL7Message oml21 = LIS_OML21.fromMessage(localMessage);
 
-        // Send OML21 LIS
-        HL7ResponseMessage response = lisClient.sendWaitingHL7Response(localCaseId, oml21.toString(), oml21.getControlId());
-        Assertions.assertEquals(response.getMessage(), NPLH_LIS_ACK.CommunicationOK(oml21.getControlId()));
+        for (Slide slide: localMessage.getAllSlides()) {
+            // Send OML21 LIS
+            HL7Message oml21 = LIS_OML21.fromSlide(localMessage, slide);
+            HL7ResponseMessage response = lisClient.sendWaitingHL7Response(localCaseId, oml21.toString(), oml21.getControlId());
+            Assertions.assertEquals(response.getMessage(), NPLH_LIS_ACK.CommunicationOK(oml21.getControlId()));
+        }
 
         sleep(1_000);
 
@@ -127,7 +130,7 @@ public class PerformanceTest extends BaseTest {
         for (Slide slide : localMessage.getAllSlides()) {
             HL7Message vtgSlideUpdate = VTG_SlideUpdate.fromMessage(localMessage, slide, "PRINTED");
             slide.setLabelPrinted(LocalDateTime.now().toString());
-            response = vtgClient.sendWaitingHL7Response(localCaseId, vtgSlideUpdate.toString(), vtgSlideUpdate.getControlId());
+            HL7ResponseMessage response = vtgClient.sendWaitingHL7Response(localCaseId, vtgSlideUpdate.toString(), vtgSlideUpdate.getControlId());
             Assertions.assertEquals(response.getMessage(), NPLH_VTG_ACK.CommunicationOK(vtgSlideUpdate.getControlId()));
         }
 

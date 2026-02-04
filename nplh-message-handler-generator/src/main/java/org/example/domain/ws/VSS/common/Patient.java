@@ -50,7 +50,7 @@ public class Patient extends WSSegment {
         }
 
         patient.setSuffix(entityPatient.getSuffix());
-        patient.setPrefix(entityPatient.getPreffix());
+        patient.setPrefix(entityPatient.getPrefix());
 
         return patient;
     }

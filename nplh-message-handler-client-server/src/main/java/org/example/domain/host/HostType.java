@@ -7,5 +7,6 @@ public enum HostType {
     VSS,
     HE600,
     DP,
-    AUTOMATION_SW
+    AUTOMATION_SW,
+    COCKPIT
 }

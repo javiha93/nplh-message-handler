@@ -57,7 +57,7 @@ public class Specimen extends WSSegment {
         specimen.tissueName = entitySpecimen.getProcedure().getTissue().getType();
         specimen.facilityCode = entitySpecimen.getFacilityCode();
         specimen.facilityName = entitySpecimen.getFacilityName();
-        specimen.observationDateTime = convertToXmlDateTime(entitySpecimen.getCollectDateTime());
+        specimen.observationDateTime = "2014-10-14T00:00:00"; // convertToXmlDateTime(entitySpecimen.getCollectDateTime());
 
         return specimen;
     }

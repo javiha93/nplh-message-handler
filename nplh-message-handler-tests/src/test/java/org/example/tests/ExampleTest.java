@@ -27,18 +27,22 @@ import org.example.domain.ws.VSS.VSSToNPLH.UpdateSlideStatus.VSS_UpdateSlideStat
 import org.example.domain.ws.VSS.VSSToNPLH.response.CommunicationResponse;
 import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessNewOrder.VTGWS_ProcessNewOrder;
 import org.example.domain.ws.VTGWS.NPLHTpVTGWS.ProcessStainingStatusUpdate.VTGWS_ProcessStainingStatusUpdate;
+import org.example.domain.ws.VTGWS.VTGWSToNPLH.ProcessVTGEvent.VTGWS_ProcessVTGEvent;
 import org.example.domain.ws.WSMessage;
 import org.example.server.HL7Server;
 import org.example.server.Servers;
 import org.example.server.WSServer;
 import org.example.service.DuplicateHostService;
 import org.example.service.IrisService;
+import org.example.service.ReceiversINService;
 import org.example.service.StainProtocolsService;
 import org.junit.jupiter.api.*;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 import static org.example.service.IrisService.parseList;
@@ -51,6 +55,7 @@ class ExampleTest {
 
     static StainProtocolsService stainProtocolsService;
     static DuplicateHostService duplicateHostService;
+    static ReceiversINService receiversINService;
 
     static Clients clients;
     static Servers servers;
@@ -79,13 +84,14 @@ class ExampleTest {
         IrisService irisService = new IrisService(irisConnectionManager);
         stainProtocolsService = new StainProtocolsService(irisConnectionManager);
         duplicateHostService = new DuplicateHostService(irisConnectionManager);
+        receiversINService = new ReceiversINService(irisConnectionManager);
 
 //        duplicatedVtgwsHost = List.of("VANTAGE WS Oklahoma", "VANTAGE WS Milwaukee");
 //        duplicatedVtgwsHost = List.of("VANTAGE WS Denver", "VANTAGE WS Seattle");
 //        duplicateHostService.duplicateHost("VANTAGEWS", duplicatedVtgwsHost);
 
-        duplicatedVssHost = List.of("VSS Denver", "VSS Seattle", "VSS Atlanta", "VSS Colorado", "VSS Cincinnati");
-        duplicateHostService.duplicateHost("VSS", duplicatedVssHost);
+        //duplicatedVssHost = List.of("VSS Denver", "VSS Seattle", "VSS Atlanta", "VSS Colorado", "VSS Cincinnati");
+        //duplicateHostService.duplicateHost("VSS", duplicatedVssHost);
 
         HostInfoList hostInfoList = new HostInfoList(parseList(irisService.getHostInfo(), HostInfo.class));
         clients = new Clients(hostInfoList, irisService);
@@ -108,9 +114,9 @@ class ExampleTest {
         advanceStainProtocol = StainProtocol.Default("1234", "ADV", "VSSprotocol");
         stainProtocolsService.createStainProtocolAndAssign("VSS", advanceStainProtocol.getNumber(), advanceStainProtocol.getName(), advanceStainProtocol.getDescription());
 
-        for (String hostName : duplicatedVssHost) {
-            stainProtocolsService.createStainProtocolAndAssign(hostName, advanceStainProtocol.getNumber(), advanceStainProtocol.getName(), advanceStainProtocol.getDescription());
-        }
+//        for (String hostName : duplicatedVssHost) {
+//            stainProtocolsService.createStainProtocolAndAssign(hostName, advanceStainProtocol.getNumber(), advanceStainProtocol.getName(), advanceStainProtocol.getDescription());
+//        }
 
 //        duplicatedVtgwsHost = List.of("VANTAGE WS Oklahoma", "VANTAGE WS Milwaukee");
 //        duplicatedVtgwsHost = List.of("VANTAGE WS Denver", "VANTAGE WS Seattle");
@@ -121,6 +127,121 @@ class ExampleTest {
     void setup() {
         caseId = "CASE-" + NanoIdUtils.randomNanoId(new SecureRandom(), NanoIdUtils.DEFAULT_ALPHABET, 13);
         message = Message.Default(caseId);
+    }
+
+
+    @Test
+    @DisplayName("NPLH receives from LIS a new message and forwards to VTG")
+    void testMultipleSlideOly1Case() throws InterruptedException {
+
+        String localCaseId ="CASE-" + NanoIdUtils.randomNanoId(new SecureRandom(), NanoIdUtils.DEFAULT_ALPHABET, 13);
+        Message localMessage = Message.Default(localCaseId);
+        multipleSlidePrinted(localMessage, localCaseId);
+    }
+
+    @Test
+    @DisplayName("NPLH receives from LIS a new message and forwards to VTG")
+    void testMultipleSlide() throws InterruptedException {
+
+        ScheduledExecutorService triggerScheduler = Executors.newSingleThreadScheduledExecutor();
+
+        ExecutorService workerPool = Executors.newCachedThreadPool();
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(50);
+
+        triggerScheduler.scheduleAtFixedRate(() -> {
+            workerPool.submit(() -> {
+                try {
+                    String localCaseId = "CASE-" + NanoIdUtils.randomNanoId(new SecureRandom(), NanoIdUtils.DEFAULT_ALPHABET, 13);
+                    Message localMessage = Message.Default(localCaseId);
+
+                    multipleSlidePrinted(localMessage, localCaseId);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }, 0, 4, TimeUnit.SECONDS);
+
+        long durationMinutes = 30;
+
+        try {
+            System.out.println("Starting performance simulation. Running for " + durationMinutes + " minutes...");
+            TimeUnit.MINUTES.sleep(durationMinutes);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Stopping test simulation due to interruption.");
+        } finally {
+            // 3. Detener el scheduler y esperar su terminación para una salida limpia
+            triggerScheduler.shutdownNow();
+            workerPool.shutdownNow();
+
+            System.out.println("Pending to be processed: " + receiversINService.getMessageReceiversINPendingToProcess());
+            System.out.println("Processed: " + receiversINService.getMessageReceiversINProcessed());
+
+            if (!triggerScheduler.awaitTermination(30, TimeUnit.SECONDS)) {
+                System.err.println("Scheduler did not terminate gracefully.");
+            }
+        }
+    }
+
+    public void multipleSlidePrinted(Message Singmessage, String SingcaseId) throws InterruptedException {
+        try {
+            Singmessage.getOrder().getBlock().addSlide(20);
+            Singmessage.setStainProtocol(advanceStainProtocol);
+            HL7Message oml21 = LIS_OML21.fromMessage(Singmessage);
+            lisClient.sendWaitingHL7Response(SingcaseId, oml21.toString(), oml21.getControlId());
+
+            sleep(30_000);
+
+            ExecutorService slideExecutor = Executors.newFixedThreadPool(20);
+
+            List<CompletableFuture<Void>> tasks = Singmessage.getAllSlides().stream()
+                    .map(slide -> CompletableFuture.runAsync(() -> {
+                        try {
+                            updateSlideStatus(Singmessage, slide);
+                        } catch (Exception e) {
+                            System.err.println("Error slide " + slide.getId());
+                        }
+                    }, slideExecutor))
+                    .collect(Collectors.toList());
+
+            CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
+
+            slideExecutor.shutdown();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateSlideStatus(Message Singmessage, Slide slide) {
+
+        randomSleep();
+
+        WSMessage vtgEvent = VTGWS_ProcessVTGEvent.FromMessage(Singmessage, "PRINTED", slide);
+        vtgwsClient.send(vtgEvent.getSoapAction(), vtgEvent.toString());
+
+        randomSleep();
+
+        WSMessage vssSlideUpdate = VSS_UpdateSlideStatus.FromSlide(Singmessage, slide, "SlideStaining");
+        vssClient.send(vssSlideUpdate.getSoapAction(), vssSlideUpdate.toString());
+
+        randomSleep();
+
+        WSMessage vssSlideUpdate2 = VSS_UpdateSlideStatus.FromSlide(Singmessage, slide, "SlideStained");
+        vssClient.send(vssSlideUpdate2.getSoapAction(), vssSlideUpdate2.toString());
+    }
+
+    private void randomSleep() {
+        try {
+            long randomSeconds = ThreadLocalRandom.current().nextLong(0, 41);
+            Thread.sleep(randomSeconds * 1000);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("El sleep fue interrumpido: " + e.getMessage());
+        }
     }
 
     @Test
@@ -346,8 +467,8 @@ class ExampleTest {
 //            duplicateHostService.deleteHost(hostName);
 //        }
 
-        for (String hostName : duplicatedVssHost) {
-            duplicateHostService.deleteHost(hostName);
-        }
+//        for (String hostName : duplicatedVssHost) {
+//            duplicateHostService.deleteHost(hostName);
+//        }
     }
 }

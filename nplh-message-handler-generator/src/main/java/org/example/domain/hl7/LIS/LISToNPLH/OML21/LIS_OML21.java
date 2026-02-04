@@ -51,6 +51,22 @@ public class LIS_OML21 extends HL7Segment implements HL7Message {
         return LISOML21;
     }
 
+    public static LIS_OML21 fromSlide(Message message, Slide slide) {
+        LIS_OML21 LISOML21 = new LIS_OML21();
+
+        LISOML21.msh = MSH_OML21.FromMessageHeader(message.getHeader(), "OML^O21");
+        LISOML21.pid = PID_OML21.FromPatient(message.getPatient());
+        LISOML21.pv1 = PV1_OML21.FromPhysician(message.getPhysician());
+        LISOML21.sac = SAC_OML21.FromOrder(message.getOrder());
+
+        OBR_OML21 obr = OBR_OML21.FromMessage(slide, message, 1);
+        ORC_OML21 orc = ORC_OML21.FromMessage(slide, message);
+        OBX_OML21 obx = OBX_OML21.FromMessage(slide, message, 1);
+        LISOML21.oSegments.add(new OSegment(orc, obr, obx));
+
+        return LISOML21;
+    }
+
     @Override
     public String toString() {
         String oml21 = nullSafe(msh) + "\n" +

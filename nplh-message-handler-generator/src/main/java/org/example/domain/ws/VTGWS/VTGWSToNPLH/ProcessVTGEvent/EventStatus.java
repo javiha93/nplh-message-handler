@@ -25,7 +25,7 @@ public class EventStatus extends WSSegment {
 
         eventStatus.caseId = message.getOrder().getSampleId();
         eventStatus.eventType = eventType;
-        eventStatus.observationDateTime = message.getRegisterTime();
+        eventStatus.observationDateTime = "2014-10-14T00:00:00"; //message.getRegisterTime();
         eventStatus.specimen = Specimen.Default(specimen);
         eventStatus.technician = Technician.FromTechnician(message.getOrder().getTechnician());
 
@@ -39,7 +39,7 @@ public class EventStatus extends WSSegment {
         eventStatus.block = Block.Default(block, specimen);
         eventStatus.caseId = message.getOrder().getSampleId();
         eventStatus.eventType = eventType;
-        eventStatus.observationDateTime = message.getRegisterTime();
+        eventStatus.observationDateTime = "2014-10-14T00:00:00" ; //message.getRegisterTime();
         eventStatus.specimen = Specimen.Default(specimen);
         eventStatus.technician = Technician.FromTechnician(message.getOrder().getTechnician());
 
@@ -54,7 +54,7 @@ public class EventStatus extends WSSegment {
         eventStatus.block = Block.Default(block, specimen);
         eventStatus.caseId = message.getOrder().getSampleId();
         eventStatus.eventType = eventType;
-        eventStatus.observationDateTime = message.getRegisterTime();
+        eventStatus.observationDateTime = "2014-10-14T00:00:00" ; //message.getRegisterTime();
         eventStatus.slide = Slide.Default(slide);
         eventStatus.specimen = Specimen.Default(specimen);
         eventStatus.technician = Technician.FromTechnician(message.getOrder().getTechnician());

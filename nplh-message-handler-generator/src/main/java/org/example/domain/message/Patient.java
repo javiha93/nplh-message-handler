@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Patient extends PersonInfo implements Cloneable {
     private String suffix;
-    private String preffix;
+    private String prefix;
     private String secondSurname;
     private String dateOfBirth;
     private String sex;

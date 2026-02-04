@@ -53,7 +53,7 @@ public class StainProtocol extends WSSegment {
             indentationLevel ++;
 
             specimen += addIndentation(indentationLevel) + "<ProtocolDescription>" +  nullSafe(protocolDescription) + "</ProtocolDescription>\n"
-                    + addIndentation(indentationLevel) + "<ProtocolName>" +  nullSafe(protocolNumber) + "</ProtocolName>\n"
+                    + addIndentation(indentationLevel) + "<ProtocolName>" +  nullSafe(protocolName) + "</ProtocolName>\n"
                     + addIndentation(indentationLevel) + "<ProtocolNumber>" +  nullSafe(protocolNumber) + "</ProtocolNumber>\n";
 
             indentationLevel --;
